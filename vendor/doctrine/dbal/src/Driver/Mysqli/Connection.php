@@ -80,7 +80,13 @@ final class Connection implements ConnectionInterface
 
     public function beginTransaction(): void
     {
-        $this->connection->begin_transaction();
+        try {
+            if (! $this->connection->begin_transaction()) {
+                throw ConnectionError::new($this->connection);
+            }
+        } catch (mysqli_sql_exception $e) {
+            throw ConnectionError::upcast($e);
+        }
     }
 
     public function commit(): void

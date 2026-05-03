@@ -6,6 +6,7 @@
     $isInline = $isInline();
     $isMultiple = $isMultiple();
     $statePath = $getStatePath();
+    $areButtonLabelsHidden = $areButtonLabelsHidden();
 @endphp
 
 <x-dynamic-component
@@ -35,7 +36,7 @@
             \Filament\Support\prepare_inherited_attributes($attributes)
                 ->merge($getExtraAttributes(), escape: false)
                 ->class([
-                    'fi-fo-radio gap-3',
+                    'fi-fo-toggle-buttons gap-3',
                     '-mt-3' => (! $isInline) && ($gridDirection === 'column'),
                     'flex flex-wrap' => $isInline,
                 ])
@@ -53,6 +54,7 @@
                 ])
             >
                 <input
+                    @if ($loop->first && $isAutofocused()) autofocus @endif
                     @disabled($shouldOptionBeDisabled)
                     id="{{ $inputId }}"
                     @if (! $isMultiple)
@@ -60,7 +62,6 @@
                     @endif
                     type="{{ $isMultiple ? 'checkbox' : 'radio' }}"
                     value="{{ $value }}"
-                    wire:loading.attr="disabled"
                     {{ $applyStateBindingModifiers('wire:model') }}="{{ $statePath }}"
                     {{ $getExtraInputAttributeBag()->class(['peer pointer-events-none absolute opacity-0']) }}
                 />
@@ -70,6 +71,7 @@
                     :disabled="$shouldOptionBeDisabled"
                     :for="$inputId"
                     :icon="$getIcon($value)"
+                    :label-sr-only="$areButtonLabelsHidden"
                     tag="label"
                 >
                     {{ $label }}

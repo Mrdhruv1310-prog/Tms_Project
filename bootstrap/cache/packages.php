@@ -103,13 +103,13 @@
   ),
   'livewire/livewire' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Livewire\\LivewireServiceProvider',
-    ),
     'aliases' => 
     array (
       'Livewire' => 'Livewire\\Livewire',
+    ),
+    'providers' => 
+    array (
+      0 => 'Livewire\\LivewireServiceProvider',
     ),
   ),
   'livewire/volt' => 
@@ -121,13 +121,13 @@
   ),
   'maatwebsite/excel' => 
   array (
-    'providers' => 
-    array (
-      0 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
-    ),
     'aliases' => 
     array (
       'Excel' => 'Maatwebsite\\Excel\\Facades\\Excel',
+    ),
+    'providers' => 
+    array (
+      0 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
     ),
   ),
   'nesbot/carbon' => 
@@ -160,24 +160,24 @@
   ),
   'ralphjsmit/livewire-urls' => 
   array (
-    'providers' => 
-    array (
-      0 => 'RalphJSmit\\Livewire\\Urls\\LivewireUrlsServiceProvider',
-    ),
     'aliases' => 
     array (
       'LivewireUrls' => 'RalphJSmit\\Livewire\\Urls\\Facades\\Url',
     ),
+    'providers' => 
+    array (
+      0 => 'RalphJSmit\\Livewire\\Urls\\LivewireUrlsServiceProvider',
+    ),
   ),
   'ryangjchandler/blade-capture-directive' => 
   array (
-    'providers' => 
-    array (
-      0 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
-    ),
     'aliases' => 
     array (
       'BladeCaptureDirective' => 'RyanChandler\\BladeCaptureDirective\\Facades\\BladeCaptureDirective',
+    ),
+    'providers' => 
+    array (
+      0 => 'RyanChandler\\BladeCaptureDirective\\BladeCaptureDirectiveServiceProvider',
     ),
   ),
   'tymon/jwt-auth' => 

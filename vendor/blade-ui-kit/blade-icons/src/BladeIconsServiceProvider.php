@@ -65,6 +65,22 @@ final class BladeIconsServiceProvider extends ServiceProvider
         $this->callAfterResolving(ViewFactory::class, function ($view, Application $app) {
             $app->make(Factory::class)->registerComponents();
         });
+
+        // Ensure components are registered during console commands (like optimize)
+        // that compile views before ViewFactory is resolved. `icons:cache` is
+        // intentionally excluded: it only writes the manifest, so pre-registering
+        // every component would duplicate the filesystem scan and add thousands of
+        // unnecessary Blade::component() calls when large icon packs are installed.
+        if ($this->app->runningInConsole() && ! $this->app->environment('testing')) {
+            $this->app->booted(function (Application $app) {
+                if (in_array($_SERVER['argv'][1] ?? null, ['optimize', 'view:cache'])) {
+                    try {
+                        $app->make(Factory::class)->registerComponents();
+                    } catch (\Exception $e) {
+                    }
+                }
+            });
+        }
     }
 
     private function registerManifest(): void
@@ -90,6 +106,14 @@ final class BladeIconsServiceProvider extends ServiceProvider
                 Console\CacheCommand::class,
                 Console\ClearCommand::class,
             ]);
+
+            if (method_exists($this, 'optimizes')) {
+                $this->optimizes(
+                    'icons:cache',
+                    'icons:clear',
+                    'blade-icons'
+                );
+            }
         }
     }
 
