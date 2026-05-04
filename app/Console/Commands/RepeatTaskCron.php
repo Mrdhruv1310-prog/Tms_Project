@@ -248,6 +248,7 @@ class RepeatTaskCron extends Command
             'minutes' => Carbon::parse($dueDate)->subMinutes($reminderTime),
             'hours' => Carbon::parse($dueDate)->subHours($reminderTime),
             'days' => Carbon::parse($dueDate)->subDays($reminderTime),
+            'last_30_minutes' => Carbon::parse($dueDate)->subMinutes(30),
             default => throw new \Exception('Invalid reminder unit provided.'),
         };
 
