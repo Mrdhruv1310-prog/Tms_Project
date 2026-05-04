@@ -29,15 +29,8 @@ class Navbar extends Component
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
-        // Redirect based on role
-        if ($role === 'admin') {
-            return $this->redirect('/admin-login');
-        }
-
         return $this->redirect('/login');
     }
 
