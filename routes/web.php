@@ -7,6 +7,9 @@ use App\Livewire\Dashboard;
 use App\Livewire\ExportTaskModal;
 use App\Livewire\ForgetPasswordForm;
 use App\Livewire\Forms\LoginForm;
+use App\Livewire\Forms\RegisterForm;
+use App\Livewire\Forms\AdminLoginForm;
+use App\Livewire\Forms\AdminRegisterForm;
 use App\Livewire\GroupPerformance;
 use App\Livewire\PasswordResetForm;
 use App\Livewire\TaskTable;
@@ -36,6 +39,9 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
 
 
 Route::middleware(['guest'])->group(function () {
+    Route::get('/admin-login', AdminLoginForm::class)->name('admin.login');
+    Route::get('/admin-register', AdminRegisterForm::class)->name('admin.register');
+    Route::get('/register', RegisterForm::class)->name('register');
     Route::get('/login', LoginForm::class)->name('login');
     Volt::route('forgot-password', 'pages.auth.forgot-password')->name('password.request');
     Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('password.reset');
