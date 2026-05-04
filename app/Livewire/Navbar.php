@@ -28,9 +28,6 @@ class Navbar extends Component
     // }
     public function logout(Request $request)
     {
-        $user = Auth::user();
-
-        $role = $user->role;
         Auth::logout();
 
         $request->session()->invalidate();
