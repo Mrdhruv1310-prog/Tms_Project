@@ -103,7 +103,7 @@ class TeamPerformance extends Component
                 ];
             })
             ->toArray();
-        
+
         }
     }
 

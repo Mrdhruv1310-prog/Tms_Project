@@ -21,7 +21,6 @@
         "laravel/breeze": "^2.1",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
-        "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.0",
         "pestphp/pest": "^2.0",
         "pestphp/pest-plugin-laravel": "^2.0"
@@ -31,7 +30,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+         "exclude-from-classmap": [
+         "vendor/league/flysystem/src/Local/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
