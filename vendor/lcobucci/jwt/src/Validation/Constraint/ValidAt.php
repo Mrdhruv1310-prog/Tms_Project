@@ -5,17 +5,19 @@ namespace Lcobucci\JWT\Validation\Constraint;
 
 use DateInterval;
 use DateTimeInterface;
+use Lcobucci\Clock\Clock;
 use Lcobucci\JWT\Token;
+use Lcobucci\JWT\Validation\Constraint;
 use Lcobucci\JWT\Validation\ConstraintViolation;
-use Lcobucci\JWT\Validation\ValidAt as ValidAtInterface;
-use Psr\Clock\ClockInterface as Clock;
 
-final class LooseValidAt implements ValidAtInterface
+final class ValidAt implements Constraint
 {
-    private readonly DateInterval $leeway;
+    private Clock $clock;
+    private DateInterval $leeway;
 
-    public function __construct(private readonly Clock $clock, ?DateInterval $leeway = null)
+    public function __construct(Clock $clock, ?DateInterval $leeway = null)
     {
+        $this->clock  = $clock;
         $this->leeway = $this->guardLeeway($leeway);
     }
 
@@ -45,7 +47,7 @@ final class LooseValidAt implements ValidAtInterface
     private function assertExpiration(Token $token, DateTimeInterface $now): void
     {
         if ($token->isExpired($now)) {
-            throw ConstraintViolation::error('The token is expired', $this);
+            throw new ConstraintViolation('The token is expired');
         }
     }
 
@@ -53,7 +55,7 @@ final class LooseValidAt implements ValidAtInterface
     private function assertMinimumTime(Token $token, DateTimeInterface $now): void
     {
         if (! $token->isMinimumTimeBefore($now)) {
-            throw ConstraintViolation::error('The token cannot be used yet', $this);
+            throw new ConstraintViolation('The token cannot be used yet');
         }
     }
 
@@ -61,7 +63,7 @@ final class LooseValidAt implements ValidAtInterface
     private function assertIssueTime(Token $token, DateTimeInterface $now): void
     {
         if (! $token->hasBeenIssuedBefore($now)) {
-            throw ConstraintViolation::error('The token was issued in the future', $this);
+            throw new ConstraintViolation('The token was issued in the future');
         }
     }
 }
