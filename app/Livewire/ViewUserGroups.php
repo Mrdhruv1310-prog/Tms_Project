@@ -20,6 +20,12 @@ class ViewUserGroups extends Component
     // Load users for the group
     public function loadUsers($labelId)
     {
+        if (empty($labelId)) {
+            $this->labelName = 'Unknown Group';
+            $this->groupUsers = [];
+            return;
+        }
+
         $this->labelId = $labelId;
         $group = Group::find($labelId);
 
@@ -29,15 +35,14 @@ class ViewUserGroups extends Component
             return;
         }
 
-        $this->labelName = $group->label ?? 'Unknown Group';
+        $this->labelName = is_string($group->label) && !empty($group->label)
+            ? $group->label
+            : 'Unknown Group';
 
-        // Fetch group users
-        $this->groupUsers = $group
-            ->users()
+        $this->groupUsers = $group->users()
             ->get(['users.id', 'users.first_name', 'users.last_name'])
             ->toArray();
 
-        // Fetch available users excluding group users
         $this->fetchAvailableUsers();
         $this->isOpen = true;
         $this->dispatch('viewusergroupmodalopened');
@@ -46,7 +51,7 @@ class ViewUserGroups extends Component
     // Fetch users not already in the group
     public function fetchAvailableUsers()
     {
-        $existingUserIds = array_column($this->groupUsers, 'id');
+        $existingUserIds = array_column($this->groupUsers ?? [], 'id');
 
         $this->availableUsers = User::select('id', 'first_name', 'last_name')
             ->whereNotIn('id', $existingUserIds)
@@ -54,21 +59,28 @@ class ViewUserGroups extends Component
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'name' => trim((string)($user->first_name ?? '') . ' ' . (string)($user->last_name ?? '')),
                 ];
-            });
-        // ->toArray();
+            })
+            ->toArray();
     }
 
     // Add a user to the group
     public function addUser($userId)
     {
         $group = Group::find($this->labelId);
-        $user = User::find($userId); // Fetch user information
+        $user = User::find($userId);
+
         if ($group && $user) {
             $group->users()->syncWithoutDetaching([$userId]);
-            $this->loadUsers($this->labelId); // Reload data
-            $this->notify("Added " . ucfirst($user->first_name) . " " . ucfirst($user->last_name) . " to the ".ucwords($this->labelName)." group.", 'success');
+            $this->loadUsers($this->labelId);
+
+            $this->notify(
+                "Added " . ucfirst($user->first_name ?? '') . " " .
+                    ucfirst($user->last_name ?? '') . " to the " .
+                    ucwords($this->labelName ?? 'Group') . " group.",
+                'success'
+            );
         }
     }
 
@@ -80,10 +92,15 @@ class ViewUserGroups extends Component
         if ($group && $user) {
             $group->users()->detach($userId);
             $this->loadUsers($this->labelId); // Reload data
-            $this->notify("Removed " . ucfirst($user->first_name) . " " . ucfirst($user->last_name) . " from the group.", 'success');
+            $this->notify(
+                "Removed " . ucfirst($user->first_name ?? '') . " " .
+                    ucfirst($user->last_name ?? '') . " from the " .
+                    ucwords($this->labelName ?? 'Group') . " group.",
+                'success'
+            );
         }
     }
-    
+
     public function render()
     {
         return view('livewire.view-user-groups');

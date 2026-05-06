@@ -353,16 +353,20 @@ class TaskDetailsModal extends Component
     // Send Reminder Email Notification
     public function createTaskReminders($task, $reminderTime, $reminderUnit, $selectedUsers)
     {
-        $dueDate = Carbon::parse($task->due_date);
-
-        $reminderValue = match ($reminderUnit) {
-            'minutes' => $dueDate->copy()->subMinutes($reminderTime),
-            'hours' => $dueDate->copy()->subHours($reminderTime),
-            'days' => $dueDate->copy()->subDays($reminderTime),
-            default => throw new \Exception('Invalid reminder unit'),
-        };
-
-
+        $dueDate = $task->due_date;
+        switch ($reminderUnit) {
+            case 'minutes':
+                $reminderValue = Carbon::parse($dueDate)->subMinutes($reminderTime);
+                break;
+            case 'hours':
+                $reminderValue = Carbon::parse($dueDate)->subHours($reminderTime);
+                break;
+            case 'days':
+                $reminderValue = Carbon::parse($dueDate)->subDays($reminderTime);
+                break;
+            default:
+                throw new \Exception('Invalid reminder unit provided.');
+        }
         if ($reminderValue->isPast()) {
             throw new \Exception('Reminder time cannot be in the past.');
         }
