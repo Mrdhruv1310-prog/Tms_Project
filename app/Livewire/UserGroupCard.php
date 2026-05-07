@@ -19,7 +19,21 @@ class UserGroupCard extends Component
         // Show Manager users Groups:
         // $this->groups = Group::all();
         // FIX:
-        $this->groups = Group::select('id', 'label')->get();
+        $this->groups = Group::select('id', 'label')
+            ->get()
+            ->map(function ($group) {
+
+                return [
+                    'id' => $group->id ?? 0,
+                    'name' => !empty($group->label) ? (string) $group->label : 'No Group',
+                    'percentage' => 0,
+                    'pending' => 0,
+                    'in_progress' => 0,
+                    'completed' => 0,
+                    'total' => 0,
+                ];
+            })
+            ->toArray();
     }
 
     public function showGroup($groupId)
