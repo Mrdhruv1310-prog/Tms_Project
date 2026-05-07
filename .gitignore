@@ -1,6 +1,3 @@
 package.json
 .env
 node_modules
-public/hot
-bootstrap/cache/packages.php
-bootstrap/cache/services.php
