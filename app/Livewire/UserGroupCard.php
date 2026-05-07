@@ -16,6 +16,7 @@ class UserGroupCard extends Component
 
     public function mount()
     {
+<<<<<<< HEAD
         // Show Manager users Groups:
         // $this->groups = Group::all();
         // FIX:
@@ -34,6 +35,10 @@ class UserGroupCard extends Component
                 ];
             })
             ->toArray();
+=======
+        // Fetch all groups from the database
+        $this->groups = Group::select('id', 'label')->get();
+>>>>>>> e99bb68ea7ec90cefd4dd2f011f1b8252bea283c
     }
 
     public function showGroup($groupId)
