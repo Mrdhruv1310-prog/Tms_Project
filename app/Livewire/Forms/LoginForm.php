@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -16,18 +17,27 @@ class LoginForm extends Component
     public $password;
     public $error = false; // Add this line to define the property
 
+
     public function login(Request $request)
     {
-        $validated = $this->validate([
+        $credentials = $this->validate([
             'email' => 'required|email|max:255',
             'password' => 'required|min:6|max:255',
         ]);
 
-        if (Auth::attempt($validated)) {
-            $request->session()->regenerate();
+        $user = User::where('email', $credentials['email'])->first();
 
+        if ($user && $user->status == 0) {
+            $this->addError('credentials', 'Permission denied.');
+            $this->error = true;
+            return;
+        }
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
             return $this->redirect('dashboard');
         }
+
         $this->addError('credentials', 'Invalid credentials!');
         $this->error = true;
     }

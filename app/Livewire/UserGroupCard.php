@@ -6,6 +6,7 @@ use App\Models\Group;
 use Livewire\Component;
 use App\Models\Task;
 use App\Models\User;
+
 class UserGroupCard extends Component
 {
     public $groups = [];
@@ -15,6 +16,25 @@ class UserGroupCard extends Component
 
     public function mount()
     {
+        // Show Manager users Groups:
+        // $this->groups = Group::all();
+        // FIX:
+        $this->groups = Group::select('id', 'label')
+            ->get()
+            ->map(function ($group) {
+
+                return [
+                    'id' => $group->id ?? 0,
+                    'name' => !empty($group->label) ? (string) $group->label : 'No Group',
+                    'percentage' => 0,
+                    'pending' => 0,
+                    'in_progress' => 0,
+                    'completed' => 0,
+                    'total' => 0,
+                ];
+            })
+            ->toArray();
+
         // Fetch all groups from the database
         $this->groups = Group::select('id', 'label')->get();
     }
