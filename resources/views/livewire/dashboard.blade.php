@@ -141,7 +141,7 @@
                                     </div>
 
                                 </div>
-<<<<<<< HEAD
+
                             </div>
                         @endforeach
                     </div>
@@ -241,11 +241,9 @@
                             </a>
                         @endforeach
                     </div>
-=======
 
                             </a>
                         @endforeach
->>>>>>> e99bb68ea7ec90cefd4dd2f011f1b8252bea283c
                 </div>
         </main>
     </div>
