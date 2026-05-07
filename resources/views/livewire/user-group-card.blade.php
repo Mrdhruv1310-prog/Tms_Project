@@ -41,7 +41,7 @@
                         <!-- Group Initials -->
                         <div x-data="{ backgroundColor: generateRandomColor() }" :style="{ backgroundColor: backgroundColor }"
                             class="w-24 h-24 mb-4 rounded-full shadow-lg flex items-center justify-center text-white text-2xl font-bold">
-                            {{ strtoupper(collect(explode(' ', $group->label))->map(fn($word) => $word[0])->join('')) }}
+                           <span>{{ !empty($user['name']) ? strtoupper(substr($user['name'], 0, 1)) : '' }}</span>
                         </div>
 
                     <!-- Group Label or Input -->
