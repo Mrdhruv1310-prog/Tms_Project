@@ -16,7 +16,7 @@ class UserGroupCard extends Component
     public function mount()
     {
         // Fetch all groups from the database
-        $this->groups = Group::all();
+        $this->groups = Group::select('id', 'label')->get();
     }
 
     public function showGroup($groupId)
