@@ -43,7 +43,7 @@
                                         <li class="flex justify-between items-center py-2 px-2 rounded hover:bg-gray-100">
                                             <div class="flex items-center">
                                                 <div class="w-7 h-7 ml-3 flex items-center justify-center text-white rounded-full bg-blue-600">
-                                                    <span>{{ strtoupper(substr($user['name'], 0, 1)) }}</span>
+                                                    <span>{{ !empty($user['name']) ? strtoupper(substr($user['name'], 0, 1)) : '' }}</span>
                                                 </div>
                                                 <label class="ml-2 text-sm font-medium text-gray-900" >{{ $user['name'] }}</label>
                                             </div>
