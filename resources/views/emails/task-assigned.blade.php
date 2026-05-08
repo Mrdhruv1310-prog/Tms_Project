@@ -122,7 +122,7 @@
 
                 <!-- Button -->
                 <div class="btn" style="text-align:center;">
-                    <a href="#"
+                    <a href="{{ url('/tasks/' . $task->id) }}"
                         style="background-color:#ff8300; color:#ffffff;padding:12px 25px;text-decoration:none;
                     border-radius:5px;display:inline-block;font-weight:bold;">
                         View Task
