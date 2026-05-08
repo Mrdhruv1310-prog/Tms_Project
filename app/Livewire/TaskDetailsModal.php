@@ -170,15 +170,15 @@ class TaskDetailsModal extends Component
                 )->format('Y-m-d')
                 : null;
 
-            // Check existing task
+            // Existing task
             $oldTask = Task::find($this->taskId);
 
             $oldDueDate = $oldTask?->due_date;
 
-            // Detect update mode
-            $isUpdate = !empty($this->taskId);
+            // Detect update
+            $isUpdate = $oldTask ? true : false;
 
-            // Create or Update task
+            // Save task
             $task = Task::updateOrCreate(
                 ['id' => $this->taskId],
                 [
@@ -201,19 +201,17 @@ class TaskDetailsModal extends Component
             // Handle assignments
             $this->handleTaskAssignments($task);
 
-            // Handle reminders
+            // Handle notifications/reminders
             $this->handleNotificationsAndReminders($task);
 
             /*
         |--------------------------------------------------------------------------
-        | Send Task Update Mail
+        | Send Update Mail
         |--------------------------------------------------------------------------
         */
 
-            // Send mail only on update
             if ($isUpdate) {
 
-                // Get assigned users
                 $assignedUsers = DB::table('task_assignments')
                     ->where('task_id', $task->id)
                     ->pluck('user_id');
@@ -225,12 +223,14 @@ class TaskDetailsModal extends Component
                     if ($assignedUser && $assignedUser->email) {
 
                         Mail::to($assignedUser->email)
-                            ->send(new TaskStatusUpdateMail(
-                                $task,
-                                $assignedUser,
-                                'updated',
-                                'Task details updated successfully.'
-                            ));
+                            ->send(
+                                new TaskStatusUpdateMail(
+                                    $task,
+                                    $assignedUser,
+                                    'updated',
+                                    'Task details updated successfully.'
+                                )
+                            );
 
                         Log::info('Task Update Mail Sent', [
                             'task_id' => $task->id,
@@ -244,7 +244,7 @@ class TaskDetailsModal extends Component
 
             /*
         |--------------------------------------------------------------------------
-        | Due Date Notification Job
+        | Due Date Notification
         |--------------------------------------------------------------------------
         */
 
@@ -259,7 +259,6 @@ class TaskDetailsModal extends Component
                 );
             }
 
-            // Success event
             $this->dispatch('taskCreated');
 
             $this->close();
