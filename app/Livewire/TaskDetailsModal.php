@@ -20,6 +20,7 @@ use App\Mail\TaskAssignedMail;
 use App\Models\Group;
 use App\Models\GroupUser;
 use Illuminate\Support\Facades\Mail;
+use App\Jobs\SendTaskUpdateJob;
 
 class TaskDetailsModal extends Component
 {
@@ -154,15 +155,21 @@ class TaskDetailsModal extends Component
         DB::beginTransaction();
 
         try {
-            $dueDateFormatted = Carbon::createFromFormat('d/m/Y H:i', $this->due_date)
-                ->format('Y-m-d H:i:00');
+            $dueDateFormatted = Carbon::createFromFormat(
+                'd/m/Y H:i',
+                $this->due_date
+            )->format('Y-m-d H:i:00');
 
             $recurrenceEnd = $this->recurrence_end_date
-                ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date)->format('Y-m-d')
+                ? Carbon::createFromFormat(
+                    'd/m/Y',
+                    $this->recurrence_end_date
+                )->format('Y-m-d')
                 : null;
 
             $oldTask = Task::find($this->taskId);
             $oldDueDate = $oldTask?->due_date;
+            $isUpdate = !empty($this->taskId);
 
             $task = Task::updateOrCreate(
                 ['id' => $this->taskId],
@@ -184,18 +191,57 @@ class TaskDetailsModal extends Component
             $this->handleTaskAssignments($task);
             $this->handleNotificationsAndReminders($task);
 
+
+            if ($isUpdate) {
+
+                $assignedUsers = DB::table('task_assignments')
+                    ->where('task_id', $task->id)
+                    ->pluck('user_id');
+
+                foreach ($assignedUsers as $assignedUserId) {
+
+                    $assignedUser = User::find($assignedUserId);
+
+                    if ($assignedUser && $assignedUser->email) {
+
+                        SendTaskUpdateJob::dispatch(
+                            $task,
+                            $assignedUser,
+                            'updated',
+                            'Task details updated successfully.'
+                        );
+
+                        Log::info('Task Update Job Dispatched', [
+                            'task_id' => $task->id,
+                            'email' => $assignedUser->email,
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
             if ($oldDueDate !== $dueDateFormatted) {
-                SendDueDateNotificationJob::dispatch($task, $this->dueDateChannel, $dueDateFormatted)
-                    ->delay(Carbon::parse($dueDateFormatted));
+
+                SendDueDateNotificationJob::dispatch(
+                    $task,
+                    $this->dueDateChannel,
+                    $dueDateFormatted
+                )->delay(
+                    Carbon::parse($dueDateFormatted)
+                );
             }
 
             $this->dispatch('taskCreated');
             $this->close();
         } catch (\Exception $e) {
+
             DB::rollBack();
+
             Log::error('Error saving task: ' . $e->getMessage());
+
+            Log::error($e->getTraceAsString());
+
             $this->notify('Something went wrong.', 'error');
         }
     }

@@ -23,8 +23,12 @@ class TaskStatusUpdateMail extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(Task $task, User $user, string $status, string $remark)
-    {
+    public function __construct(
+        Task $task,
+        User $user,
+        string $status,
+        string $remark
+    ) {
         $this->task = $task;
         $this->user = $user;
         $this->status = $status;
@@ -37,7 +41,7 @@ class TaskStatusUpdateMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Task Status Updated: ' . $this->task->title,
+            subject: 'Task Updated - ' . $this->task->title,
         );
     }
 
@@ -46,12 +50,11 @@ class TaskStatusUpdateMail extends Mailable
      */
     public function content(): Content
     {
-        Log::info('Task Status Update Mail Sent', [
+        Log::info('Task Update Mail View Loaded', [
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,
             'user_email' => $this->user->email,
             'status' => $this->status,
-            'remark' => $this->remark,
         ]);
 
         return new Content(
