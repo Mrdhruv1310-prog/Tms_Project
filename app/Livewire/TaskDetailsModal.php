@@ -20,6 +20,7 @@ use App\Mail\TaskAssignedMail;
 use App\Models\Group;
 use App\Models\GroupUser;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\TaskStatusUpdateMail;
 
 class TaskDetailsModal extends Component
 {
@@ -154,16 +155,30 @@ class TaskDetailsModal extends Component
         DB::beginTransaction();
 
         try {
-            $dueDateFormatted = Carbon::createFromFormat('d/m/Y H:i', $this->due_date)
-                ->format('Y-m-d H:i:00');
 
+            // Format due date
+            $dueDateFormatted = Carbon::createFromFormat(
+                'd/m/Y H:i',
+                $this->due_date
+            )->format('Y-m-d H:i:00');
+
+            // Format recurrence end date
             $recurrenceEnd = $this->recurrence_end_date
-                ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date)->format('Y-m-d')
+                ? Carbon::createFromFormat(
+                    'd/m/Y',
+                    $this->recurrence_end_date
+                )->format('Y-m-d')
                 : null;
 
+            // Check existing task
             $oldTask = Task::find($this->taskId);
+
             $oldDueDate = $oldTask?->due_date;
 
+            // Detect update mode
+            $isUpdate = !empty($this->taskId);
+
+            // Create or Update task
             $task = Task::updateOrCreate(
                 ['id' => $this->taskId],
                 [
@@ -180,23 +195,86 @@ class TaskDetailsModal extends Component
                 ]
             );
 
+            // Handle recurrence
             $this->handleTaskRecurrence($task);
+
+            // Handle assignments
             $this->handleTaskAssignments($task);
+
+            // Handle reminders
             $this->handleNotificationsAndReminders($task);
+
+            /*
+        |--------------------------------------------------------------------------
+        | Send Task Update Mail
+        |--------------------------------------------------------------------------
+        */
+
+            // Send mail only on update
+            if ($isUpdate) {
+
+                // Get assigned users
+                $assignedUsers = DB::table('task_assignments')
+                    ->where('task_id', $task->id)
+                    ->pluck('user_id');
+
+                foreach ($assignedUsers as $assignedUserId) {
+
+                    $assignedUser = User::find($assignedUserId);
+
+                    if ($assignedUser && $assignedUser->email) {
+
+                        Mail::to($assignedUser->email)
+                            ->send(new TaskStatusUpdateMail(
+                                $task,
+                                $assignedUser,
+                                'updated',
+                                'Task details updated successfully.'
+                            ));
+
+                        Log::info('Task Update Mail Sent', [
+                            'task_id' => $task->id,
+                            'email' => $assignedUser->email,
+                        ]);
+                    }
+                }
+            }
 
             DB::commit();
 
+            /*
+        |--------------------------------------------------------------------------
+        | Due Date Notification Job
+        |--------------------------------------------------------------------------
+        */
+
             if ($oldDueDate !== $dueDateFormatted) {
-                SendDueDateNotificationJob::dispatch($task, $this->dueDateChannel, $dueDateFormatted)
-                    ->delay(Carbon::parse($dueDateFormatted));
+
+                SendDueDateNotificationJob::dispatch(
+                    $task,
+                    $this->dueDateChannel,
+                    $dueDateFormatted
+                )->delay(
+                    Carbon::parse($dueDateFormatted)
+                );
             }
 
+            // Success event
             $this->dispatch('taskCreated');
+
             $this->close();
         } catch (\Exception $e) {
+
             DB::rollBack();
+
             Log::error('Error saving task: ' . $e->getMessage());
-            $this->notify('Something went wrong.', 'error');
+
+            Log::error($e->getTraceAsString());
+
+            $this->notify(
+                'Something went wrong.',
+                'error'
+            );
         }
     }
 
