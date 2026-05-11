@@ -187,22 +187,22 @@ class TaskDetailsModal extends Component
                 ]
             );
 
-            $this->handleTaskRecurrence($task);
-            $this->handleTaskAssignments($task);
-            $this->handleNotificationsAndReminders($task);
-
-
             if ($isUpdate) {
+                Log::info('Task Update Started', [
+                    'task_id' => $task->id,
+                ]);
 
+                // Get assigned user IDs
                 $assignedUsers = DB::table('task_assignments')
                     ->where('task_id', $task->id)
                     ->pluck('user_id');
 
+                // Send mail to all assigned users
                 foreach ($assignedUsers as $assignedUserId) {
 
                     $assignedUser = User::find($assignedUserId);
 
-                    if ($assignedUser && $assignedUser->email) {
+                    if ($assignedUser && !empty($assignedUser->email)) {
 
                         SendTaskUpdateJob::dispatch(
                             $task,
@@ -211,13 +211,18 @@ class TaskDetailsModal extends Component
                             'Task details updated successfully.'
                         );
 
-                        Log::info('Task Update Job Dispatched', [
+                        Log::info('Task Update Mail Job Dispatched', [
                             'task_id' => $task->id,
+                            'user_id' => $assignedUser->id,
                             'email' => $assignedUser->email,
                         ]);
                     }
                 }
             }
+
+            $this->handleTaskRecurrence($task);
+            $this->handleTaskAssignments($task);
+            $this->handleNotificationsAndReminders($task);
 
             DB::commit();
 
