@@ -288,8 +288,13 @@
                                                 <p class="text-sm font-medium text-gray-900">
                                                     {{ $update->user->first_name }} {{ $update->user->last_name }}</p>
                                                 <p class="text-sm text-gray-500">
-                                                    {{ $update->created_at->diffForHumans() }}
-                                                    ({{ $update->updated_at->format('D, M j, Y - g:i A') }})</p>
+                                                    @if($update->created_at)
+                                                        {{ \Carbon\Carbon::parse($update->created_at)->diffForHumans() }}
+                                                    @endif
+                                                    @if($update->updated_at)
+                                                        ({{ \Carbon\Carbon::parse($update->updated_at)->format('D, M j, Y - g:i A') }})
+                                                    @endif
+                                                </p>
                                             </div>
                                             <!-- Task status -->
                                             <div>
