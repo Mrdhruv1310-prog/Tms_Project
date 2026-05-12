@@ -44,10 +44,19 @@ class SendResetPasswordEmail extends Mailable
     {
         return new Content(
             view: 'emails.reset_password',
+
             with: [
-                'firstname' => $this->user->first_name,
-                'lastname' => $this->user->last_name,
-                'resetLink' => route('password.reset', ['token' => $this->token, 'email' => $this->user->email]),
+
+                'user' => $this->user,
+
+                'resetLink' => route(
+                    'password.reset',
+                    [
+                        'token' => $this->token,
+                        'email' => $this->user->email,
+                    ]
+                ),
+
             ],
         );
     }

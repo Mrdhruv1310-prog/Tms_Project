@@ -5,8 +5,10 @@ namespace App\Livewire\Forms;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Livewire\Attributes\Validate;
+use Illuminate\Validation\ValidationException;
 
 class LoginForm extends Component
 {

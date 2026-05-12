@@ -48,11 +48,7 @@
         <!-- Logo -->
         <tr>
             <td align="center" style="padding:20px;">
-
-                <img src="{{ url('icons/tms.png') }}"
-                    width="120"
-                    alt="TMS Logo">
-
+             <img src="{{ asset('icons/tms.png') }}">
             </td>
         </tr>
 

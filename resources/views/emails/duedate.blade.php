@@ -56,7 +56,7 @@
 
 <!-- Logo Section (Outside the White Box) -->
 <div class="logo-container">
-  <img src="{{ asset('icons/tms.png') }}" alt="Logo" class="logo">
+  <img src="{{ url('icons/tms.png') }}" alt="Logo" class="logo">
 </div>
 
 <div class="email-container">
