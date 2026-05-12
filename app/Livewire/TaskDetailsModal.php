@@ -152,24 +152,20 @@ class TaskDetailsModal extends Component
     {
         $this->validate();
 
+        $this->due_date = Carbon::createFromFormat('d/m/Y H:i',$this->due_date)->format('Y-m-d H:i:00');
+
+        if ($this->recurrence_end_date) {
+            $this->recurrence_end_date = Carbon::createFromFormat('d/m/Y',$this->recurrence_end_date)->format('Y-m-d');
+        } else {
+            $this->recurrence_end_date = null;
+        }
+
         DB::beginTransaction();
 
         try {
-            $dueDateFormatted = Carbon::createFromFormat(
-                'd/m/Y H:i',
-                $this->due_date
-            )->format('Y-m-d H:i:00');
-
-            $recurrenceEnd = $this->recurrence_end_date
-                ? Carbon::createFromFormat(
-                    'd/m/Y',
-                    $this->recurrence_end_date
-                )->format('Y-m-d')
-                : null;
-
-            $oldTask = Task::find($this->taskId);
-            $oldDueDate = $oldTask?->due_date;
             $isUpdate = !empty($this->taskId);
+            $oldTask = Task::find($this->taskId);
+            $oldDueDate = $oldTask ? $oldTask->due_date : null;
 
             $task = Task::updateOrCreate(
                 ['id' => $this->taskId],
@@ -178,47 +174,14 @@ class TaskDetailsModal extends Component
                     'description' => $this->description,
                     'category_id' => $this->category_id,
                     'priority' => $this->priority,
-                    'label_id' => $this->label_id ?: null,
+                    'label_id' => $this->label_id,
                     'recurrence' => $this->recurrence,
-                    'due_date' => $dueDateFormatted,
-                    'recurrence_end_date' => $recurrenceEnd,
+                    'due_date' => $this->due_date,
+                    'recurrence_end_date' => $this->recurrence_end_date,
                     'status' => $this->status,
                     'user_id' => Auth::id(),
                 ]
             );
-
-            if ($isUpdate) {
-                Log::info('Task Update Started', [
-                    'task_id' => $task->id,
-                ]);
-
-                // Get assigned user IDs
-                $assignedUsers = DB::table('task_assignments')
-                    ->where('task_id', $task->id)
-                    ->pluck('user_id');
-
-                // Send mail to all assigned users
-                foreach ($assignedUsers as $assignedUserId) {
-
-                    $assignedUser = User::find($assignedUserId);
-
-                    if ($assignedUser && !empty($assignedUser->email)) {
-
-                        SendTaskUpdateJob::dispatch(
-                            $task,
-                            $assignedUser,
-                            'updated',
-                            'Task details updated successfully.'
-                        );
-
-                        Log::info('Task Update Mail Job Dispatched', [
-                            'task_id' => $task->id,
-                            'user_id' => $assignedUser->id,
-                            'email' => $assignedUser->email,
-                        ]);
-                    }
-                }
-            }
 
             $this->handleTaskRecurrence($task);
             $this->handleTaskAssignments($task);
@@ -226,28 +189,40 @@ class TaskDetailsModal extends Component
 
             DB::commit();
 
-            if ($oldDueDate !== $dueDateFormatted) {
-
+            if ($oldDueDate !== $this->due_date) {
                 SendDueDateNotificationJob::dispatch(
                     $task,
                     $this->dueDateChannel,
-                    $dueDateFormatted
-                )->delay(
-                    Carbon::parse($dueDateFormatted)
-                );
+                    $this->due_date
+                )->delay(Carbon::parse($task->due_date));
+            }
+
+            if ($isUpdate) {
+                $assignedUsers = $task->assignedUsers;
+                foreach ($assignedUsers as $user) {
+                    SendTaskUpdateJob::dispatch(
+                        $task,
+                        $user,
+                        $task->status,
+                        'Task details updated successfully.'
+                    );
+                }
             }
 
             $this->dispatch('taskCreated');
             $this->close();
+
+            $message = $isUpdate
+                ? 'Task updated successfully.'
+                : 'Task created successfully.';
+            $this->notify($message, 'success');
         } catch (\Exception $e) {
-
             DB::rollBack();
-
-            Log::error('Error saving task: ' . $e->getMessage());
-
-            Log::error($e->getTraceAsString());
-
-            $this->notify('Something went wrong.', 'error');
+            Log::error('Task Save Error: ' . $e->getMessage());
+            $this->notify(
+                'An error occurred while saving task.',
+                'error'
+            );
         }
     }
 
