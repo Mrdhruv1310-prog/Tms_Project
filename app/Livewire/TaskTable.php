@@ -319,33 +319,31 @@ class TaskTable extends Component implements HasForms, HasTable
                     }),
                 Action::make('completeintimation')
                     ->action(function (Task $task) {
-                        $this->updateStatus($task, 'complete_intimation'); // Update the status
+                        $this->updateStatus($task, 'complete_intimation');
                     })
                     ->label('Complete Intimate')
                     ->color('info')
                     ->icon('heroicon-o-paper-airplane')
                     ->visible(function (Task $task) {
+
                         $userId = Auth::user()->id;
 
-                        // Check if the user is assigned to this task
+                        // Check if user is assigned
                         $isAssigned = DB::table('task_assignments')
                             ->where('task_id', $task->id)
                             ->where('user_id', $userId)
                             ->exists();
 
-                        // Fetch the latest status for the logged-in user for this task
+                        // Latest user status
                         $userStatus = DB::table('task_updates')
-                            ->where('task_id', $task->id)       // Filter by task ID
-                            ->where('user_id', $userId)         // Filter by user ID (User 5 in this case)
-                            ->orderBy('updated_at', 'desc') // Sort by the updated_at timestamp in descending order
-                            ->limit(1)                    // Limit the result to the latest record
-                            ->value('status');            // Get the 'status' field of the latest entry
+                            ->where('task_id', $task->id)
+                            ->where('user_id', $userId)
+                            ->latest('updated_at')
+                            ->value('status');
 
-                        //show button if user is assigned to task and task is in progress and user is not the creator
-
-                        if ($isAssigned && $userStatus === 'in_progress' && $userId !== optional($task->creator)->id) {
-                            return true;
-                        }
+                        return $isAssigned
+                            && $userStatus === 'in_progress'
+                            && $userId !== optional($task->creator)->id;
                     }),
 
 
