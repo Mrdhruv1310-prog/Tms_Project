@@ -12,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 class ReminderEmail extends Mailable
 {
     use Queueable, SerializesModels;
+    protected $signature = 'emails:reminder';
     public $reminder;
     public $task;
 

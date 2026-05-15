@@ -10,3 +10,8 @@ use Illuminate\Support\Facades\Schedule;
 // })->purpose('Display an inspiring quote')->everyTenSeconds();
 
 Schedule::command('repeattask:cron')->everyMinute();
+Schedule::command('emails:duedate')->everyMinute();
+Schedule::command('emails:reminder')->everyMinute();
+Schedule::command('emails:reset_password')->everyMinute();
+Schedule::command('emails:task_assigned')->everyMinute();
+Schedule::command('emails:task_status_update')->everyMinute();
