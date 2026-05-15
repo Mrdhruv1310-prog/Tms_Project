@@ -15,6 +15,7 @@ class TaskStatusUpdateMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    protected $signature = 'emails:task_status_update';
     public Task $task;
     public User $user;
     public string $status;

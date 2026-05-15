@@ -14,6 +14,7 @@ class TaskAssignedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    protected $signature = 'emails:task_assigned';
     public $task; // Task details
     public $user; // User details
 

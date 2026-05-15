@@ -12,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 class DueDateEmail extends Mailable
 {
     use Queueable, SerializesModels;
+    protected $signature = 'emails:duedate';
     public $task;
     public $user;
 

@@ -13,6 +13,8 @@ class SendResetPasswordEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    protected $signature = 'emails:reset_password';
+
     public $user;
     public $token;
 

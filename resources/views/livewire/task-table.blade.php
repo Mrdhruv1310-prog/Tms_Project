@@ -1,6 +1,6 @@
 <div>
-    <div class="antialiased dark:bg-gray-900">
-        <main class="scrollcontainer p-4 md:ml-16 h-auto pt-14 pb-16">
+    <div class="antialiased min-h-screen bg-gray-100 dark:bg-gray-950">
+        <main class="scrollcontainer md:ml-16 px-4 sm:px-6 lg:px-8 py-6 pt-20 pb-16">
             @php
                 $titles = [
                     'my_tasks' => 'My Tasks',
