@@ -76,21 +76,27 @@ class TaskUpdateModal extends Component
 
                 $statuses[$userId] = $latestStatus ?? 'pending';
             }
-            dd($statuses);
             $taskStatus = 'pending';
 
             if (in_array('in_progress', $statuses)) {
-
+                dd('1',$statuses);
+                dd('1',$taskStatus);
                 $taskStatus = 'in_progress';
             } elseif (
                 count($statuses) > 0 &&
                 count(array_unique($statuses)) === 1 &&
                 in_array('complete_intimation', $statuses)
             ) {
+                dd('2',$statuses);
+                dd('2',$taskStatus);
                 $taskStatus = 'completed';
             } elseif (in_array('complete_intimation', $statuses) && !in_array('in_progress', $statuses)) {
+                dd('3',$statuses);
+                dd('3',$taskStatus);
                 $taskStatus = 'pending';
             } else {
+                dd('4',$statuses);
+                dd('4',$taskStatus);
                 $taskStatus = 'pending';
             }
 
