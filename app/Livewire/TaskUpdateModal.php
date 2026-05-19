@@ -56,7 +56,7 @@ class TaskUpdateModal extends Component
                 DB::table('task_completion_requests')->insert([
                     'task_id' => $this->task->id,
                     'user_id' => Auth::user()->id,
-                    'request_status' => 'pending', // Assuming initial status is 'pending'
+                    'request_status' => 'completed', // Assuming initial status is 'completed'
                     'requested_at' => now(),
                 ]);
             }
