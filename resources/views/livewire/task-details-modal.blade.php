@@ -153,7 +153,8 @@
             </div>
             <!-- Modal body -->
             {{-- <form  @submit.prevent="submitForm"> --}}
-            <form wire:submit.prevent="saveTask">
+            {{-- <form wire:submit.prevent="saveTask"> --}}
+            <form wire:submit.prevent="{{ $taskId ? 'updateTask' : 'saveTask' }}">
                 <div x-data="{
                     due_date: '',
                     reminderTime: '',
@@ -584,10 +585,10 @@
                 this.$watch('show', (value) => {
                     if (value) {
                         document.body.classList.add(
-                        'overflow-hidden'); // Disable body scroll
+                            'overflow-hidden'); // Disable body scroll
                     } else {
                         document.body.classList.remove(
-                        'overflow-hidden'); // Enable body scroll
+                            'overflow-hidden'); // Enable body scroll
                     }
                 });
             }
