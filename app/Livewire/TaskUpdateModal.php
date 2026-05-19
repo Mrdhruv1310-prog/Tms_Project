@@ -34,7 +34,6 @@ class TaskUpdateModal extends Component
 
     public function updateTaskRemark(User $user)
     {
-        dd($this->remark, $this->status, $this->task->id, $user->id);
         $this->validate([
             'remark' => 'required|string|max:255',
         ]);
@@ -78,12 +77,12 @@ class TaskUpdateModal extends Component
                 $statuses[$userId] = $latestStatus ?? 'pending';
             }
             // Determine the task status
-            if (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
+            if (in_array('pending', $statuses)) {
                 $taskStatus = 'in_progress';
-            } elseif (count(array_unique($statuses)) === 1 && in_array('completed', $statuses)) {
+            } elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
                 $taskStatus = 'completed';
             } else {
-                $taskStatus = 'in_progress';
+                $taskStatus = 'pending';
             }
 
             // Update the task status in the tasks table
