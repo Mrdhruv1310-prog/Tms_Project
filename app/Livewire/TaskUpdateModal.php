@@ -34,7 +34,7 @@ class TaskUpdateModal extends Component
 
     public function updateTaskRemark(User $user)
     {
-        dd($this->remark);
+        dd($this->remark, $this->status, $this->task->id, $user->id);
         $this->validate([
             'remark' => 'required|string|max:255',
         ]);
