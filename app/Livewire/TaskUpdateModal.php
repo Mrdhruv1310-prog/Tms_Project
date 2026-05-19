@@ -55,7 +55,7 @@ class TaskUpdateModal extends Component
                 DB::table('task_completion_requests')->insert([
                     'task_id' => $this->task->id,
                     'user_id' => Auth::user()->id,
-                    'request_status' => 'completed', // Assuming initial status is 'completed'
+                    'request_status' => 'pending',
                     'requested_at' => now(),
                 ]);
             }
@@ -71,25 +71,30 @@ class TaskUpdateModal extends Component
                 $latestStatus = DB::table('task_updates')
                     ->where('task_id', $this->task->id)
                     ->where('user_id', $userId)
-                    ->orderBy('updated_at', 'desc')
+                    ->latest()
                     ->value('status');
 
                 $statuses[$userId] = $latestStatus ?? 'pending';
             }
-            // Determine the task status
-            if (in_array('pending', $statuses)) {
+
+            $taskStatus = 'pending';
+
+            if (in_array('in_progress', $statuses)) {
+
                 $taskStatus = 'in_progress';
-            } elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
+            } elseif (
+                count($statuses) > 0 &&
+                count(array_unique($statuses)) === 1 &&
+                in_array('complete_intimation', $statuses)
+            ) {
                 $taskStatus = 'completed';
+            } elseif (in_array('complete_intimation', $statuses) && !in_array('in_progress', $statuses)) {
+                $taskStatus = 'pending';
             } else {
                 $taskStatus = 'pending';
             }
 
-            // Update the task status in the tasks table
-            Task::where('id', $this->task->id)->update([
-                'status' => $taskStatus,
-                'updated_at' => now(),
-            ]);
+            Task::where('id', $this->task->id)->update(['status' => $taskStatus, 'updated_at' => now(),]);
 
             DB::commit();
 
@@ -99,8 +104,12 @@ class TaskUpdateModal extends Component
             $this->dispatch('taskStatusUpdated');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Task Status Update Error: ' . $e->getMessage());
             $this->taskUpdateModalOpen = false;
-            $this->notify('Failed to update task status. Please try again.', 'error');
+            $this->notify(
+                'Failed to update task status. Please try again.',
+                'error'
+            );
         }
     }
 
