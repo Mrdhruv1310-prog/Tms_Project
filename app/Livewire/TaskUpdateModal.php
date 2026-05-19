@@ -76,7 +76,7 @@ class TaskUpdateModal extends Component
 
                 $statuses[$userId] = $latestStatus ?? 'pending';
             }
-
+            dd($statuses);
             $taskStatus = 'pending';
 
             if (in_array('in_progress', $statuses)) {
