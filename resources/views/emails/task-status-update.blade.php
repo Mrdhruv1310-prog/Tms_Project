@@ -186,7 +186,7 @@
                     <tr>
                         <td align="center">
 
-                            <a href="{{ url('/tasks/' . $task->id) }}"
+                            <a href="{{ url('/tasks?task_view=tasks') }}"
                                 class="button"
                                 style="
                                     background-color:#007bff;

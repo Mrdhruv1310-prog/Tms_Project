@@ -34,6 +34,7 @@ class TaskUpdateModal extends Component
 
     public function updateTaskRemark(User $user)
     {
+        dd($this->remark);
         $this->validate([
             'remark' => 'required|string|max:255',
         ]);
@@ -51,7 +52,7 @@ class TaskUpdateModal extends Component
             ]);
 
             // If the status is 'complete_intimation', add a record in task_completion_requests table
-            if ($this->status === 'complete_intimation') {
+            if ($this->status == 'complete_intimation') {
                 DB::table('task_completion_requests')->insert([
                     'task_id' => $this->task->id,
                     'user_id' => Auth::user()->id,

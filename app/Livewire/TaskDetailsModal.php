@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Mail\TaskStatusUpdateMail;
 use App\Models\Category;
 use App\Models\Notification;
 use App\Models\Reminder;
@@ -43,6 +44,7 @@ class TaskDetailsModal extends Component
     public $selectedUsers = [];
     public $categories;
     public $labels;
+    public string $remark;
     public $isEditMode = false;
     public $label_id;
     public $label, $groupUserMap = [];
@@ -148,6 +150,83 @@ class TaskDetailsModal extends Component
     }
 
     // Create or update task workflow with notifications and reminders
+    // public function saveTask()
+    // {
+    //     $this->validate();
+
+    //     $this->due_date = Carbon::createFromFormat('d/m/Y H:i',$this->due_date)->format('Y-m-d H:i:00');
+
+    //     if ($this->recurrence_end_date) {
+    //         $this->recurrence_end_date = Carbon::createFromFormat('d/m/Y',$this->recurrence_end_date)->format('Y-m-d');
+    //     } else {
+    //         $this->recurrence_end_date = null;
+    //     }
+
+    //     DB::beginTransaction();
+
+    //     try {
+    //         $isUpdate = !empty($this->taskId);
+    //         $oldTask = Task::find($this->taskId);
+    //         $oldDueDate = $oldTask ? $oldTask->due_date : null;
+
+    //         $task = Task::updateOrCreate(
+    //             ['id' => $this->taskId],
+    //             [
+    //                 'title' => $this->title,
+    //                 'description' => $this->description,
+    //                 'category_id' => $this->category_id,
+    //                 'priority' => $this->priority,
+    //                 'label_id' => $this->label_id,
+    //                 'recurrence' => $this->recurrence,
+    //                 'due_date' => $this->due_date,
+    //                 'recurrence_end_date' => $this->recurrence_end_date,
+    //                 'status' => $this->status,
+    //                 'user_id' => Auth::id(),
+    //             ]
+    //         );
+
+    //         $this->handleTaskRecurrence($task);
+    //         $this->handleTaskAssignments($task);
+    //         $this->handleNotificationsAndReminders($task);
+
+    //         DB::commit();
+
+    //         if ($oldDueDate !== $this->due_date) {
+    //             SendDueDateNotificationJob::dispatch(
+    //                 $task,
+    //                 $this->dueDateChannel,
+    //                 $this->due_date
+    //             )->delay(Carbon::parse($task->due_date));
+    //         }
+
+    //         if ($isUpdate) {
+    //             $assignedUsers = $task->assignedUsers;
+    //             foreach ($assignedUsers as $user) {
+    //                 SendTaskUpdateJob::dispatch(
+    //                     $task,
+    //                     $user,
+    //                     $task->status,
+    //                     'Task details updated successfully.'
+    //                 );
+    //             }
+    //         }
+
+    //         $this->dispatch('taskCreated');
+    //         $this->close();
+
+    //         $message = $isUpdate
+    //             ? 'Task updated successfully.'
+    //             : 'Task created successfully.';
+    //         $this->notify($message, 'success');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Task Save Error: ' . $e->getMessage());
+    //         $this->notify(
+    //             'An error occurred while saving task.',
+    //             'error'
+    //         );
+    //     }
+    // }
     public function saveTask()
     {
         $this->validate();
@@ -163,25 +242,18 @@ class TaskDetailsModal extends Component
         DB::beginTransaction();
 
         try {
-            $isUpdate = !empty($this->taskId);
-            $oldTask = Task::find($this->taskId);
-            $oldDueDate = $oldTask ? $oldTask->due_date : null;
-
-            $task = Task::updateOrCreate(
-                ['id' => $this->taskId],
-                [
-                    'title' => $this->title,
-                    'description' => $this->description,
-                    'category_id' => $this->category_id,
-                    'priority' => $this->priority,
-                    'label_id' => $this->label_id,
-                    'recurrence' => $this->recurrence,
-                    'due_date' => $this->due_date,
-                    'recurrence_end_date' => $this->recurrence_end_date,
-                    'status' => $this->status,
-                    'user_id' => Auth::id(),
-                ]
-            );
+            $task = Task::create([
+                'title' => $this->title,
+                'description' => $this->description,
+                'category_id' => $this->category_id,
+                'priority' => $this->priority,
+                'label_id' => $this->label_id,
+                'recurrence' => $this->recurrence,
+                'due_date' => $this->due_date,
+                'recurrence_end_date' => $this->recurrence_end_date,
+                'status' => $this->status,
+                'user_id' => Auth::id(),
+            ]);
 
             $this->handleTaskRecurrence($task);
             $this->handleTaskAssignments($task);
@@ -189,33 +261,19 @@ class TaskDetailsModal extends Component
 
             DB::commit();
 
-            if ($oldDueDate !== $this->due_date) {
-                SendDueDateNotificationJob::dispatch(
-                    $task,
-                    $this->dueDateChannel,
-                    $this->due_date
-                )->delay(Carbon::parse($task->due_date));
-            }
-
-            if ($isUpdate) {
-                $assignedUsers = $task->assignedUsers;
-                foreach ($assignedUsers as $user) {
-                    SendTaskUpdateJob::dispatch(
-                        $task,
-                        $user,
-                        $task->status,
-                        'Task details updated successfully.'
-                    );
-                }
-            }
+            SendDueDateNotificationJob::dispatch(
+                $task,
+                $this->dueDateChannel,
+                $this->due_date
+            )->delay(Carbon::parse($task->due_date));
 
             $this->dispatch('taskCreated');
             $this->close();
 
-            $message = $isUpdate
-                ? 'Task updated successfully.'
-                : 'Task created successfully.';
-            $this->notify($message, 'success');
+            $this->notify(
+                'Task created successfully.',
+                'success'
+            );
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Task Save Error: ' . $e->getMessage());
@@ -242,6 +300,24 @@ class TaskDetailsModal extends Component
                 ->delete();
         }
     }
+
+
+    private function UpdatehandleTaskRecurrence(Task $task)
+    {
+        if ($this->recurrence === 'weekly' && !empty($this->selectedDays)) {
+            DB::table('task_recurrence_days')
+                ->where('task_id', $task->id)
+                ->delete();
+            foreach ($this->selectedDays as $day) {
+                DB::table('task_recurrence_days')->update(['task_id' => $task->id, 'day' => $day]);
+            }
+        } else {
+            DB::table('task_recurrence_days')
+                ->where('task_id', $task->id)
+                ->delete();
+        }
+    }
+
 
     // Assign tasks and send emails to assigned users
     private function handleTaskAssignments(Task $task)
@@ -293,10 +369,91 @@ class TaskDetailsModal extends Component
         }
     }
 
+    private function updatehandleTaskAssignments(Task $task)
+    {
+        try {
+
+            DB::beginTransaction();
+
+            if (!empty($this->selectedUsers)) {
+
+                $this->selectedUsers = array_unique($this->selectedUsers);
+
+                foreach ($this->selectedUsers as $userId) {
+
+                    // CHECK EXISTING ASSIGNMENT
+                    $exists = DB::table('task_assignments')
+                        ->where('task_id', $task->id)
+                        ->where('user_id', $userId)
+                        ->exists();
+
+                    // UPDATE ONLY EXISTING
+                    if ($exists) {
+
+                        DB::table('task_assignments')
+                            ->where('task_id', $task->id)
+                            ->where('user_id', $userId)
+                            ->update([
+                                'assigned_at' => now(),
+                            ]);
+                    }
+
+                    // FIND USER
+                    $user = User::find($userId);
+
+                    if ($user) {
+
+                        $status = $user->status ?? 'pending';
+
+                        $remark = $user->remark ?? '';
+
+                        // SEND MAIL
+                        Mail::to($user->email)
+                            ->queue(
+                                new TaskStatusUpdateMail(
+                                    $task,
+                                    $user,
+                                    $status,
+                                    $remark
+                                )
+                            );
+                    } else {
+
+                        Log::warning(
+                            "User with ID {$userId} not found."
+                        );
+                    }
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            Log::error(
+                "Failed to update task assignments for task ID {$task->id}: {$e->getMessage()}"
+            );
+
+            throw new \Exception(
+                "Unable to update task assignments."
+            );
+        }
+    }
+
     // Handle task notifications and reminders
-    private function handleNotificationsAndReminders($task)
+    private function handleNotificationsAndReminders(Task $task)
     {
         $this->createInstantNotifications($task);
+        if (!empty($this->reminderTime) && !empty($this->reminderUnit)) {
+            $this->selectedUsers = array_unique($this->selectedUsers);
+            $this->createTaskReminders($task, $this->reminderTime, $this->reminderUnit, $this->selectedUsers);
+        }
+    }
+
+    private function UpdatehandleNotificationsAndReminders(Task $task)
+    {
+        $this->updateInstantNotifications($task);
         if (!empty($this->reminderTime) && !empty($this->reminderUnit)) {
             $this->selectedUsers = array_unique($this->selectedUsers);
             $this->createTaskReminders($task, $this->reminderTime, $this->reminderUnit, $this->selectedUsers);
@@ -335,6 +492,96 @@ class TaskDetailsModal extends Component
             ->toArray();
         $this->isOpen = true;
     }
+
+    public function updateTask()
+    {
+        $this->validate();
+
+        $this->due_date = Carbon::createFromFormat(
+            'd/m/Y H:i',
+            $this->due_date
+        )->format('Y-m-d H:i:00');
+
+        if ($this->recurrence_end_date) {
+
+            $this->recurrence_end_date = Carbon::createFromFormat(
+                'd/m/Y',
+                $this->recurrence_end_date
+            )->format('Y-m-d');
+        } else {
+
+            $this->recurrence_end_date = null;
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $task = Task::findOrFail($this->taskId);
+
+            $oldDueDate = $task->due_date;
+
+            $task->update([
+                'title' => $this->title,
+                'description' => $this->description,
+                'category_id' => $this->category_id,
+                'priority' => $this->priority,
+                'label_id' => $this->label_id,
+                'recurrence' => $this->recurrence,
+                'due_date' => $this->due_date,
+                'recurrence_end_date' => $this->recurrence_end_date,
+                'status' => $this->status,
+            ]);
+            $this->updatehandleTaskAssignments($task);
+            $this->UpdatehandleTaskRecurrence($task);
+            $this->UpdatehandleNotificationsAndReminders($task);
+            // $this->handleTaskAssignmentsupdate($task);
+            // $this->handleNotificationsAndReminders($task);
+
+            DB::commit();
+
+            // Send notification only if due date changed
+            if ($oldDueDate != $this->due_date) {
+
+                SendDueDateNotificationJob::dispatch(
+                    $task,
+                    $this->dueDateChannel,
+                    $this->due_date
+                )->delay(Carbon::parse($this->due_date));
+            }
+
+            // Send update notification to assigned users
+            foreach ($task->assignedUsers as $user) {
+
+                SendTaskUpdateJob::dispatch(
+                    $task,
+                    $user,
+                    $task->status,
+                    'Task details updated successfully.'
+                );
+            }
+
+            $this->dispatch('taskUpdated');
+
+            $this->close();
+
+            $this->notify(
+                'Task updated successfully.',
+                'success'
+            );
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            Log::error('Task Update Error: ' . $e->getMessage());
+
+            $this->notify(
+                'An error occurred while updating task.',
+                'error'
+            );
+        }
+    }
+
     public function resetForm()
     {
         $this->taskId = null;
@@ -376,86 +623,96 @@ class TaskDetailsModal extends Component
         }
     }
 
-    // Send Reminder Email Notification
-    public function createTaskReminders($task, $reminderTime, $reminderUnit, $selectedUsers)
+    public function updateInstantNotifications(Task $task)
     {
-        $dueDate = $task->due_date;
-        switch ($reminderUnit) {
-            case 'minutes':
-                $reminderValue = Carbon::parse($dueDate)->subMinutes($reminderTime);
-                break;
-            case 'hours':
-                $reminderValue = Carbon::parse($dueDate)->subHours($reminderTime);
-                break;
-            case 'days':
-                $reminderValue = Carbon::parse($dueDate)->subDays($reminderTime);
-                break;
-            default:
-                throw new \Exception('Invalid reminder unit provided.');
-        }
-        if ($reminderValue->isPast()) {
-            throw new \Exception('Reminder time cannot be in the past.');
-        }
-
-        foreach ($selectedUsers as $userId) {
-            Reminder::where('task_id', $task->id)
+        $this->selectedUsers = array_unique($this->selectedUsers);
+        foreach ($this->selectedUsers as $userId) {
+            Notification::where('task_id', $task->id)
                 ->where('user_id', $userId)
                 ->delete();
-
-            $reminder = Reminder::create([
-                'task_id' => $task->id,
-                'user_id' => $userId,
-                'reminder_time' => $reminderValue,
-                'reminder_unit' => $reminderUnit,
-                'reminder_value' => $reminderTime,
-            ]);
-
-            SendReminderJob::dispatch($reminder, $this->reminderChannel, $reminderValue)
-                ->delay($reminderValue);
+            DB::table('notifications')->update(['user_id' => $userId, 'task_id' => $task->id, 'type' => 'due_date', 'message' => 'You have been assigned to task "' . $task->title . '".', 'sent_at' => $task->due_date]);
         }
     }
-    // public function createTaskReminders($task, $selectedUsers)
+    // Send Reminder Email Notification
+    // public function createTaskReminders($task, $reminderTime, $reminderUnit, $selectedUsers)
     // {
-    //     $dueDate = Carbon::parse($task->due_date);
+    //     $dueDate = $task->due_date;
+    //     switch ($reminderUnit) {
+    //         case 'minutes':
+    //             $reminderValue = Carbon::parse($dueDate)->subMinutes($reminderTime);
+    //             break;
+    //         case 'hours':
+    //             $reminderValue = Carbon::parse($dueDate)->subHours($reminderTime);
+    //             break;
+    //         case 'days':
+    //             $reminderValue = Carbon::parse($dueDate)->subDays($reminderTime);
+    //             break;
+    //         default:
+    //             throw new \Exception('Invalid reminder unit provided.');
+    //     }
+    //     if ($reminderValue->isPast()) {
+    //         throw new \Exception('Reminder time cannot be in the past.');
+    //     }
 
-    //     $reminders = [
-    //         ['hours' => 24, 'minutes' => 0, 'label' => 'Only 24 hours left to complete your task'],
-    //         ['hours' => 6,  'minutes' => 0, 'label' => 'Only 6 hours left to complete your task'],
-    //         ['hours' => 0,  'minutes' => 30, 'label' => 'Only 30 minutes left to complete your task'],
-    //         ['hours' => 0,  'minutes' => 0,  'label' => 'Task is due now'],
-    //     ];
+    //     foreach ($selectedUsers as $userId) {
+    //         Reminder::where('task_id', $task->id)
+    //             ->where('user_id', $userId)
+    //             ->delete();
 
-    //     foreach ($reminders as $reminder) {
+    //         $reminder = Reminder::create([
+    //             'task_id' => $task->id,
+    //             'user_id' => $userId,
+    //             'reminder_time' => $reminderValue,
+    //             'reminder_unit' => $reminderUnit,
+    //             'reminder_value' => $reminderTime,
+    //         ]);
 
-    //         $reminderTime = $dueDate->copy()
-    //             ->subHours($reminder['hours'])
-    //             ->subMinutes($reminder['minutes']);
-
-    //         if ($reminderTime->isPast()) {
-    //             continue;
-    //         }
-
-    //         foreach ($selectedUsers as $userId) {
-
-    //             Reminder::where('task_id', $task->id)
-    //                 ->where('user_id', $userId)
-    //                 ->where('reminder_time', $reminderTime)
-    //                 ->delete();
-
-    //             $model = Reminder::create([
-    //                 'task_id'        => $task->id,
-    //                 'user_id'        => $userId,
-    //                 'reminder_time'  => $reminderTime,
-    //                 'reminder_unit'  => $reminder['hours'] ? 'hours' : 'minutes',
-    //                 'reminder_value' => $reminder['hours'] ?: $reminder['minutes'],
-    //             ]);
-
-    //             SendReminderJob::dispatch(
-    //                 $model,
-    //                 $this->reminderChannel,
-    //                 $reminderTime
-    //             )->delay($reminderTime);
-    //         }
+    //         SendReminderJob::dispatch($reminder, $this->reminderChannel, $reminderValue)
+    //             ->delay($reminderValue);
     //     }
     // }
+    public function createTaskReminders(Task $task, $selectedUsers)
+    {
+        $dueDate = Carbon::parse($task->due_date);
+
+        $reminders = [
+            ['hours' => 24, 'minutes' => 0, 'label' => 'Only 24 hours left to complete your task'],
+            ['hours' => 6,  'minutes' => 0, 'label' => 'Only 6 hours left to complete your task'],
+            ['hours' => 0,  'minutes' => 30, 'label' => 'Only 30 minutes left to complete your task'],
+            ['hours' => 0,  'minutes' => 0,  'label' => 'Task is due now'],
+        ];
+
+        foreach ($reminders as $reminder) {
+
+            $reminderTime = $dueDate->copy()
+                ->subHours($reminder['hours'])
+                ->subMinutes($reminder['minutes']);
+
+            if ($reminderTime->isPast()) {
+                continue;
+            }
+
+            foreach ($selectedUsers as $userId) {
+
+                Reminder::where('task_id', $task->id)
+                    ->where('user_id', $userId)
+                    ->where('reminder_time', $reminderTime)
+                    ->delete();
+
+                $model = Reminder::create([
+                    'task_id'        => $task->id,
+                    'user_id'        => $userId,
+                    'reminder_time'  => $reminderTime,
+                    'reminder_unit'  => $reminder['hours'] ? 'hours' : 'minutes',
+                    'reminder_value' => $reminder['hours'] ?: $reminder['minutes'],
+                ]);
+
+                SendReminderJob::dispatch(
+                    $model,
+                    $this->reminderChannel,
+                    $reminderTime
+                )->delay($reminderTime);
+            }
+        }
+    }
 }
