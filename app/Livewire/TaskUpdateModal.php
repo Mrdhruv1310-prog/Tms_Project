@@ -78,25 +78,34 @@ class TaskUpdateModal extends Component
 
                 $statuses[$userId] = $latestStatus ?? 'pending';
             }
-            $taskStatus = 'pending';
+            // $taskStatus = 'pending';
 
-            if (in_array('in_progress', $statuses)) {
+            // if (in_array('in_progress', $statuses)) {
 
-                $taskStatus = 'in_progress';
-            } elseif (
-                count($statuses) > 0 &&
-                count(array_unique($statuses)) === 1 &&
-                in_array('complete_intimation', $statuses)
-            ) {
-                $taskStatus = 'completed';
-            } elseif (
-                in_array('complete_intimation', $statuses) &&
-                !in_array('in_progress', $statuses)
-            ) {
+            //     $taskStatus = 'in_progress';
+            // } elseif (
+            //     count($statuses) > 0 &&
+            //     count(array_unique($statuses)) === 1 &&
+            //     in_array('complete_intimation', $statuses)
+            // ) {
+            //     $taskStatus = 'completed';
+            // } elseif (
+            //     in_array('complete_intimation', $statuses) &&
+            //     !in_array('in_progress', $statuses)
+            // ) {
+            //     $taskStatus = 'pending';
+            // }elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
+            //     $taskStatus = 'in_progress';
+            // }else {
+            //     $taskStatus = 'in_progress';
+            // }
+            if (in_array('pending', $statuses)) {
                 $taskStatus = 'pending';
-            }elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
+            } elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
                 $taskStatus = 'in_progress';
-            }else {
+            } elseif (count(array_unique($statuses)) === 1 && in_array('completed', $statuses)) {
+                $taskStatus = 'completed';
+            } else {
                 $taskStatus = 'in_progress';
             }
 
