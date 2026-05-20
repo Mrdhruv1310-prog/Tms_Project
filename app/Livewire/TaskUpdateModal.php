@@ -94,6 +94,8 @@ class TaskUpdateModal extends Component
                 !in_array('in_progress', $statuses)
             ) {
                 $taskStatus = 'pending';
+            }elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
+                $taskStatus = 'in_progress';
             }
 
             Task::where('id', $this->task->id)->update(['status' => $taskStatus, 'updated_at' => now(),]);
