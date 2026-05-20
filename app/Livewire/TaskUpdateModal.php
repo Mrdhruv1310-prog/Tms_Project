@@ -45,19 +45,17 @@ class TaskUpdateModal extends Component
             // Update the task status in the task_updates table for the current user
             DB::table('task_updates')->insert([
                 'task_id' => $this->task->id,
-                'user_id' => Auth::id(),
+                'user_id' => Auth::user()->id,
                 'status' => $this->status,
                 'comment' => $this->remark,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
 
             // If the status is 'complete_intimation', add a record in task_completion_requests table
-            if ($this->status == 'complete_intimation') {
+            if ($this->status === 'complete_intimation') {
                 DB::table('task_completion_requests')->insert([
                     'task_id' => $this->task->id,
-                    'user_id' => Auth::id(),
-                    'request_status' => 'pending',
+                    'user_id' => Auth::user()->id,
+                    'request_status' => 'pending', // Assuming initial status is 'pending'
                     'requested_at' => now(),
                 ]);
             }
@@ -73,35 +71,13 @@ class TaskUpdateModal extends Component
                 $latestStatus = DB::table('task_updates')
                     ->where('task_id', $this->task->id)
                     ->where('user_id', $userId)
-                    ->latest()
+                    ->orderBy('updated_at', 'desc')
                     ->value('status');
 
                 $statuses[$userId] = $latestStatus ?? 'pending';
             }
-            // $taskStatus = 'pending';
-
-            // if (in_array('in_progress', $statuses)) {
-
-            //     $taskStatus = 'in_progress';
-            // } elseif (
-            //     count($statuses) > 0 &&
-            //     count(array_unique($statuses)) === 1 &&
-            //     in_array('complete_intimation', $statuses)
-            // ) {
-            //     $taskStatus = 'completed';
-            // } elseif (
-            //     in_array('complete_intimation', $statuses) &&
-            //     !in_array('in_progress', $statuses)
-            // ) {
-            //     $taskStatus = 'pending';
-            // }elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
-            //     $taskStatus = 'in_progress';
-            // }else {
-            //     $taskStatus = 'in_progress';
-            // }
-            if (in_array('pending', $statuses)) {
-                $taskStatus = 'pending';
-            } elseif (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
+            // Determine the task status
+            if (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
                 $taskStatus = 'in_progress';
             } elseif (count(array_unique($statuses)) === 1 && in_array('completed', $statuses)) {
                 $taskStatus = 'completed';
@@ -109,7 +85,11 @@ class TaskUpdateModal extends Component
                 $taskStatus = 'in_progress';
             }
 
-            Task::where('id', $this->task->id)->update(['status' => $taskStatus, 'updated_at' => now(),]);
+            // Update the task status in the tasks table
+            Task::where('id', $this->task->id)->update([
+                'status' => $taskStatus,
+                'updated_at' => now(),
+            ]);
 
             DB::commit();
 
@@ -119,12 +99,8 @@ class TaskUpdateModal extends Component
             $this->dispatch('taskStatusUpdated');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Task Status Update Error: ' . $e->getMessage());
             $this->taskUpdateModalOpen = false;
-            $this->notify(
-                'Failed to update task status. Please try again.',
-                'error'
-            );
+            $this->notify('Failed to update task status. Please try again.', 'error');
         }
     }
 
