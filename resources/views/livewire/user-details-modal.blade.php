@@ -45,67 +45,107 @@
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">First Name<span
                                 class="text-red-500">*</span></label>
                         <input type="text" id="first_name" wire:model="first_name" x-model="first_name"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5
+                            @if ($submitted && $errors->has('first_name')) border-red-500 focus:ring-red-500 focus:border-red-500
+                            @else
+                                border-gray-300 focus:ring-primary-600 focus:border-primary-600 @endif"
                             placeholder="Enter First Name">
-                        @error('first_name')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
+                        @if ($submitted)
+                            @error('first_name')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                            @enderror
+                        @endif
                     </div>
                     <div>
                         <label for="last_name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Last
                             Name<span class="text-red-500">*</span></label>
                         <input type="text" id="last_name" wire:model="last_name" x-model="last_name"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5
+                            @if ($submitted && $errors->has('last_name')) border-red-500 focus:ring-red-500 focus:border-red-500
+                            @else
+                                border-gray-300 focus:ring-primary-600 focus:border-primary-600 @endif"
                             placeholder="Enter Last Name">
-                        @error('last_name')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
+                        @if ($submitted)
+                            @error('last_name')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                            @enderror
+                        @endif
                     </div>
                     <div>
 
                         <label for="email"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email<span
                                 class="text-red-500">*</span></label>
-                        <input type="email" id="email" wire:model="email" x-model="email"
+                        {{-- <input type="email" id="email" wire:model="email" x-model="email"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Enter User Email Id">
-                        @error('email')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
+                            placeholder="Enter User Email Id"> --}}
+                        <input type="text" id="email" wire:model="email" x-model="email"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5
+                            @if ($submitted && $errors->has('email')) border-red-500 focus:ring-red-500 focus:border-red-500
+                            @else
+                                border-gray-300 focus:ring-primary-600 focus:border-primary-600 @endif"
+                            placeholder="Enter Email Id">
+                        @if ($submitted)
+                            @error('email')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                            @enderror
+                        @endif
                     </div>
                     <div>
                         <label for="phone_number"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Phone Number</label>
                         <input type="text" id="phone_number" wire:model="phone_number" x-model="phone_number"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                            placeholder="Enter Mobile Number">
-                        @error('phone_number')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5
+                            @if ($submitted && $errors->has('phone_number')) border-red-500 focus:ring-red-500 focus:border-red-500
+                            @else
+                                border-gray-300 focus:ring-primary-600 focus:border-primary-600 @endif"
+                            placeholder="Enter Phone Number">
+                        @if ($submitted)
+                            @error('phone_number')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                            @enderror
+                        @endif
                     </div>
                     <div>
                         <label for="role"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Role</label>
-                        <select id="role" wire:model="role" x-model="role"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                        <select id="role" wire:model.defer="role" x-model="role"
+                            class="bg-gray-50 border text-gray-900 text-sm rounded-lg block w-full p-2.5
+                                dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500
+
+                                @if ($submitted && $errors->has('role')) border-red-500 focus:ring-red-500 focus:border-red-500
+                                @else
+                                    border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 @endif
+                            ">
+                            <option value="">Select Role</option>
                             <option value="admin">Admin</option>
                             <option value="user">User</option>
                         </select>
-                        @error('role')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
+                        @if ($submitted && $errors->has('role'))
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">
+                                {{ $errors->first('role') }}
+                            </p>
+                        @endif
                     </div>
                     <div>
                         <label for="status"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
-                        <select id="status" wire:model="status" x-model="status"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                        <select id="status" wire:model.defer="status" x-model="status"
+                            class="bg-gray-50 border text-gray-900 text-sm rounded-lg block w-full p-2.5
+                                dark:bg-gray-700 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500
+                                @if ($submitted && $errors->has('status')) border-red-500 focus:ring-red-500 focus:border-red-500
+                                @else
+                                    border-gray-300 dark:border-gray-600 focus:ring-primary-500 focus:border-primary-500 @endif
+                            ">
+                            <option value="">Select Status</option>
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
                         </select>
-                        @error('status')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
+                        @if ($submitted)
+                            @error('status')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                            @enderror
+                        @endif
                     </div>
                     <div>
                         <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
@@ -116,9 +156,11 @@
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5
                         dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                             placeholder="Enter Password">
-                        @error('password')
-                            <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
+                        @if ($submitted)
+                            @error('password')
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                            @enderror
+                        @endif
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">

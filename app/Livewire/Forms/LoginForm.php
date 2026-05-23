@@ -17,14 +17,23 @@ class LoginForm extends Component
 
     #[Validate('required')]
     public $password;
-    public $error = false; // Add this line to define the property
-
+    public $error = false;
+    public $submitted = true;
 
     public function login(Request $request)
     {
+        $this->submitted = true;
+        $this->error = false;
+
         $credentials = $this->validate([
             'email' => 'required|email|max:255',
             'password' => 'required|min:6|max:255',
+        ], [
+            'email.required' => 'Please enter the email address.',
+            'email.email' => 'Please enter a valid email address.',
+
+            'password.required' => 'Please enter the password.',
+            'password.min' => 'The password must be at least 6 characters long.',
         ]);
 
         $user = User::where('email', $credentials['email'])->first();

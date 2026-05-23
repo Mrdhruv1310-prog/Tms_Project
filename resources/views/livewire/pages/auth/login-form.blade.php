@@ -6,16 +6,21 @@
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form wire:submit="login" class="space-y-6">
+        <form wire:submit.prevent="login" class="space-y-6" novalidate>
             <!-- Email Address -->
             <div>
                 <x-input-label for="email" :value="__('Email address')"
                     class="block text-sm font-medium leading-6 text-gray-900" />
                 <div class="mt-2">
-                    <x-text-input wire:model="email" id="email"
-                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        type="email" name="email" required autofocus autocomplete="username" />
-                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    <input wire:model.defer="email" id="email"
+                        class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
+                            @if ($submitted && $errors->has('email')) border-red-500 focus:border-red-500 focus:ring-red-200
+                            @else
+                                border-gray-300 focus:border-indigo-300 focus:ring-indigo-200 @endif"
+                        :type="show ? 'email' : 'text'" name="email" autocomplete="email" />
+                    @if ($submitted)
+                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    @endif
                 </div>
             </div>
 
@@ -33,10 +38,12 @@
                 </div>
                 <div class="flex flex-col mt-1 mb-2">
                     <div class="relative flex-1 col-span-4" x-data="{ show: true }">
-                        <input wire:model="password" id="password"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                            :type="show ? 'password' : 'text'" name="password" required
-                            autocomplete="current-password" />
+                        <input wire:model.defer="password" id="password"
+                            class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
+                            @if ($submitted && $errors->has('password')) border-red-500 focus:border-red-500 focus:ring-red-200
+                            @else
+                                border-gray-300 focus:border-indigo-300 focus:ring-indigo-200 @endif"
+                            :type="show ? 'password' : 'text'" name="password" autocomplete="current-password" />
 
                         <button type="button" class="flex flex-row absolute inset-y-0 right-0 items-center pr-3"
                             @click="show = !show" :class="{ 'hidden': !show, 'block': show }">
@@ -59,7 +66,10 @@
                             </svg>
                         </button>
                     </div>
-                    <x-input-error :messages="$errors->get('password')" class="mt-2" />
+
+                    @if ($submitted)
+                        <x-input-error :messages="$errors->get('password')" class="mt-2" />
+                    @endif
 
                     <!-- Error Message with Fade Out -->
                     <div x-data="{ showError: @entangle('error') }" x-init="$watch('showError', value => {

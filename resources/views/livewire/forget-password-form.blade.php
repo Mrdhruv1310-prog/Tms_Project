@@ -6,23 +6,23 @@
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
 
-        <form wire:submit="forgotPassword" class="space-y-6">
+        <form wire:submit.prevent="forgotPassword" class="space-y-6" novalidate>
             <!-- email -->
-            <div x-data="{ email: '', emailError: false }">
+            <div>
                 <div class="relative flex flex-col mt-1 mb-2">
                     <x-input-label for="email" :value="__('Email address')"
                         class="block text-sm font-medium leading-6 text-gray-900" />
 
                     <div class="mt-2">
-                        <x-text-input x-model="email" wire:model="email"
-                            x-on:input="emailError = !/^[\w\.-]+@[a-zA-Z\d\.-]+\.[a-zA-Z]{2,}$/.test(email)"
-                            id="email"
-                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            type="email" name="email" required autofocus autocomplete="off" />
-                        <template x-if="emailError">
-                            <span class="text-red-600 text-sm mt-2">Please enter a valid email address.</span>
-                        </template>
-                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        <input wire:model.defer="email" id="email"
+                            class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
+                            @if ($submitted && $errors->has('email')) border-red-500 focus:border-red-500 focus:ring-red-200
+                            @else
+                                border-gray-300 focus:border-indigo-300 focus:ring-indigo-200 @endif"
+                            :type="show ? 'email' : 'text'" name="email" autocomplete="email" />
+                        @if ($submitted)
+                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        @endif
                     </div>
                 </div>
             </div>
@@ -47,6 +47,7 @@
             </div>
         </form>
     </div>
+
     <!-- Back to Login Link -->
     <div class="mt-4 flex flex-row justify-center">
         <a href="{{ route('login') }}" wire:navigate
@@ -58,6 +59,7 @@
             Back to Login
         </a>
     </div>
+
     @if (session()->has('errormessage'))
         <div x-init="$dispatch('notify', { message: '{{ session('errormessage') }}', type: 'error' })"></div>
     @endif
