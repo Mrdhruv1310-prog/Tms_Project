@@ -12,29 +12,49 @@ use Illuminate\Support\Str;
 
 class ForgetPasswordForm extends Component
 {
-    public $email;
+    public $email = '';
+    public $submitted = false;
+
+    protected function rules()
+    {
+        return [
+            'email' => 'required|email',
+        ];
+    }
+
+    protected function messages()
+    {
+        return [
+            'email.required' => 'Please enter the email address.',
+            'email.email' => 'Please provide a valid email address.',
+        ];
+    }
 
     public function forgotPassword()
     {
-        $this->validate([
-            'email' => 'required|email',
-        ]);
+        $this->submitted = true;
 
-        // Clear any existing reset tokens for the same email
-        $user = User::where('email', $this->email)->where('status', 1)->first();
+        $this->validate();
+
+        $user = User::where('email', $this->email)
+            ->where('status', 1)
+            ->first();
+
         if (!$user) {
-            // Handle case when user is not found
-            $this->notify('No account associated with this email address was found in our system', 'error');
+            $this->addError('email', 'No account associated with this email address was found in our system.');
             return;
         }
+
         PasswordResetToken::where('email', $user->email)->delete();
-        // Create a password reset token
+
         $token = Str::random(60);
+
         PasswordResetToken::create([
             'email' => $user->email,
             'token' => $token,
             'created_at' => now(),
         ]);
+
         try {
             Mail::to($user->email)
                 ->send(new SendResetPasswordEmail($user, $token));
@@ -42,14 +62,14 @@ class ForgetPasswordForm extends Component
             $message = 'Password reset link sent successfully.';
             $type = 'success';
         } catch (\Exception $e) {
-
             Log::error('Forgot Password Mail Error: ' . $e->getMessage());
 
             $message = 'Error in sending password reset email.';
             $type = 'error';
         }
-        // Send password reset email directly
+
         $this->notify($message, $type);
+
         return;
     }
 

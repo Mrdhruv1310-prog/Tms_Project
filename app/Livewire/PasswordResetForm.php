@@ -43,14 +43,14 @@ class PasswordResetForm extends Component
             ],
             'passwordconfirmation' => 'required|same:password',
         ], [
-            'password.required' => 'The password field is required.',
+            'password.required' => 'Please enter the password.',
             'password.min' => 'The password must be at least 8 characters long.',
-            'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, and one special symbol.',
-            
-            'passwordconfirmation.required' => 'The password confirmation field is required.',
-            'passwordconfirmation.same' => 'The confirm password does not match with above password.',
+            'password.regex' => 'The password must include at least one uppercase letter, one lowercase letter, and one special character.',
+
+            'passwordconfirmation.required' => 'Please confirm the password.',
+            'passwordconfirmation.same' => 'The password confirmation does not match the password.',
         ]);
-        
+
 
         // Verify the token and email
         $passwordReset = PasswordResetToken::where('email', $this->email)
@@ -79,7 +79,7 @@ class PasswordResetForm extends Component
     protected function tokenExpired($passwordReset)
     {
         $expirationTime = 60; // Token is valid for 60 minutes
-    
+
         // Manually create a Carbon instance from the created_at string
         $createdAt = Carbon::parse($passwordReset->created_at);
         // Check if the token is older than the expiration time

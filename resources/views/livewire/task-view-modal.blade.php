@@ -18,18 +18,6 @@
                     x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
                     class="pointer-events-auto relative w-screen max-w-4xl">
 
-                    <!-- Close button -->
-                    {{-- <div class="absolute left-0 top-0 -ml-8 flex pr-2 pt-4 sm:-ml-10 sm:pr-4">
-                        <button type="button" @click="show = false"
-                            class="relative rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white">
-                            <span class="sr-only">Close panel</span>
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" inert>
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div> --}}
-
                     <!-- Drawer content -->
                     <div class="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
                         <div class="px-2 sm:px-3" style="display: flex;">

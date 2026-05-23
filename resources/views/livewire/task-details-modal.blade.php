@@ -1,3 +1,4 @@
+<div>
 <div x-data="{
     show: @entangle('isOpen'),
     title: '',
@@ -154,7 +155,7 @@
             <!-- Modal body -->
             {{-- <form  @submit.prevent="submitForm"> --}}
             {{-- <form wire:submit.prevent="saveTask"> --}}
-            <form wire:submit.prevent="{{ $taskId ? 'updateTask' : 'saveTask' }}">
+            <form wire:submit.prevent="{{ $taskId ? 'updateTask' : 'saveTask' }}" novalidate>
                 <div x-data="{
                     due_date: '',
                     reminderTime: '',
@@ -223,7 +224,7 @@
                         <label for="title" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Task
                             Title <span class="text-red-500">*</span></label>
                         <input type="text" id="title" wire:model="title" x-model="title" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('title') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror"
                             placeholder="Enter Task Title" />
                         @error('title')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -232,9 +233,9 @@
 
                     <div>
                         <label for="description"
-                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
+                            class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description <span class="text-red-500">*</span></label>
                         <textarea id="description" wire:model="description" x-model="description" rows="4" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('description') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror"
                             placeholder="Enter Task Description"></textarea>
                         @error('description')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -244,9 +245,9 @@
                     <div class="flex space-x-4">
                         <div class="w-1/2">
                             <label for="category_id"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Category</label>
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Category <span class="text-red-500">*</span></label>
                             <select id="category_id" wire:model="category_id" x-model="category_id" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('category_id') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
                                 <option value="">Select Category</option>
                                 @if ($categories && is_iterable($categories))
                                     @foreach ($categories as $category)
@@ -262,10 +263,10 @@
                         <!-- Users Dropdown with Checkboxes -->
                         <div class="w-1/2">
                             <label for="users"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Users</label>
+                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Users <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <button id="dropdownUsersButton" data-dropdown-toggle="dropdownUsers"
-                                    class="flex flex-row justify-between items-center bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                    class="flex flex-row justify-between items-center bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('selectedUsers') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror"
                                     type="button">
                                     <span
                                         x-text="selectedUserNames.length ? selectedUserNames.join(', ') : 'Select Users'"></span>
@@ -310,7 +311,7 @@
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Priority <span
                                     class="text-red-500">*</span></label>
                             <select id="priority" wire:model="priority" x-model="priority" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('priority') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
@@ -324,7 +325,7 @@
                                 class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Group<small
                                     class="text-red-500">(If selected, the user will be auto-selected)</small></label>
                             <select id="label_id" wire:model="label_id"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('label_id') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
                                 <option value="">Select Group</option>
                                 @if ($labels && is_iterable($labels))
                                     @foreach ($labels as $label)
@@ -361,7 +362,7 @@
                             <div x-show="enableRepeatTask" class="transition-opacity duration-300 ease-in-out">
                                 <label for="recurrence" class="sr-only">Frequency</label>
                                 <select id="recurrence" wire:model="recurrence" x-model="recurrence" required
-                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('recurrence') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
                                     <option value="none">Frequency</option>
                                     <option value="daily">Daily</option>
                                     <option value="weekly">Weekly</option>
@@ -381,7 +382,7 @@
                                     </div>
                                     <input id="repeatenddatecalendar" name="recurrence_end_date"
                                         wire:model="recurrence_end_date" x-model="recurrence_end_date" type="text"
-                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('recurrence_end_date') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror"
                                         placeholder="Recurrence End Date" readonly>
                                 </div>
                             </div>
@@ -413,7 +414,7 @@
                     <div x-data="{ isReminderEnabled: @entangle('isReminderEnabled') }">
                         <label for="duedate"
                             class="flex flex-row items-center block mb-2 text-sm font-medium text-gray-900 dark:text-white">Due
-                            Date & Time
+                            Date & Time <span class="text-red-500">*</span>
                             <button data-tooltip-target="duedatepin" data-tooltip-trigger="click"
                                 class="tooltip-button ml-1 text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white">
                                 <svg class="h-5 w-5" inert xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -439,7 +440,7 @@
                             </div>
                             <input id="duedatecalendar" name="due_date" wire:model="due_date" x-model="due_date"
                                 x-on:change="updateReminderTime($event)" type="text"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 @error('due_date') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror"
                                 placeholder="Select date & time" readonly>
                         </div>
 
@@ -595,3 +596,5 @@
         }));
     });
 </script>
+
+</div>

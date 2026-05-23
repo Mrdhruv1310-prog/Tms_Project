@@ -55,7 +55,7 @@ class TaskDetailsModal extends Component
     {
         return [
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'required|string|max:1000',
             'category_id' => 'required|exists:categories,id',
             'priority' => 'required|in:low,medium,high',
             'label_id' => 'nullable|exists:groups,id',
@@ -64,6 +64,7 @@ class TaskDetailsModal extends Component
             'recurrence_end_date' => 'nullable|date_format:d/m/Y|after:today',
             'status' => 'required|in:pending,in_progress,completed',
             'selectedUsers' => 'required|array|min:1',
+            'selectedUsers.*' => 'exists:users,id',
         ];
     }
     protected $listeners = ['openTaskModal' => 'open', 'closeTaskModal' => 'close', 'openTaskDetailsModal' => 'edit'];
@@ -72,26 +73,54 @@ class TaskDetailsModal extends Component
     public function messages()
     {
         return [
-            'title.required' => 'The title field is required.',
-            'title.string' => 'The title must be a string.',
-            'title.max' => 'The title may not be greater than 255 characters.',
-            'description.string' => 'The description must be a string.',
-            'category_id.required' => 'The category field is required.',
-            'category_id.exists' => 'The selected category does not exist.',
-            'label_id.required' => 'The label field is required.',
-            'label_id.exists' => 'The selected label does not exist.',
-            'priority.required' => 'The priority field is required.',
-            'priority.in' => 'The priority must be one of the following: low, medium, high.',
-            'recurrence.required' => 'The recurrence field is required.',
-            'recurrence.in' => 'The recurrence must be one of the following: none, daily, weekly, monthly.',
-            'due_date.required' => 'The due date field is required.',
-            'due_date.date_format' => 'The due date must be in the format: day/month/year hour:minute am/pm. For example, 31/12/2024 10:30 pm.',
-            'recurrence_end_date.date_format' => 'The recurrence end date must be in the format: day/month/year.',
-            'recurrence_end_date.after' => 'The recurrence end date must be after the current date.',
-            'status.required' => 'The status field is required.',
-            'status.in' => 'The status must be one of the following: pending, in_progress, completed.',
-            'selectedUsers.required' => 'You must select at least one user.',
-            'selectedUsers.min' => 'You must select at least one user.',
+            'title.required' => 'Please enter task title.',
+            'title.string' => 'Task title must be valid text.',
+            'title.max' => 'Task title may not be greater than 255 characters.',
+
+            'description.required' => 'Please enter task description.',
+            'description.string' => 'Task description must be valid text.',
+            'description.max' => 'Task description may not be greater than 1000 characters.',
+
+            'category_id.required' => 'Please select category.',
+            'category_id.exists' => 'Selected category is invalid.',
+
+            'label_id.exists' => 'Selected group is invalid.',
+
+            'priority.required' => 'Please select priority.',
+            'priority.in' => 'Priority must be Low, Medium, or High.',
+
+            'recurrence.required' => 'Please select recurrence.',
+            'recurrence.in' => 'Recurrence must be None, Daily, Weekly, or Monthly.',
+
+            'due_date.required' => 'Please select due date and time.',
+            'due_date.date_format' => 'Due date must be in this format: dd/mm/yyyy hh:mm.',
+            'due_date.after' => 'Due date must be a future date and time.',
+
+            'recurrence_end_date.date_format' => 'Recurrence end date must be in this format: dd/mm/yyyy.',
+            'recurrence_end_date.after' => 'Recurrence end date must be after today.',
+
+            'status.required' => 'Task status is required.',
+            'status.in' => 'Task status is invalid.',
+
+            'selectedUsers.required' => 'Please select at least one user.',
+            'selectedUsers.array' => 'Selected users must be valid.',
+            'selectedUsers.min' => 'Please select at least one user.',
+            'selectedUsers.*.exists' => 'One selected user is invalid.',
+        ];
+    }
+
+    public function validationAttributes()
+    {
+        return [
+            'title' => 'task title',
+            'description' => 'description',
+            'category_id' => 'category',
+            'priority' => 'priority',
+            'label_id' => 'group',
+            'recurrence' => 'recurrence',
+            'due_date' => 'due date',
+            'recurrence_end_date' => 'recurrence end date',
+            'selectedUsers' => 'users',
         ];
     }
 

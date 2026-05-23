@@ -21,9 +21,14 @@ class UserDetailsModal extends Component
     public $last_name;
     public $email;
     public $phone_number;
-    public $role = 'user'; // Default role to 'user'
-    public $status = true; // Default status to active (true)
+    public $role = ''; // Default role to 'user'
+    public $status = ''; // Default status to active (true)
+
+    public $password = ''; // Default password is empty
+
     public $user_id; // To store the user ID for editing
+
+    public $submitted = true;
 
     protected $listeners = ['openModal' => 'open', 'closeModal' => 'close', 'edituser' => 'loadUser'];
 
@@ -47,18 +52,30 @@ class UserDetailsModal extends Component
 
     public function saveUser()
     {
+        $this->submitted = true;
         $rules = [
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
             'email' => 'required|email' . ($this->user_id ? '|unique:users,email,' . $this->user_id : '|unique:users,email'),
-            'phone_number' => 'nullable|string|max:15',
+            'phone_number' => 'required|string|max:15',
             'role' => 'required|in:admin,user',
             'status' => 'required|in:1,0',
         ];
 
-        $this->validate($rules);
+        $messages = [
+            'first_name.required' => 'Please enter the first name.',
+            'last_name.required' => 'Please enter the last name.',
+            'email.required' => 'Please enter the email address.',
+            'email.email' => 'Please enter a valid email address.',
+            'email.unique' => 'The email address has already been registered.',
+            'role.required' => 'Please select a role.',
+            'role.in' => 'Please select a valid role.',
+            'status.required' => 'Please select the status.',
+        ];
+
+        $this->validate($rules, $messages);
+
         if ($this->user_id) {
-            // Editing existing user
             $user = User::findOrFail($this->user_id);
             $user->update([
                 'first_name' => $this->first_name,
@@ -70,9 +87,7 @@ class UserDetailsModal extends Component
             ]);
             $message = 'User updated successfully.';
         } else {
-           
-            // Creating new user
-            $password = Str::random(12); // Generate a random password
+            $password = Str::random(12);
             $user = User::create([
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
@@ -80,11 +95,10 @@ class UserDetailsModal extends Component
                 'phone_number' => $this->phone_number,
                 'role' => $this->role,
                 'status' => $this->status,
-                'password' => Hash::make($password), // Hash the random password
+                'password' => Hash::make($password),
             ]);
-            // Clear any existing reset tokens for the same email
+
             PasswordResetToken::where('email', $user->email)->delete();
-            // Create a password reset token
 
             $token = Str::random(60);
             PasswordResetToken::create([
@@ -93,14 +107,11 @@ class UserDetailsModal extends Component
                 'created_at' => now(),
             ]);
             try {
-                //code...
                 Mail::to($user->email)->send(new SendResetPasswordEmail($user, $token));
                 $message = 'User added successfully.';
             } catch (\Throwable $th) {
-                //throw $th;
                 $message = 'User added successfully, but password reset email not sent';
             }
-            // Send password reset email directly
         }
 
         $this->resetForm();
