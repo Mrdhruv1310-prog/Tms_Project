@@ -235,8 +235,8 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->modalDescription('Are you sure you want to approve this task completion request?')
                     ->modalSubmitActionLabel('Yes, approve')
                     ->visible(function (Task $task) {
-                        return $this->taskView === 'assigned_to_others'
-                            && $task->creator?->id === Auth::id()
+                        return request()->get('task_view') === 'assigned_to_others'
+                            && (int) $task->user_id === (int) Auth::id()
                             && TaskCompletionRequest::where('task_id', $task->id)
                             ->where('request_status', 'pending')
                             ->exists();
@@ -254,8 +254,8 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->modalDescription('Are you sure you want to reject this completion request? Task will go back to In Progress.')
                     ->modalSubmitActionLabel('Yes, reject')
                     ->visible(function (Task $task) {
-                        return $this->taskView === 'assigned_to_others'
-                            && $task->creator?->id === Auth::id()
+                        return request()->get('task_view') === 'assigned_to_others'
+                            && (int) $task->user_id === (int) Auth::id()
                             && TaskCompletionRequest::where('task_id', $task->id)
                             ->where('request_status', 'pending')
                             ->exists();
