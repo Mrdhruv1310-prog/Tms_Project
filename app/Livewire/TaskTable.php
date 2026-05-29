@@ -695,6 +695,10 @@ class TaskTable extends Component implements HasForms, HasTable
             Reminder::where('task_id', $task->id)
                 ->delete();
 
+            DB::table('task_assignments')
+                ->where('task_id', $task->id)
+                ->delete();
+
             $task->delete();
         });
     }
