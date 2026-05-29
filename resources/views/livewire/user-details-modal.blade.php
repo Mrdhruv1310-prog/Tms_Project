@@ -127,6 +127,8 @@
                             </p>
                         @endif
                     </div>
+                    <!-- Users Dropdown with Checkboxes -->
+
                     <div>
                         <label for="status"
                             class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status</label>
@@ -190,13 +192,19 @@
     </div>
 </div>
 <script>
-    $(document).on('click', '.toggle-password', function() {
-        $(this).toggleClass("fa-eye fa-eye-slash");
-        var input = $("input[name='password']"); // Updated selector to target the password input
-        if (input.attr("type") === "password") {
-            input.attr("type", "text");
-        } else {
-            input.attr("type", "password");
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.toggle-password')) {
+
+            const toggle = e.target.closest('.toggle-password');
+
+            toggle.classList.toggle('fa-eye');
+            toggle.classList.toggle('fa-eye-slash');
+
+            const input = document.querySelector("input[name='password']");
+
+            if (!input) return;
+
+            input.type = input.type === 'password' ? 'text' : 'password';
         }
     });
 </script>

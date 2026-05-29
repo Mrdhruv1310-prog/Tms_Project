@@ -133,16 +133,6 @@
 
                     <tr>
                         <td style="padding:10px; border:1px solid #eee;">
-                            <strong>Status</strong>
-                        </td>
-
-                        <td style="padding:10px; border:1px solid #eee;">
-                            {{ ucfirst(str_replace('_', ' ', $status)) }}
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td style="padding:10px; border:1px solid #eee;">
                             <strong>Remark</strong>
                         </td>
 

@@ -18,7 +18,6 @@ class TaskStatusUpdateMail extends Mailable
     protected $signature = 'emails:task_status_update';
     public Task $task;
     public User $user;
-    public string $status;
     public string $remark;
 
     /**
@@ -27,12 +26,10 @@ class TaskStatusUpdateMail extends Mailable
     public function __construct(
         Task $task,
         User $user,
-        string $status,
         string $remark
     ) {
         $this->task = $task;
         $this->user = $user;
-        $this->status = $status;
         $this->remark = $remark;
     }
 
@@ -55,7 +52,6 @@ class TaskStatusUpdateMail extends Mailable
             'task_id' => $this->task->id,
             'task_title' => $this->task->title,
             'user_email' => $this->user->email,
-            'status' => $this->status,
         ]);
 
         return new Content(
@@ -63,7 +59,6 @@ class TaskStatusUpdateMail extends Mailable
             with: [
                 'task' => $this->task,
                 'user' => $this->user,
-                'status' => $this->status,
                 'remark' => $this->remark,
             ],
         );

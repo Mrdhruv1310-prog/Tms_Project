@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Mail\ReminderEmail;
 use App\Models\Reminder;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -17,116 +16,44 @@ class SendReminderJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $reminder;
-    public $reminderTime;
-    public $channel; // Channel preference (hardcoded in Livewire class)
+    public $reminderId;
+    public $channel;
+    public $message;
 
-    /**
-     * Create a new job instance.
-     *
-     * @param Reminder $reminder
-     * @param array $channel
-     */
-    public function __construct(Reminder $reminder, array $channel, $reminderTime)
+    public function __construct(int $reminderId, array $channel, string $message)
     {
-        $this->reminder = $reminder;
+        $this->reminderId = $reminderId;
         $this->channel = $channel;
-        $this->reminderTime = $reminderTime;
+        $this->message = $message;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(): void
     {
-        if (!$this->reminder) {
-            Log::error("SendReminderJob failed: Reminder object is null.");
+        $reminder = Reminder::find($this->reminderId);
+
+        if (! $reminder) {
+            Log::info("Reminder skipped because reminder was deleted. ID: {$this->reminderId}");
             return;
         }
 
-        $task = $this->reminder->task;
+        $task = $reminder->task;
 
-        if (!$task) {
-            Log::error("SendReminderJob failed: Task not found for reminder ID {$this->reminder->id}.");
+        if (! $task || $task->status === 'completed') {
             return;
         }
 
-        $user = User::find($this->reminder->user_id);
+        $user = User::find($reminder->user_id);
 
-        if (!$user) {
-            Log::error("SendReminderJob failed: User not found for ID {$this->reminder->user_id}.");
+        if (! $user) {
             return;
         }
-
-        $message = $this->reminder->message
-            ?? "Reminder: Task '{$task->title}' is due soon.";
-
-        try {
-
-            if (in_array('email', $this->channel)) {
-                Mail::to($user->email)->send(new ReminderEmail($this->reminder, $task));
-                Log::info("Reminder email sent to {$user->email} for task '{$task->title}'");
-            }
-
-            if (in_array('sms', $this->channel)) {
-                // Example SMS logic placeholder
-                // $this->sendSMS($user->phone_number, $message);
-
-                Log::info("Reminder SMS sent to {$user->phone_number} for task '{$task->title}'");
-            }
-        } catch (\Exception $e) {
-            Log::error("Reminder sending failed for task '{$task->title}': " . $e->getMessage());
+        if (in_array('email', $this->channel)) {
+            Mail::raw($this->message, function ($mail) use ($user, $task) {
+                $mail->to($user->email)
+                    ->subject("Task Reminder: {$task->title}");
+            });
         }
+
+        Log::info("Reminder mail sent to {$user->email} for task {$task->title}");
     }
-    // public function handle()
-    // {
-    //     if (!$this->reminder) {
-    //         Log::error("SendReminderJob failed: Reminder object is null.");
-    //         return;
-    //     }
-
-    //     // Retrieve the associated task and user
-    //     $task = $this->reminder->task;
-    //     if (!$task) {
-    //         Log::error("SendReminderJob failed: Task not found for reminder ID {$this->reminder->id}.");
-    //         return;
-    //     }
-
-    //     $user = User::find($this->reminder->user_id);
-    //     if (!$user) {
-    //         Log::error("SendReminderJob failed: User not found for ID {$this->reminder->user_id}.");
-    //         return;
-    //     }
-
-    //     $message = "Reminder: Task '{$task->title}' is due soon.";
-
-    //     if (in_array('email', $this->channel)) {
-    //         // Send reminder via email
-    //         if ($this->reminder->reminder_time != $this->reminderTime) {
-    //             Log::info("Reminder email is changed for this task '{$task->title}'");
-    //         } else {
-    //             Mail::to($user->email)->send(new ReminderEmail($this->reminder, $task));
-    //             Log::info("Reminder email sent to {$user->email} for task '{$task->title}'");
-    //         }
-    //     }
-    //     if (in_array('SMS', $this->channel)) {
-    //         // Send reminder via SMS
-    //         // $this->sendSMS($user->phone_number, $message);
-    //         if ($this->reminder->reminder_time != $this->reminderTime) {
-    //             Log::info("Reminder sms is changed for this task '{$task->title}'");
-    //         } else {
-    //             Log::info("Reminder SMS sent to {$user->phone_number} for task '{$task->title}'");
-    //         }
-    //     }
-    // }
-
-
-    // protected function sendSMS($phoneNumber, $message)
-    // {
-    //     // This is a placeholder for SMS sending logic
-    //     Log::info("SMS to {$phoneNumber}: {$message}");
-    // }
-
 }
