@@ -7,6 +7,7 @@ use App\Models\TaskAssignment;
 use App\Models\TaskCompletionRequest;
 use App\Models\TaskUpdate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -59,7 +60,7 @@ class TaskApproval extends Component
                         'reviewed_by' => Auth::user()->id,
                         'review_comment' => $this->remark,
                     ]);
-    
+
                 // 2. Add a record to the task_updates table
                 TaskUpdate::create([
                     'task_id' => $this->taskId,
@@ -68,14 +69,14 @@ class TaskApproval extends Component
                     'comment' => $this->remark,
                 ]);
             }
-    
+
             // 3. Check if all users for the task are marked as 'completed'
             $totalUsers = TaskAssignment::where('task_id', $this->taskId)->count();
             $completedUsers = TaskUpdate::where('task_id', $this->taskId)
                 ->where('status', 'completed')
                 ->distinct('user_id')
                 ->count('user_id');
-    
+
             // If all users have completed the task, update the tasks table
             if ($totalUsers === $completedUsers) {
                 Task::where('id', $this->taskId)->update([
@@ -95,17 +96,64 @@ class TaskApproval extends Component
                     ]);
             }
         }
-    
+
         // Close the modal after saving
         $this->taskUpdateModalOpen = false;
-    
+
         // Optionally, reset the form
         $this->reset(['remark', 'selectedUsers']);
-    
+
         $this->dispatch('taskStatusUpdated');
-        
+
         // Emit an event for UI updates if necessary
         $this->notify('Task Status Updated Successfully.', 'success');
+    }
+
+    public function statusUpdated($data)
+    {
+        $task = Task::findOrFail($data['task']['id']);
+        $status = $data['status']; // approved / rejected
+
+        $request = TaskCompletionRequest::where('task_id', $task->id)
+            ->where('request_status', 'complete_intimation')
+            ->latest('updated_at')
+            ->first();
+
+        if (! $request) {
+            return;
+        }
+
+        if ($status === 'approved') {
+            $request->update([
+                'request_status' => 'approved',
+                'updated_at' => now(),
+            ]);
+
+            DB::table('task_updates')
+                ->where('task_id', $task->id)
+                ->where('user_id', $request->user_id)
+                ->update([
+                    'status' => 'completed',
+                    'updated_at' => now(),
+                ]);
+        }
+
+        if ($status === 'rejected') {
+            $request->update([
+                'request_status' => 'rejected',
+                'updated_at' => now(),
+            ]);
+
+            DB::table('task_updates')
+                ->where('task_id', $task->id)
+                ->where('user_id', $request->user_id)
+                ->update([
+                    'status' => 'in_progress',
+                    'updated_at' => now(),
+                ]);
+        }
+
+        $this->dispatch('refreshTable');
     }
 
     public function render()

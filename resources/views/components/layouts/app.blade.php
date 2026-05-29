@@ -14,6 +14,7 @@
     <title>{{ $title ?? 'Page Title' }}</title>
     <!-- Include jQuery from a CDN -->
     <script src="{{ asset('/sw.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     @filamentStyles
@@ -119,7 +120,7 @@
         initFlowbite();
         console.log('Flowbite initialized after Livewire navigation');
         // let user = @json(auth()->user());
-        
+
         // if (window.location.pathname === '/login') {
         //     if (user) {
         //         // Redirect authenticated users to the dashboard

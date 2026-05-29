@@ -104,6 +104,52 @@ class TaskUpdateModal extends Component
         }
     }
 
+    public function statusUpdated($data)
+    {
+        $task = Task::findOrFail($data['task']['id']);
+        $status = $data['status'];
+        $userId = Auth::id();
+
+        DB::table('task_updates')->updateOrInsert(
+            [
+                'task_id' => $task->id,
+                'user_id' => $userId,
+            ],
+            [
+                'status' => $status,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+
+        if ($status === 'in_progress') {
+            TaskCompletionRequest::updateOrCreate(
+                [
+                    'task_id' => $task->id,
+                    'user_id' => $userId,
+                ],
+                [
+                    'request_status' => 'in_progress',
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
+        if ($status === 'complete_intimation') {
+            TaskCompletionRequest::updateOrCreate(
+                [
+                    'task_id' => $task->id,
+                    'user_id' => $userId,
+                ],
+                [
+                    'request_status' => 'complete_intimation',
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
+        $this->dispatch('refreshTable');
+    }
 
     public function render()
     {

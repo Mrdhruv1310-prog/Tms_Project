@@ -18,17 +18,15 @@ class SendTaskUpdateJob implements ShouldQueue
 
     public $task;
     public $user;
-    public $status;
     public $remark;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(Task $task, $user, $status, $remark)
+    public function __construct(Task $task, $user, $remark)
     {
         $this->task = $task;
         $this->user = $user;
-        $this->status = $status;
         $this->remark = $remark;
     }
 
@@ -48,7 +46,6 @@ class SendTaskUpdateJob implements ShouldQueue
                     new TaskStatusUpdateMail(
                         $this->task,
                         $this->user,
-                        $this->status,
                         $this->remark
                     )
                 );
