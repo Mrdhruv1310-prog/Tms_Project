@@ -395,7 +395,6 @@ class TaskDetailsModal extends Component
     private function updatehandleTaskAssignments(Task $task)
     {
         try {
-
             DB::beginTransaction();
 
             if (!empty($this->selectedUsers)) {
@@ -404,13 +403,11 @@ class TaskDetailsModal extends Component
 
                 foreach ($this->selectedUsers as $userId) {
 
-                    // CHECK EXISTING ASSIGNMENT
                     $exists = DB::table('task_assignments')
                         ->where('task_id', $task->id)
                         ->where('user_id', $userId)
                         ->exists();
 
-                    // UPDATE ONLY EXISTING
                     if ($exists) {
 
                         DB::table('task_assignments')
@@ -419,32 +416,6 @@ class TaskDetailsModal extends Component
                             ->update([
                                 'assigned_at' => now(),
                             ]);
-                    }
-
-                    // FIND USER
-                    $user = User::find($userId);
-
-                    if ($user) {
-
-                        $status = $user->status ?? 'pending';
-
-                        $remark = $user->remark ?? '';
-
-                        // SEND MAIL
-                        Mail::to($user->email)
-                            ->queue(
-                                new TaskStatusUpdateMail(
-                                    $task,
-                                    $user,
-                                    $status,
-                                    $remark
-                                )
-                            );
-                    } else {
-
-                        Log::warning(
-                            "User with ID {$userId} not found."
-                        );
                     }
                 }
             }
@@ -619,6 +590,10 @@ class TaskDetailsModal extends Component
         try {
             $task = Task::findOrFail($this->taskId);
 
+            $this->label_id = filled($this->label_id)
+                ? (int) $this->label_id
+                : null;
+
             $task->update([
                 'title' => $this->title,
                 'description' => $this->description,
@@ -643,6 +618,7 @@ class TaskDetailsModal extends Component
                 SendTaskUpdateJob::dispatch(
                     $task,
                     $user,
+                    $task->status,
                     'Task details updated successfully.'
                 );
             }

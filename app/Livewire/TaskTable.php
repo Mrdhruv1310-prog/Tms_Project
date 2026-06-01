@@ -453,32 +453,32 @@ class TaskTable extends Component implements HasForms, HasTable
 
     public function resetTaskWorkflowAfterEdit(Task $task): void
     {
-        DB::transaction(function () use ($task) {
+            DB::transaction(function () use ($task) {
 
-            $task->update([
-                'status' => 'pending',
-            ]);
-
-            DB::table('task_updates')
-                ->where('task_id', $task->id)
-                ->delete();
-
-            TaskCompletionRequest::where('task_id', $task->id)
-                ->where('request_status', 'pending')
-                ->update([
-                    'request_status' => 'rejected',
-                ]);
-
-            foreach ($task->taskAssignments as $assignment) {
-                DB::table('task_updates')->insert([
-                    'task_id' => $task->id,
-                    'user_id' => $assignment->user_id,
+                $task->update([
                     'status' => 'pending',
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ]);
-            }
-        });
+
+                DB::table('task_updates')
+                    ->where('task_id', $task->id)
+                    ->delete();
+
+                TaskCompletionRequest::where('task_id', $task->id)
+                    ->where('request_status', 'pending')
+                    ->update([
+                        'request_status' => 'rejected',
+                    ]);
+
+                foreach ($task->taskAssignments as $assignment) {
+                    DB::table('task_updates')->insert([
+                        'task_id' => $task->id,
+                        'user_id' => $assignment->user_id,
+                        'status' => 'pending',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
     }
 
     public function requestCompletion(Task $task): void
