@@ -37,6 +37,7 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
 
 
 Route::middleware(['guest'])->group(function () {
+    Route::get('/register', RegisterForm::class)->name('register');
     Route::get('/login', LoginForm::class)->name('login');
     Volt::route('forgot-password', 'pages.auth.forgot-password')->name('password.request');
     Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('password.reset');
