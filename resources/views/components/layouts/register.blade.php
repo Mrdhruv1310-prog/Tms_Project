@@ -8,15 +8,15 @@
     <meta http-equiv="pragma" content="no-cache">
     <meta http-equiv="expires" content="0">
     <link rel="icon" type="image/png" href="{{ asset('icons/nslogo.png') }}">
-    <meta name="theme-color" content="#1a56db"/>
+    <meta name="theme-color" content="#1a56db" />
     <link rel="apple-touch-icon" href="{{ asset('icons/nslogo.png') }}">
     <link rel="manifest" href="{{ asset('/1manifest.json') }}">
     <title>{{ 'TMS Portal | NS GROUP' }}</title>
     <script src="{{ asset('/sw.js') }}"></script>
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     <style>
-            /* CSS to customize scrollbar */
-            ::-webkit-scrollbar {
+        /* CSS to customize scrollbar */
+        ::-webkit-scrollbar {
             width: 12px;
             /* width of the scrollbar */
         }

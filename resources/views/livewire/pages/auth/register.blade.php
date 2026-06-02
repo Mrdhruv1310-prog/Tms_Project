@@ -1,27 +1,75 @@
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-sm">
         <img class="mx-auto h-15 w-auto" src="{{ asset('icons/nslogo.png') }}" alt="Your Company">
-        <h2 class="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">Sign in to your
-            account</h2>
+
+        <h2 class="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+            Create your account
+        </h2>
     </div>
 
     <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form wire:submit.prevent="login" class="space-y-6" novalidate>
-            <!-- Email Address -->
+        <form x-data="{ submitted: false }"
+            x-on:submit.prevent="
+        submitted = true;
+        if ($el.checkValidity()) {
+            $wire.register();
+        } else {
+            $el.reportValidity();
+        }
+    "
+            class="space-y-6">
             <div>
-                <x-input-label for="email" :value="__('Email address')"
-                    class="block text-sm font-medium leading-6 text-gray-900" />
-                <div class="mt-2">
-                    <input wire:model.defer="email" id="email"
-                        class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
+                <label>First Name</label>
+                {{-- <input wire:model="first_name" type="text" maxlength="255"
+                    class="block w-full rounded-md border px-3 py-2"> --}}
+                <input wire:model.defer="first_name" id="first_name"
+                    class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
+                            @if ($submitted && $errors->has('first_name')) border-red-500 focus:border-red-500 focus:ring-red-200
+                            @else
+                                border-gray-300 focus:border-indigo-300 focus:ring-indigo-200 @endif"
+                    :type="show ? 'first_name' : 'text'" name="first_name" autocomplete="first_name" />
+                @if ($submitted)
+                    <x-input-error :messages="$errors->get('first_name')" class="mt-2" />
+                @endif
+            </div>
+
+            <div>
+                <label>Last Name</label>
+                <input wire:model.defer="last_name" id="last_name"
+                    class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
+                            @if ($submitted && $errors->has('last_name')) border-red-500 focus:border-red-500 focus:ring-red-200
+                            @else
+                                border-gray-300 focus:border-indigo-300 focus:ring-indigo-200 @endif"
+                    :type="show ? 'phone_number' : 'text'" name="phone_number" autocomplete="phone_number" />
+                @if ($submitted)
+                    <x-input-error :messages="$errors->get('last_name')" class="mt-2" />
+                @endif
+            </div>
+
+            <div>
+                <label>Phone Number</label>
+                <input wire:model.defer="phone_number" id="phone_number"
+                    class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
+                            @if ($submitted && $errors->has('phone_number')) border-red-500 focus:border-red-500 focus:ring-red-200
+                            @else
+                                border-gray-300 focus:border-indigo-300 focus:ring-indigo-200 @endif"
+                    :type="show ? 'phone_number' : 'text'" name="phone_number" autocomplete="phone_number" />
+                @if ($submitted)
+                    <x-input-error :messages="$errors->get('phone_number')" class="mt-2" />
+                @endif
+            </div>
+
+            <div>
+                <label>Email</label>
+                <input wire:model.defer="email" id="email"
+                    class="w-full rounded-md shadow-sm focus:ring focus:ring-opacity-50
                             @if ($submitted && $errors->has('email')) border-red-500 focus:border-red-500 focus:ring-red-200
                             @else
                                 border-gray-300 focus:border-indigo-300 focus:ring-indigo-200 @endif"
-                        :type="show ? 'email' : 'text'" name="email" autocomplete="email" />
-                    @if ($submitted)
-                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
-                    @endif
-                </div>
+                    :type="show ? 'email' : 'text'" name="email" autocomplete="email" />
+                @if ($submitted)
+                    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                @endif
             </div>
 
             <!-- Password -->
@@ -29,12 +77,6 @@
                 <div class="flex items-center justify-between">
                     <x-input-label for="password" :value="__('Password')"
                         class="block text-sm font-medium leading-6 text-gray-900" />
-                    @if (Route::has('forget.password'))
-                        <div class="text-sm">
-                            <a href="{{ route('forget.password') }}" wire:navigate
-                                class="font-semibold text-indigo-600 hover:text-indigo-500">Forgot password?</a>
-                        </div>
-                    @endif
                 </div>
                 <div class="flex flex-col mt-1 mb-2">
                     <div class="relative flex-1 col-span-4" x-data="{ show: true }">
@@ -91,19 +133,18 @@
                 </div>
             </div>
 
-            <!-- Sign In Button -->
+            <!-- Sign Up Button -->
             <div>
                 <x-primary-button
                     class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     wire:loading.attr="disabled">
-                    <span wire:loading.remove>{{ __('Sign in') }}</span>
-                    <span wire:loading>{{ __('Signing in...') }}
+                    <span wire:loading.remove>{{ __('Sign up') }}</span>
+                    <span wire:loading>{{ __('Signing up...') }}
                         <svg class="inline-block animate-spin h-5 w-5 text-gray-500" viewBox="0 0 24 24">
                             <path fill="white"
                                 d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"
                                 opacity="0.25" />
-                            <path fill="white"
-                                d="M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z"
+                            <path fill="white" d="M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,
                                 transform="rotate(360 12 12)" />
                         </svg>
                     </span>
@@ -112,14 +153,13 @@
             </div>
             <div class="text-sm text-center">
                 <span class="font-medium text-gray-900">Don't have an account?</span>
-                <a href="{{ route('register') }}" wire:navigate
-                    class="font-semibold text-indigo-600 hover:text-indigo-500">Sign Up</a>
+                <a href="{{ route('login') }}" wire:navigate
+                    class="font-semibold text-indigo-600 hover:text-indigo-500">Sign In</a>
+
         </form>
     </div>
-    @if (session()->has('errormessage'))
-        <div x-init="$dispatch('notify', { message: '{{ session('errormessage') }}', type: 'error' })"></div>
-    @endif
-    @if (session()->has('successmessage'))
-        <div x-init="$dispatch('notify', { message: '{{ session('successmessage') }}', type: 'success' })"></div>
-    @endif
-</div>
+
+       @if (session()->has('successmessage'))
+                                <div x-init="$dispatch('notify', { message: '{{ session('successmessage') }}', type: 'success' })"></div>
+                                @endif
+            </div>
