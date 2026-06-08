@@ -1,4 +1,14 @@
 <div>
+    @php
+        $authUser = Auth::user();
+        $isAdmin = $authUser->role === 'admin';
+        $isUser = $authUser->role === 'user';
+
+        $visibleCategories = collect($categories ?? []);
+        $visibleTeam = collect($team ?? []);
+        $visibleGroups = collect($groups ?? []);
+    @endphp
+
     <div class="min-h-screen bg-[#f3f6fb] antialiased">
         <main class="scrollcontainer p-4 md:ml-16 h-auto pt-14 pb-16">
 
@@ -11,12 +21,18 @@
                 </div>
 
                 <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p class="mt-1 text-gray-500">Welcome back, here is your task overview.</p>
+                <p class="mt-1 text-gray-500">
+                    {{ $isAdmin ? 'Welcome back, here is your team task overview.' : 'Welcome back, here is your assigned task overview.' }}
+                </p>
             </div>
 
             {{-- Summary Cards --}}
             <div class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 @foreach ($labels as $label)
+                    @php
+                        $title = strtolower($label['title']);
+                    @endphp
+
                     <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                         <div class="flex items-center justify-between">
                             <div>
@@ -29,24 +45,18 @@
                                 </h2>
                             </div>
 
-                            @php
-                                $title = strtolower($label['title']);
-                            @endphp
-
                             <div class="flex h-12 w-12 items-center justify-center rounded-full"
                                 style="background-color: {{ $label['bg'] }}; border: 2px solid {{ $label['border'] }};">
                                 @if ($title === 'pending')
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        fill="currentColor" class="bi bi-clock-history" viewBox="0 0 16 16">
-                                        <path
-                                            d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.1-1.025l.985-.17q.1.58.116 1.17zm-.131 1.538q.05-.254.081-.51l.993.123a8 8 0 0 1-.23 1.155l-.964-.267q.069-.247.12-.501m-.952 2.379q.276-.436.486-.908l.914.405q-.24.54-.555 1.038zm-.964 1.205q.183-.183.35-.378l.758.653a8 8 0 0 1-.401.432z" />
+                                        fill="currentColor" viewBox="0 0 16 16">
                                         <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z" />
                                         <path
-                                            d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5" />
+                                            d="M7.5 3a.5.5 0 0 1 .5.5V9l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5" />
                                     </svg>
                                 @elseif ($title === 'in progress')
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+                                        fill="currentColor" viewBox="0 0 16 16">
                                         <path
                                             d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9" />
                                         <path fill-rule="evenodd"
@@ -54,17 +64,17 @@
                                     </svg>
                                 @elseif ($title === 'completed')
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                                        fill="currentColor" viewBox="0 0 16 16">
                                         <path
                                             d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
                                     </svg>
                                 @elseif ($title === 'total')
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                        fill="currentColor" class="bi bi-card-checklist" viewBox="0 0 16 16">
+                                        fill="currentColor" viewBox="0 0 16 16">
                                         <path
                                             d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z" />
                                         <path
-                                            d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0M7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
+                                            d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0" />
                                     </svg>
                                 @endif
                             </div>
@@ -78,7 +88,9 @@
                 <div class="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-gray-900">Category Report</h2>
-                        <p class="text-sm text-gray-500">Category-wise task completion progress</p>
+                        <p class="text-sm text-gray-500">
+                            {{ $isAdmin ? 'Category-wise task completion progress' : 'Your assigned category-wise task progress' }}
+                        </p>
                     </div>
 
                     <a href="{{ route('categoryReport') }}" wire:navigate
@@ -88,7 +100,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-                    @foreach ($categories as $category)
+                    @forelse ($visibleCategories as $category)
                         @php
                             $circumference = 565.48;
                             $percentage =
@@ -142,18 +154,26 @@
                                 </div>
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <div
+                            class="col-span-full rounded-xl border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+                            No category data available.
+                        </div>
+                    @endforelse
                 </div>
             </section>
 
-            {{-- Team Performance --}}
+            {{-- Team / My Performance --}}
             <section class="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div class="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-gray-900">
-                            {{ Auth::user()->role === 'user' ? 'Assigned To Others' : 'Team Performance' }}
+                            {{ $isAdmin ? 'Team Performance' : 'My Performance' }}
                         </h2>
-                        <p class="text-sm text-gray-500">User-wise task completion summary</p>
+
+                        <p class="text-sm text-gray-500">
+                            {{ $isAdmin ? 'User-wise task completion summary' : 'Your assigned task completion summary' }}
+                        </p>
                     </div>
 
                     <a href="{{ route('teamPerformance') }}" wire:navigate
@@ -163,7 +183,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-                    @foreach ($team as $member)
+                    @forelse ($visibleTeam as $member)
                         @php
                             $circumference = 565.48;
                             $percentage =
@@ -217,7 +237,12 @@
                                 </div>
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <div
+                            class="col-span-full rounded-xl border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+                            No performance data available.
+                        </div>
+                    @endforelse
                 </div>
             </section>
 
@@ -225,11 +250,13 @@
             <section class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div class="mb-6 border-b border-gray-100 pb-4">
                     <h2 class="text-xl font-bold text-gray-900">Groups Overview</h2>
-                    <p class="text-sm text-gray-500">Group-wise task status overview</p>
+                    <p class="text-sm text-gray-500">
+                        {{ $isAdmin ? 'Group-wise task status overview' : 'Your group-wise task status overview' }}
+                    </p>
                 </div>
 
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                    @foreach ($groups as $group)
+                    @forelse ($visibleGroups as $group)
                         @php
                             $circumference = 565.48;
                             $percentage =
@@ -289,7 +316,12 @@
                                 </div>
                             </div>
                         </a>
-                    @endforeach
+                    @empty
+                        <div
+                            class="col-span-full rounded-xl border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+                            No group data available.
+                        </div>
+                    @endforelse
                 </div>
             </section>
 
