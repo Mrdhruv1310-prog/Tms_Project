@@ -60,7 +60,7 @@
                                     <!-- Task Completion Status -->
                                     <div class="ml-4">
                                         <p class="text-sm font-medium text-gray-600 group-hover:text-white">
-                                            {{ ucwords($status) }} - {{ $statusCount }}/{{ $total }}
+                                            {{ ucwords(str_replace('_', ' ', $status)) }} - {{ $statusCount }}/{{ $total }}
                                         </p>
                                     </div>
                                 </div>
