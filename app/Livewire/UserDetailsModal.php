@@ -87,7 +87,6 @@ class UserDetailsModal extends Component
             ]);
             $message = 'User updated successfully.';
         } else {
-            $password = Str::random(12);
             $user = User::create([
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
@@ -95,7 +94,7 @@ class UserDetailsModal extends Component
                 'phone_number' => $this->phone_number,
                 'role' => $this->role,
                 'status' => $this->status,
-                'password' => Hash::make($password),
+                'password' => Hash::make($this->password),
             ]);
 
             PasswordResetToken::where('email', $user->email)->delete();
@@ -107,7 +106,7 @@ class UserDetailsModal extends Component
                 'created_at' => now(),
             ]);
             try {
-                Mail::to($user->email)->send(new SendResetPasswordEmail($user, $token));
+                // Mail::to($user->email)->send(new SendResetPasswordEmail($user, $token));
                 $message = 'User added successfully.';
             } catch (\Throwable $th) {
                 $message = 'User added successfully, but password reset email not sent';
