@@ -305,37 +305,6 @@ class TaskDetailsModal extends Component
         }
     }
 
-    // private function sendTaskAssignmentWhatsApp($task, $user)
-    // {
-    //     try {
-
-    //         if (empty($user->phone_number)) {
-    //             return;
-    //         }
-
-    //         $message =
-    //             "*New Task Assigned*\n\n" .
-    //             "Hello {$user->name},\n\n" .
-    //             "Task : {$task->title}\n" .
-    //             "Description : {$task->description}\n" .
-    //             "Priority : {$task->priority}\n" .
-    //             "Status : {$task->status}\n" .
-    //             "Due Date : " .
-    //             Carbon::parse($task->due_date)
-    //             ->format('d-m-Y h:i A') .
-    //             "\n\nPlease complete the task on time.";
-
-    //         app(WhatsAppService::class)
-    //             ->send($user->phone_number, $message);
-    //     } catch (\Exception $e) {
-
-    //         \Log::error(
-    //             'Task WhatsApp Error : ' .
-    //                 $e->getMessage()
-    //         );
-    //     }
-    // }
-
     // Manage weekly task recurrence days
     private function handleTaskRecurrence(Task $task)
     {
@@ -426,9 +395,6 @@ class TaskDetailsModal extends Component
                     $user = User::find($userId);
                     if ($user) {
                         Mail::to($user->email)->queue(new TaskAssignedMail($task, $user));
-
-                        // New WhatsApp
-                        // $this->sendTaskAssignmentWhatsApp($task,$user);
                     } else {
                         // Log or handle invalid user ID
                         Log::warning("User with ID {$userId} not found for task assignment.");
