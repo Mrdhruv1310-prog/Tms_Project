@@ -22,6 +22,7 @@ use App\Models\Group;
 use App\Models\GroupUser;
 use Illuminate\Support\Facades\Mail;
 use App\Jobs\SendTaskUpdateJob;
+use App\Services\WhatsAppService;
 
 class TaskDetailsModal extends Component
 {
@@ -260,52 +261,80 @@ class TaskDetailsModal extends Component
     {
         $this->validate();
 
-        $this->due_date = Carbon::createFromFormat('d/m/Y H:i', $this->due_date)->format('Y-m-d H:i:00');
+        $dueDate = Carbon::createFromFormat('d/m/Y H:i', $this->due_date)->format('Y-m-d H:i:00');
 
-        if ($this->recurrence_end_date) {
-            $this->recurrence_end_date = Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date)->format('Y-m-d');
-        } else {
-            $this->recurrence_end_date = null;
-        }
-
-        DB::beginTransaction();
+        $recurrenceEndDate = $this->recurrence_end_date
+            ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date)->format('Y-m-d')
+            : null;
 
         try {
+            DB::beginTransaction();
+
             $task = Task::create([
                 'title' => $this->title,
                 'description' => $this->description,
                 'category_id' => $this->category_id,
                 'priority' => $this->priority,
-                'label_id' => $this->label_id,
+                'label_id' => $this->label_id ?: null,
                 'recurrence' => $this->recurrence,
-                'due_date' => $this->due_date,
-                'recurrence_end_date' => $this->recurrence_end_date,
+                'due_date' => $dueDate,
+                'recurrence_end_date' => $recurrenceEndDate,
                 'status' => $this->status,
                 'user_id' => Auth::id(),
             ]);
 
             $this->handleTaskRecurrence($task);
             $this->handleTaskAssignments($task);
-            $this->handleNotificationsAndReminders($task);
+            $this->createInstantNotifications($task);
 
             DB::commit();
+
+            // Mail/reminder after task save, so task save will not fail because of mail/queue issue
+            // $this->sendTaskAssignedMails($task);
+            // $this->safeScheduleTaskMailFlow($task);
 
             $this->dispatch('taskCreated');
             $this->close();
 
-            $this->notify(
-                'Task created successfully.',
-                'success'
-            );
+            $this->notify('Task created successfully.', 'success');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Task Save Error: ' . $e->getMessage());
-            $this->notify(
-                'An error occurred while saving task.',
-                'error'
-            );
+
+            $this->notify('Task Save Error: ' . $e->getMessage(), 'error');
         }
     }
+
+    // private function sendTaskAssignmentWhatsApp($task, $user)
+    // {
+    //     try {
+
+    //         if (empty($user->phone_number)) {
+    //             return;
+    //         }
+
+    //         $message =
+    //             "*New Task Assigned*\n\n" .
+    //             "Hello {$user->name},\n\n" .
+    //             "Task : {$task->title}\n" .
+    //             "Description : {$task->description}\n" .
+    //             "Priority : {$task->priority}\n" .
+    //             "Status : {$task->status}\n" .
+    //             "Due Date : " .
+    //             Carbon::parse($task->due_date)
+    //             ->format('d-m-Y h:i A') .
+    //             "\n\nPlease complete the task on time.";
+
+    //         app(WhatsAppService::class)
+    //             ->send($user->phone_number, $message);
+    //     } catch (\Exception $e) {
+
+    //         \Log::error(
+    //             'Task WhatsApp Error : ' .
+    //                 $e->getMessage()
+    //         );
+    //     }
+    // }
 
     // Manage weekly task recurrence days
     private function handleTaskRecurrence(Task $task)
@@ -342,6 +371,32 @@ class TaskDetailsModal extends Component
     }
 
 
+    // private function sendTaskAssignedMails(Task $task): void
+    // {
+    //     foreach ($this->selectedUsers as $userId) {
+    //         $user = User::find($userId);
+
+    //         if (! $user) {
+    //             continue;
+    //         }
+
+    //         try {
+    //             Mail::to($user->email)->send(new TaskAssignedMail($task, $user));
+    //         } catch (\Throwable $e) {
+    //             Log::error('Task Assigned Mail Error: ' . $e->getMessage());
+    //         }
+    //     }
+    // }
+
+    // private function safeScheduleTaskMailFlow(Task $task): void
+    // {
+    //     try {
+    //         $this->selectedUsers = array_unique($this->selectedUsers);
+    //         $this->scheduleTaskMailFlow($task, $this->selectedUsers);
+    //     } catch (\Throwable $e) {
+    //         Log::error('Task Reminder Schedule Error: ' . $e->getMessage());
+    //     }
+    // }
     // Assign tasks and send emails to assigned users
     private function handleTaskAssignments(Task $task)
     {
@@ -371,6 +426,9 @@ class TaskDetailsModal extends Component
                     $user = User::find($userId);
                     if ($user) {
                         Mail::to($user->email)->queue(new TaskAssignedMail($task, $user));
+
+                        // New WhatsApp
+                        // $this->sendTaskAssignmentWhatsApp($task,$user);
                     } else {
                         // Log or handle invalid user ID
                         Log::warning("User with ID {$userId} not found for task assignment.");
