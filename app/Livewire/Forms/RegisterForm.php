@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
+use App\Mail\RegisterUserMail;
+use Illuminate\Support\Facades\Mail;
 
 class RegisterForm extends Component
 {
@@ -39,6 +41,8 @@ class RegisterForm extends Component
             'password.min'          => 'The password must be at least 8 characters long.',
         ]);
 
+        $plainPassword = $validated['password'];
+
         $user = User::create([
             'first_name'   => $validated['first_name'],
             'last_name'    => $validated['last_name'],
@@ -48,6 +52,8 @@ class RegisterForm extends Component
             'status' => 1,
             'password'     => Hash::make($validated['password']),
         ]);
+
+        Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
 
         Auth::login($user);
 

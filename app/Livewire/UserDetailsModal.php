@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
+use App\Mail\RegisterUserMail;
 
 class UserDetailsModal extends Component
 {
@@ -29,6 +30,8 @@ class UserDetailsModal extends Component
     public $user_id; // To store the user ID for editing
 
     public $submitted = true;
+
+    public $plainPassword = '';
 
     protected $listeners = ['openModal' => 'open', 'closeModal' => 'close', 'edituser' => 'loadUser'];
 
@@ -53,6 +56,7 @@ class UserDetailsModal extends Component
     public function saveUser()
     {
         $this->submitted = true;
+
         $rules = [
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
@@ -60,6 +64,7 @@ class UserDetailsModal extends Component
             'phone_number' => 'required|string|max:15',
             'role' => 'required|in:admin,user',
             'status' => 'required|in:1,0',
+            'password' => $this->user_id ? 'nullable|min:8|max:255' : 'required|min:8|max:255',
         ];
 
         $messages = [
@@ -71,22 +76,42 @@ class UserDetailsModal extends Component
             'role.required' => 'Please select a role.',
             'role.in' => 'Please select a valid role.',
             'status.required' => 'Please select the status.',
+            'password.required' => 'Please enter the password.',
+            'password.min' => 'The password must be at least 8 characters long.',
         ];
 
         $this->validate($rules, $messages);
 
         if ($this->user_id) {
             $user = User::findOrFail($this->user_id);
-            $user->update([
+
+            $updateData = [
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
                 'email' => $this->email,
                 'phone_number' => $this->phone_number,
                 'role' => $this->role,
                 'status' => $this->status,
-            ]);
+            ];
+
+            if (!empty($this->password)) {
+                $plainPassword = $this->password;
+                $updateData['password'] = Hash::make($plainPassword);
+            }
+
+            $user->update($updateData);
+
+            if (!empty($this->password)) {
+                $user->refresh();
+
+                Mail::to($user->email)
+                    ->send(new RegisterUserMail($user, $plainPassword));
+            }
+
             $message = 'User updated successfully.';
         } else {
+            $plainPassword = $this->password;
+
             $user = User::create([
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
@@ -94,23 +119,21 @@ class UserDetailsModal extends Component
                 'phone_number' => $this->phone_number,
                 'role' => $this->role,
                 'status' => $this->status,
-                'password' => Hash::make($this->password),
+                'password' => Hash::make($plainPassword),
             ]);
 
             PasswordResetToken::where('email', $user->email)->delete();
-
             $token = Str::random(60);
             PasswordResetToken::create([
                 'email' => $user->email,
                 'token' => $token,
                 'created_at' => now(),
             ]);
-            try {
-                // Mail::to($user->email)->send(new SendResetPasswordEmail($user, $token));
-                $message = 'User added successfully.';
-            } catch (\Throwable $th) {
-                $message = 'User added successfully, but password reset email not sent';
-            }
+
+            Mail::to($user->email)
+                ->send(new RegisterUserMail($user, $plainPassword));
+
+            $message = 'User added successfully.';
         }
 
         $this->resetForm();
