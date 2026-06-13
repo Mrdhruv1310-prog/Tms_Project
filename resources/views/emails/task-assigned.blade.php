@@ -1,23 +1,3 @@
-{{-- <!DOCTYPE html>
-<html>
-<head>
-    <title>Task Assigned</title>
-</head>
-<body>
-    <h1>Task Assigned</h1>
-    <p>Dear {{ $user->name }},</p>
-    <p>You have been assigned a new task:</p>
-    <ul>
-        <li><strong>Title:</strong> {{ $task->title }}</li>
-        <li><strong>Description:</strong> {{ $task->description }}</li>
-        <li><strong>Due Date:</strong> {{ $task->due_date }}</li>
-        <li><strong>Priority:</strong> {{ ucfirst($task->priority) }}</li>
-    </ul>
-    <p>Please complete this task by the due date.</p>
-    <p>Best regards,<br>Your Task Management Team</p>
-</body>
-</html> --}}
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -25,126 +5,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Assigned</title>
-
-    <style>
-        @media only screen and (max-width: 600px) {
-            .main {
-                width: 320px !important;
-            }
-
-            .content {
-                padding: 15px !important;
-            }
-
-            .btn a {
-                display: block !important;
-                width: 100% !important;
-            }
-        }
-    </style>
-
 </head>
 
-<body style="margin:0; padding:0; background-color:#fdf3ec; font-family:Arial, sans-serif;">
+<body style="margin:0; padding:0; background:#f4f7fb; font-family:Arial, Helvetica, sans-serif;">
 
-    <table class="main" align="center" width="600" style="margin:auto; background:#ffffff; border-collapse:collapse;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb; padding:30px 12px;">
+    <tr>
+        <td align="center">
 
-        <!-- Logo -->
-        <tr>
-            <td align="center" style="padding:20px;">
-                <img src="{{ asset('icons/tms.png') }}" width="120" alt="Logo">
-            </td>
-        </tr>
+            <table width="620" cellpadding="0" cellspacing="0"
+                style="width:100%; max-width:620px; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(15,23,42,0.10);">
 
-        <!-- Main Heading -->
-        <tr>
-            <td align="center" style="padding:10px 20px 0 20px;">
-                <h1 style="margin:0; font-size:26px; color:#333;">Task Assigned</h1>
-            </td>
-        </tr>
+                <!-- Header -->
+                <tr>
+                    <td style="background:#0f172a; padding:28px 32px; text-align:center;">
+                        <img src="{{ asset('icons/tms.png') }}"
+                            alt="Company Logo"
+                            style="max-width:110px; height:auto; margin-bottom:16px;">
 
-        <!-- Sub Header -->
-        <tr>
-            <td
-                style="background:#28a745; color:#ffffff; text-align:center; padding:12px; font-size:18px; font-weight:bold;">
-                New Task Notification
-            </td>
-        </tr>
+                        <h1 style="margin:0; color:#ffffff; font-size:24px; font-weight:700;">
+                            Task Assigned
+                        </h1>
 
-        <!-- Content -->
-        <tr>
-            <td class="content" style="padding:25px; color:#555; font-size:16px; line-height:24px;">
-                ```
-                Dear <strong style="color:#2b7a78;">{{ $user->name }}</strong>,
-                <br><br>
+                        <p style="margin:8px 0 0; color:#cbd5e1; font-size:14px;">
+                            A new task has been assigned to you.
+                        </p>
+                    </td>
+                </tr>
 
-                You have been assigned a new task. Please find the details below:
+                <!-- Body -->
+                <tr>
+                    <td style="padding:32px; color:#334155; font-size:15px; line-height:1.6;">
 
-                <br><br>
+                        <p style="margin:0 0 18px;">
+                            Dear
+                            <strong style="color:#0f172a;">
+                                {{ $user->name }}
+                            </strong>,
+                        </p>
 
-                <strong>Task Details:</strong>
+                        <p style="margin:0 0 22px;">
+                            You have been assigned a new task. Please review the details below.
+                        </p>
 
-                <table width="100%" style="margin-top:10px; border-collapse:collapse;">
-                    <tr>
-                        <td style="padding:8px; border:1px solid #eee;"><strong>Title</strong></td>
-                        <td style="padding:8px; border:1px solid #eee;">
-                            {{ $task->title }}
-                        </td>
-                    </tr>
+                        <!-- Task Details -->
+                        <table width="100%" cellpadding="0" cellspacing="0"
+                            style="border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
 
-                    <tr>
-                        <td style="padding:8px; border:1px solid #eee;"><strong>Description</strong></td>
-                        <td style="padding:8px; border:1px solid #eee;">
-                            {{ $task->description }}
-                        </td>
-                    </tr>
+                            <tr>
+                                <td colspan="2"
+                                    style="background:#f8fafc; padding:14px 18px; color:#0f172a; font-size:16px; font-weight:700; border-bottom:1px solid #e2e8f0;">
+                                    Task Details
+                                </td>
+                            </tr>
 
-                    <tr>
-                        <td style="padding:8px; border:1px solid #eee;"><strong>Due Date</strong></td>
-                        <td style="padding:8px; border:1px solid #eee;">
-                            {{ $task->due_date }}
-                        </td>
-                    </tr>
+                            <tr>
+                                <td style="width:35%; padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#64748b; font-weight:600;">
+                                    Task Title
+                                </td>
+                                <td style="padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#0f172a;">
+                                    {{ $task->title }}
+                                </td>
+                            </tr>
 
-                    <tr>
-                        <td style="padding:8px; border:1px solid #eee;"><strong>Priority</strong></td>
-                        <td style="padding:8px; border:1px solid #eee;">
-                            {{ ucfirst($task->priority) }}
-                        </td>
-                    </tr>
-                </table>
+                            <tr>
+                                <td style="padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#64748b; font-weight:600;">
+                                    Description
+                                </td>
+                                <td style="padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#0f172a;">
+                                    {{ $task->description }}
+                                </td>
+                            </tr>
 
-                <br>
+                            <tr>
+                                <td style="padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#64748b; font-weight:600;">
+                                    Due Date
+                                </td>
+                                <td style="padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#0f172a;">
+                                    {{ $task->due_date }}
+                                </td>
+                            </tr>
 
-                Please make sure to complete this task by the due date.
+                            <tr>
+                                <td style="padding:14px 18px; color:#64748b; font-weight:600;">
+                                    Priority
+                                </td>
+                                <td style="padding:14px 18px;">
+                                    <span style="display:inline-block; padding:6px 12px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:13px; font-weight:700;">
+                                        {{ ucfirst($task->priority) }}
+                                    </span>
+                                </td>
+                            </tr>
 
-                <br><br>
+                        </table>
 
-                <!-- Button -->
-                <div class="btn" style="text-align:center;">
-                    <a href="{{ url('/tasks?task_view=tasks') }}"
-                        style="background-color:#ff8300; color:#ffffff;padding:12px 25px;text-decoration:none;
-                    border-radius:5px;display:inline-block;font-weight:bold;">
-                        View Task
-                    </a>
-                </div>
+                        <p style="margin:22px 0 0; color:#475569;">
+                            Please make sure to complete this task before the due date.
+                        </p>
 
-                <br><br>
+                        <!-- Button -->
+                        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                            <tr>
+                                <td align="center">
+                                    <a href="{{ url('/tasks?task_view=tasks') }}"
+                                        style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:13px 30px; border-radius:10px; font-size:15px; font-weight:700;">
+                                        View Task
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
 
-                Best regards,<br>
-                <strong>Your Task Management Team</strong>
-            </td>
-        </tr>
+                        <p style="margin:28px 0 0; color:#475569;">
+                            Best regards,<br>
+                            <strong style="color:#0f172a;">Task Management Team</strong>
+                        </p>
 
-        <!-- Footer -->
-        <tr>
-            <td style="background:#f5f5f5; text-align:center; padding:15px; font-size:12px; color:#777;">
-                *This is an automated notification. Please do not reply to this email.*
-            </td>
-        </tr>
+                    </td>
+                </tr>
 
-    </table>
+                <!-- Footer -->
+                <tr>
+                    <td style="background:#f8fafc; padding:18px 28px; text-align:center; border-top:1px solid #e2e8f0;">
+                        <p style="margin:0; color:#64748b; font-size:12px; line-height:1.5;">
+                            This is an automated notification email. Please do not reply.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
 
 </body>
-
 </html>

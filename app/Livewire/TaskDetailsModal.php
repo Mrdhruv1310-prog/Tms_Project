@@ -523,7 +523,7 @@ class TaskDetailsModal extends Component
                 ]);
 
                 SendReminderJob::dispatch(
-                    $reminder,
+                    $reminder->id,
                     $this->reminderChannel,
                     $schedule['message']
                 )->delay($schedule['time']);
@@ -541,7 +541,7 @@ class TaskDetailsModal extends Component
                 ]);
 
                 SendReminderJob::dispatch(
-                    $reminder,
+                    $reminder->id,
                     $this->reminderChannel,
                     'Reminder: Task "' . $task->title . '" is still pending.'
                 )->delay($dailyDate);
