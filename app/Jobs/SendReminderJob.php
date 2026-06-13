@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Mail\TimeWiseReminderMail;
 use App\Models\Reminder;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -9,16 +10,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class SendReminderJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $reminderId;
-    public $channel;
-    public $message;
+    public int $reminderId;
+    public array $channel;
+    public string $message;
 
     public function __construct(int $reminderId, array $channel, string $message)
     {
@@ -44,14 +45,18 @@ class SendReminderJob implements ShouldQueue
 
         $user = User::find($reminder->user_id);
 
-        if (! $user) {
+        if (! $user || empty($user->email)) {
             return;
         }
+
         if (in_array('email', $this->channel)) {
-            Mail::raw($this->message, function ($mail) use ($user, $task) {
-                $mail->to($user->email)
-                    ->subject("Task Reminder: {$task->title}");
-            });
+            Mail::to($user->email)->send(
+                new TimeWiseReminderMail(
+                    $task,
+                    $user,
+                    $this->message
+                )
+            );
         }
 
         Log::info("Reminder mail sent to {$user->email} for task {$task->title}");
