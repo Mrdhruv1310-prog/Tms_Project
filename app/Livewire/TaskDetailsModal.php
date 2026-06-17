@@ -781,21 +781,35 @@ class TaskDetailsModal extends Component
                 $task,
                 $userId,
                 $dueDate->copy()->subHours(24),
-                "Only 24 hours left to complete your task '{$task->title}'."
+                "Only 24 hours left to complete your task."
             );
 
             $this->createAndDispatchReminder(
                 $task,
                 $userId,
                 $dueDate->copy()->subHours(12),
-                "Only 12 hours left to complete your task '{$task->title}'."
+                "Only 12 hours left to complete your task."
             );
 
             $this->createAndDispatchReminder(
                 $task,
                 $userId,
                 $dueDate->copy()->subHours(6),
-                "Only 6 hours left to complete your task '{$task->title}'."
+                "Only 6 hours left to complete your task ."
+            );
+
+            $this->createAndDispatchReminder(
+                $task,
+                $userId,
+                $dueDate->copy()->subHours(3),
+                "Only 3 hours left to complete your task ."
+            );
+
+            $this->createAndDispatchReminder(
+                $task,
+                $userId,
+                $dueDate->copy()->subMinutes(30),
+                'Only 30 minutes left to complete task "' . $task->title . '".'
             );
 
             $this->createAndDispatchReminder(

@@ -60,15 +60,6 @@
 
                                 <tr>
                                     <td style="width:35%; padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#64748b; font-weight:600;">
-                                        Task ID
-                                    </td>
-                                    <td style="padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#0f172a;">
-                                        #{{ $task->id ?? 'N/A' }}
-                                    </td>
-                                </tr>
-
-                                <tr>
-                                    <td style="width:35%; padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#64748b; font-weight:600;">
                                         Task Title
                                     </td>
                                     <td style="padding:14px 18px; border-bottom:1px solid #e2e8f0; color:#0f172a;">

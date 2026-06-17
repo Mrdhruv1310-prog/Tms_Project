@@ -30,7 +30,7 @@ class SendReminderJob implements ShouldQueue
 
     public function handle(): void
     {
-        $reminder = Reminder::find($this->reminderId);
+        $reminder = Reminder::with('task')->find($this->reminderId);
 
         if (! $reminder) {
             Log::info("Reminder skipped because reminder was deleted. ID: {$this->reminderId}");
