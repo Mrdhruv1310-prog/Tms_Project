@@ -406,7 +406,7 @@ class TaskDetailsModal extends Component
     // Assign tasks and send emails to assigned users
     private function handleTaskAssignments(Task $task)
     {
-        $selectedUsers = array_values(array_unique(array_filter($this->selectedUsers)));
+        $selectedUsers = array_values(array_unique($this->selectedUsers));
 
         DB::table('task_assignments')
             ->where('task_id', $task->id)
@@ -428,9 +428,13 @@ class TaskDetailsModal extends Component
             $users = User::whereIn('id', $selectedUsers)->get();
 
             foreach ($users as $user) {
-                if (! empty($user->email)) {
-                    Mail::to($user->email)->queue(new TaskAssignedMail($task, $user));
+                $cacheKey = 'task_assigned_mail_sent_' . $task->id . '_' . $user->id;
+
+                if (! Cache::add($cacheKey, true, now()->addDays(7))) {
+                    continue;
                 }
+
+                Mail::to($user->email)->queue(new TaskAssignedMail($task, $user));
             }
         });
     }
