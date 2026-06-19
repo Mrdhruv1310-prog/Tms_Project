@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use App\Jobs\SendReminderJob;
@@ -29,6 +30,7 @@ class TaskDetailsModal extends Component
     public string $route;
     public $isReminderEnabled = false;
     public bool $isOpen = false;
+    public bool $isSaving = false;
     public $taskId;
     public $title;
     public $description;
@@ -259,15 +261,41 @@ class TaskDetailsModal extends Component
     // }
     public function saveTask()
     {
-        $this->validate();
+        if ($this->isSaving) {
+            return;
+        }
 
-        $dueDate = Carbon::createFromFormat('d/m/Y H:i', $this->due_date)->format('Y-m-d H:i:00');
-
-        $recurrenceEndDate = $this->recurrence_end_date
-            ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date)->format('Y-m-d')
-            : null;
+        $this->isSaving = true;
+        $cacheKey = null;
 
         try {
+            $this->validate();
+
+            $dueDate = Carbon::createFromFormat('d/m/Y H:i', $this->due_date)
+                ->format('Y-m-d H:i:00');
+
+            $recurrenceEndDate = $this->recurrence_end_date
+                ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date)->format('Y-m-d')
+                : null;
+
+            $this->selectedUsers = array_values(array_unique(array_filter($this->selectedUsers)));
+
+            $cacheKey = 'task-save-lock:' . Auth::id() . ':' . md5(
+                $this->title . '|' .
+                    $this->description . '|' .
+                    $this->category_id . '|' .
+                    $this->priority . '|' .
+                    ($this->label_id ?: 'null') . '|' .
+                    $this->recurrence . '|' .
+                    $dueDate . '|' .
+                    ($recurrenceEndDate ?: 'null') . '|' .
+                    implode(',', $this->selectedUsers)
+            );
+
+            if (! Cache::add($cacheKey, true, now()->addSeconds(10))) {
+                return;
+            }
+
             DB::beginTransaction();
 
             $task = Task::create([
@@ -289,19 +317,28 @@ class TaskDetailsModal extends Component
 
             DB::commit();
 
-            // Mail/reminder after task save, so task save will not fail because of mail/queue issue
-            // $this->sendTaskAssignedMails($task);
-            // $this->safeScheduleTaskMailFlow($task);
-
             $this->dispatch('taskCreated');
             $this->close();
 
             $this->notify('Task created successfully.', 'success');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($cacheKey) {
+                Cache::forget($cacheKey);
+            }
+
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if ($cacheKey) {
+                Cache::forget($cacheKey);
+            }
+
             Log::error('Task Save Error: ' . $e->getMessage());
 
             $this->notify('Task Save Error: ' . $e->getMessage(), 'error');
+        } finally {
+            $this->isSaving = false;
         }
     }
 
@@ -369,51 +406,33 @@ class TaskDetailsModal extends Component
     // Assign tasks and send emails to assigned users
     private function handleTaskAssignments(Task $task)
     {
-        try {
-            // Start a database transaction
-            DB::beginTransaction();
+        $selectedUsers = array_values(array_unique(array_filter($this->selectedUsers)));
 
-            // Delete existing task assignments
-            DB::table('task_assignments')
-                ->where('task_id', $task->id)
-                ->delete();
+        DB::table('task_assignments')
+            ->where('task_id', $task->id)
+            ->delete();
 
-            // Process assignments if there are selected users
-            if (!empty($this->selectedUsers)) {
-                // Ensure unique user IDs
-                $this->selectedUsers = array_unique($this->selectedUsers);
+        foreach ($selectedUsers as $userId) {
+            DB::table('task_assignments')->updateOrInsert(
+                [
+                    'task_id' => $task->id,
+                    'user_id' => $userId,
+                ],
+                [
+                    'assigned_at' => now(),
+                ]
+            );
+        }
 
-                foreach ($this->selectedUsers as $userId) {
-                    // Insert new assignment
-                    DB::table('task_assignments')->insert([
-                        'task_id' => $task->id,
-                        'user_id' => $userId,
-                        'assigned_at' => now(),
-                    ]);
+        DB::afterCommit(function () use ($task, $selectedUsers) {
+            $users = User::whereIn('id', $selectedUsers)->get();
 
-                    // Send email to the assigned user
-                    $user = User::find($userId);
-                    if ($user) {
-                        Mail::to($user->email)->queue(new TaskAssignedMail($task, $user));
-                    } else {
-                        // Log or handle invalid user ID
-                        Log::warning("User with ID {$userId} not found for task assignment.");
-                    }
+            foreach ($users as $user) {
+                if (! empty($user->email)) {
+                    Mail::to($user->email)->queue(new TaskAssignedMail($task, $user));
                 }
             }
-
-            // Commit the transaction
-            DB::commit();
-        } catch (\Exception $e) {
-            // Roll back the transaction on error
-            DB::rollBack();
-
-            // Log the error for debugging
-            Log::error("Failed to handle task assignments for task ID {$task->id}: {$e->getMessage()}");
-
-            // Optionally, rethrow or handle the error based on your needs
-            throw new \Exception("Unable to process task assignments. Please try again later.");
-        }
+        });
     }
 
     private function updatehandleTaskAssignments(Task $task)
