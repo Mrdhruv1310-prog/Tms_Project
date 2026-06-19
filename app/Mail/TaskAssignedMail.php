@@ -8,13 +8,11 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
-class TaskAssignedMail extends Mailable
+class TaskAssignedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    protected $signature = 'emails:task_assigned';
     public $task; // Task details
     public $user; // User details
 
@@ -45,11 +43,6 @@ class TaskAssignedMail extends Mailable
      */
     public function content(): Content
     {
-        // log the task and user details for debugging
-        Log::info('Task Assigned Mail', [
-            'task' => $this->task,
-            'user' => $this->user,
-        ]);
         return new Content(
             view: 'emails.task-assigned', // Path to the Blade view
             with: [
