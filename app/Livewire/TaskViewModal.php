@@ -8,25 +8,70 @@ use Illuminate\Support\Facades\Log;
 
 class TaskViewModal extends Component
 {
-    public $taskId;
-    public $isOpen = false;
-    public $taskList;
+    public $taskId = null;
+    public bool $isOpen = false;
+    public $taskList = null;
     public $taskUpdates = [];
 
-    protected $listeners = ['openTaskViewModal' => 'open'];
+    protected $listeners = [
+        'openTaskViewModal' => 'open',
+        'taskStatusUpdated' => 'refreshTaskData',
+        'taskUpdated' => 'refreshTaskData',
+        'refreshTaskViewModal' => 'refreshTaskData',
+    ];
 
-    public function open($taskId)
+    public function open($taskId): void
     {
-        $this->taskId = $taskId;
+        $this->taskId = is_array($taskId) ? ($taskId['taskId'] ?? null) : $taskId;
 
-        // Fetch task with related models including task updates and the users who made the updates
-        $this->taskList = Task::with(['assignedUsers', 'assignedBy', 'category', 'updates.user']) // 'updates.user' will load the user who made the update
-            ->findOrFail($this->taskId);
+        if (! $this->taskId) {
+            return;
+        }
 
-        // Also load the task updates separately if needed
-        $this->taskUpdates = $this->taskList->updates;
-        
+        $this->loadTaskData();
         $this->isOpen = true;
+    }
+
+    public function refreshTaskData(): void
+    {
+        if (! $this->taskId) {
+            return;
+        }
+
+        $this->loadTaskData();
+    }
+
+    private function loadTaskData(): void
+    {
+        try {
+            $this->taskList = Task::query()
+                ->with([
+                    'assignedUsers',
+                    'assignedBy',
+                    'category',
+                    'updates.user',
+                    'reminders.user',
+                ])
+                ->findOrFail($this->taskId);
+
+            $this->taskUpdates = $this->taskList->updates()
+                ->with('user')
+                ->latest()
+                ->get();
+        } catch (\Throwable $e) {
+            Log::error('Task View Modal Load Error: ' . $e->getMessage(), [
+                'task_id' => $this->taskId,
+            ]);
+
+            $this->taskList = null;
+            $this->taskUpdates = collect();
+        }
+    }
+
+    public function close(): void
+    {
+        $this->isOpen = false;
+        $this->reset(['taskId', 'taskList', 'taskUpdates']);
     }
 
     public function render()
