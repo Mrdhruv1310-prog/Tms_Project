@@ -7,6 +7,7 @@
         $visibleCategories = collect($categories ?? []);
         $visibleTeam = collect($team ?? []);
         $visibleGroups = collect($groups ?? []);
+        $visibleTasks = collect($tasksAssignedByUser ?? []);
     @endphp
 
     <div class="min-h-screen bg-[#eef3fb] antialiased">
@@ -38,10 +39,10 @@
                         $title = strtolower($label['title']);
 
                         $cardGradient = match ($title) {
-                            'pending' => 'from-[#0067f4] to-[#6aaeff]',
-                            'in progress' => 'from-[#f5365c] to-[#fb7896]',
-                            'completed' => 'from-[#00a06a] to-[#45d6aa]',
-                            'total' => 'from-[#fb7b24] to-[#ffb167]',
+                            'pending' => 'from-[#F40202] to-[#FF0F11]',
+                            'in progress' => 'from-[#FFCE1B] to-[#FBC500]',
+                            'completed' => 'from-[#00a06a] to-[#006d4c]',
+                            'total' => 'from-[#0067f4] to-[#6aaeff]',
                             default => 'from-[#0067f4] to-[#6aaeff]',
                         };
                     @endphp

@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Component
 {
@@ -17,7 +18,15 @@ class Dashboard extends Component
     public $groups = [];
     public $tasksAssignedByUser = [];
 
+    public ?int $openStatusTaskId = null;
+    public array $statusForm = [];
+
     public function mount()
+    {
+        $this->refreshDashboardData();
+    }
+
+    private function refreshDashboardData(): void
     {
         $authUser = Auth::user();
         $authUserId = (int) $authUser->id;
@@ -29,6 +38,7 @@ class Dashboard extends Component
         $this->setCategories($isAdmin, $isUser, $authUserId);
         $this->setTeam($isAdmin, $isUser, $authUserId);
         $this->setGroups($isAdmin, $isUser, $authUserId);
+        $this->setTasksAssignedByUser($isAdmin, $authUserId);
     }
 
     private function assignedTaskQuery(bool $isAdmin, int $authUserId)
@@ -216,6 +226,114 @@ class Dashboard extends Component
             })
             ->values()
             ->toArray();
+    }
+
+    private function setTasksAssignedByUser(bool $isAdmin, int $authUserId): void
+    {
+        $this->tasksAssignedByUser = $this->assignedTaskQuery($isAdmin, $authUserId)
+            ->with(['assignedBy', 'category', 'group'])
+            ->latest('id')
+            ->get();
+    }
+
+    public function openStatusDropdown(int $taskId): void
+    {
+        $task = $this->getAllowedTask($taskId);
+
+        if (! $task || $task->status === 'completed') {
+            return;
+        }
+
+        $this->openStatusTaskId = $task->id;
+
+        $this->statusForm[$task->id] = ['status' => in_array($task->status, ['pending', 'in_progress']) ? 'in_progress' : 'completed', 'comment' => '',];
+    }
+
+    public function cancelStatusDropdown(): void
+    {
+        $this->openStatusTaskId = null;
+        $this->resetValidation();
+    }
+
+    public function saveTaskStatus(int $taskId): void
+    {
+        $task = $this->getAllowedTask($taskId);
+
+        if (! $task || $task->status === 'completed') {
+            return;
+        }
+
+        $this->validate([
+            "statusForm.$taskId.status" => 'required|in:in_progress,completed',
+            "statusForm.$taskId.comment" => 'nullable|string|max:1000',
+        ]);
+
+        $newStatus = (string) ($this->statusForm[$taskId]['status'] ?? '');
+        $comment = trim((string) ($this->statusForm[$taskId]['comment'] ?? ''));
+
+        if (! in_array($newStatus, $this->allowedNextStatuses($task->status), true)) {
+            $this->addError("statusForm.$taskId.status", 'Selected status is not allowed for this task.');
+            return;
+        }
+
+        DB::transaction(function () use ($task, $newStatus, $comment) {
+            $task->update([
+                'status' => $newStatus,
+            ]);
+
+            DB::table('task_updates')->insert([
+                'task_id' => $task->id,
+                'user_id' => Auth::id(),
+                'status' => $newStatus,
+                'comment' => $comment,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        unset($this->statusForm[$taskId]);
+        $this->openStatusTaskId = null;
+        $this->refreshDashboardData();
+
+        session()->flash('success', 'Task status updated successfully.');
+    }
+
+    public function allowedNextStatuses(string $currentStatus): array
+    {
+        return match ($currentStatus) {
+            'pending', 'in_progress' => [
+                'in_progress',
+                'completed',
+            ],
+            default => [],
+        };
+    }
+
+    private function getAllowedTask(int $taskId): ?Task
+    {
+        $authUser = Auth::user();
+        $authUserId = (int) $authUser->id;
+        $isAdmin = $authUser->role === 'admin';
+
+        return $this->assignedTaskQuery($isAdmin, $authUserId)->where('id', $taskId)->first();
+    }
+
+    public function statusLabel(string $status): string
+    {
+        return match ($status) {
+            'in_progress' => 'In Progress',
+            'completed' => 'Complete',
+            default => 'Pending',
+        };
+    }
+
+    public function statusClass(string $status): string
+    {
+        return match ($status) {
+            'in_progress' => 'background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd;',
+            'completed' => 'background:#dcfce7;color:#15803d;border:1px solid #86efac;',
+            default => 'background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;',
+        };
     }
 
     public function render()

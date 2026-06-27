@@ -7,6 +7,7 @@ use App\Models\TaskCompletionRequest;
 use App\Models\TaskConversation;
 use Carbon\Carbon;
 use App\Models\Reminder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -15,8 +16,7 @@ use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\ActionSize;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
@@ -28,6 +28,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -83,8 +84,14 @@ class TaskTable extends Component implements HasForms, HasTable
                                 ->label('Due Date')
                                 ->tooltip(fn($record, $column) => $column->getLabel())
                                 ->icon('heroicon-o-calendar-days')
-                                ->formatStateUsing(fn($state) => Carbon::parse($state)->format('d-m-Y H:i'))
-                                ->color(fn(string $state): string => Carbon::parse($state)->isPast() ? 'danger' : 'info')
+                                ->placeholder('Non')
+                                ->formatStateUsing(function ($state) {
+                                    if (blank($state)) {
+                                        return 'Non';
+                                    }
+
+                                    return Carbon::parse($state)->format('d-m-Y H:i');
+                                })
                                 ->extraAttributes(['class' => 'whitespace-nowrap rounded-xl bg-gray-50 px-3 py-2 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700']),
 
                             TextColumn::make('assignedUsers')
@@ -180,6 +187,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->options([
                         'pending' => 'Pending',
                         'in_progress' => 'In Progress',
+                        'complete_intimation' => 'Request Complete',
                         'completed' => 'Completed',
                     ]),
 
@@ -261,91 +269,39 @@ class TaskTable extends Component implements HasForms, HasTable
                             ->exists();
                     }),
 
-                Action::make('in_progress')
-                    ->action(function (Task $task) {
-                        $this->updateStatus($task, 'in_progress');
+                Action::make('status_update')
+                    ->label(fn(Task $task) => $this->getStatusActionLabel($task))
+                    ->button()
+                    ->size(ActionSize::Small)
+                    ->color(fn(Task $task) => $this->getStatusActionColor($task))
+                    ->icon('heroicon-o-arrow-path-rounded-square')
+                    ->modalHeading(fn(Task $task) => 'Update Status - ' . $task->title)
+                    ->modalSubmitActionLabel('Update Status')
+                    ->form(function (Task $task): array {
+                        return [
+                            Textarea::make('comment')
+                                ->label('Comment')
+                                ->placeholder('Enter task update comment...')
+                                ->required()
+                                ->maxLength(1000)
+                                ->rows(3),
+
+                            Select::make('status')
+                                ->label('Select Option')
+                                ->options($this->getStatusOptions($task))
+                                ->default($this->getDefaultNextStatus($task))
+                                ->required()
+                                ->native(false),
+                        ];
                     })
-                    ->label('In Progress')
-                    ->button()
-                    ->size(ActionSize::Small)
-                    ->color('warning')
-                    ->icon('heroicon-o-forward')
-                    ->visible(function (Task $task) {
-                        $userId = Auth::id();
-
-                        $isAssigned = DB::table('task_assignments')
-                            ->where('task_id', $task->id)
-                            ->where('user_id', $userId)
-                            ->exists();
-
-                        $userStatus = DB::table('task_updates')
-                            ->where('task_id', $task->id)
-                            ->where('user_id', $userId)
-                            ->latest('updated_at')
-                            ->value('status');
-
-                        return $this->taskView === 'my_tasks'
-                            && $isAssigned
-                            && ($userStatus === 'pending' || is_null($userStatus));
-                    }),
-
-                Action::make('complete')
-                    ->action(function (Task $task) {
-                        $this->updateStatus($task, 'completed');
+                    ->action(function (Task $task, array $data): void {
+                        $this->updateTaskStatusFromTable(
+                            $task,
+                            $data['status'],
+                            $data['comment'] ?? null,
+                        );
                     })
-                    ->label('Complete')
-                    ->button()
-                    ->size(ActionSize::Small)
-                    ->color('success')
-                    ->icon('heroicon-o-check')
-                    ->visible(function (Task $task) {
-                        $userId = Auth::id();
-
-                        $userStatus = DB::table('task_updates')
-                            ->where('task_id', $task->id)
-                            ->where('user_id', $userId)
-                            ->orderBy('updated_at', 'desc')
-                            ->limit(1)
-                            ->value('status');
-
-                        return $this->taskView === 'my_tasks'
-                            && $userStatus === 'in_progress'
-                            && $userId === optional($task->creator)->id
-                            && $task->taskAssignments->contains('user_id', $userId);
-                    }),
-
-                Action::make('completeintimation')
-                    ->action(fn(Task $task) => $this->requestCompletion($task))
-                    ->label('Request Complete')
-                    ->button()
-                    ->size(ActionSize::Small)
-                    ->color('info')
-                    ->icon('heroicon-o-paper-airplane')
-                    ->visible(function (Task $task) {
-                        $userId = Auth::id();
-
-                        $isAssigned = DB::table('task_assignments')
-                            ->where('task_id', $task->id)
-                            ->where('user_id', $userId)
-                            ->exists();
-
-                        $userStatus = DB::table('task_updates')
-                            ->where('task_id', $task->id)
-                            ->where('user_id', $userId)
-                            ->orderBy('updated_at', 'desc')
-                            ->limit(1)
-                            ->value('status');
-
-                        $hasPendingRequest = TaskCompletionRequest::where('task_id', $task->id)
-                            ->where('request_status', 'pending')
-                            ->exists();
-
-                        return $this->taskView === 'my_tasks'
-                            && $isAssigned
-                            && $userStatus === 'in_progress'
-                            && $userId !== optional($task->creator)->id
-                            && ! $hasPendingRequest;
-                    }),
+                    ->visible(fn(Task $task) => $this->canUpdateTaskStatusFromTable($task)),
 
                 Action::make('task_chat')
                     ->label('Chat')
@@ -418,7 +374,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     })
                     ->visible(
                         fn(Task $task) =>
-                        Auth::user()->role === 'admin'
+                        Auth::user()->role === 'admin' || Auth::user()->role === 'user'
                             || Auth::id() === $task->user_id
                     ),
 
@@ -436,9 +392,24 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->modalDescription('Are you sure you\'d like to delete this task? This cannot be undone.')
                     ->modalSubmitActionLabel('Yes, delete it')
                     ->modalAlignment(Alignment::Center)
-                    ->visible(fn(Task $task) => Auth::user()->role === 'admin' || Auth::user()->id === $task->user_id),
+                    ->visible(fn(Task $task) => Auth::user()->role === 'admin' ||
+                        Auth::user()->role === 'user' || Auth::user()->id === $task->user_id),
             ], position: ActionsPosition::AfterColumns)
-            ->bulkActions([BulkActionGroup::make([DeleteBulkAction::make()])])
+            ->bulkActions([
+                BulkAction::make('delete_all_tasks')
+                    ->label('Delete All Tasks')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalIcon('heroicon-o-trash')
+                    ->modalIconColor('danger')
+                    ->modalHeading('Delete selected tasks')
+                    ->modalDescription('Are you sure you want to delete the selected tasks? This will also delete related task updates, completion requests, chats, reminders, and assignments. This cannot be undone.')
+                    ->modalSubmitActionLabel('Yes, delete')
+                    ->modalAlignment(Alignment::Center)
+                    ->action(fn(Collection $records) => $this->deleteSelectedTasks($records))
+                    ->deselectRecordsAfterCompletion(),
+            ])
             ->defaultSort('id', 'desc')
             ->striped();
     }
@@ -451,41 +422,171 @@ class TaskTable extends Component implements HasForms, HasTable
         ])->to(TaskUpdateModal::class);
     }
 
-    public function resetTaskWorkflowAfterEdit(Task $task): void
+    public function updateTaskStatusFromTable(Task $task, string $status, ?string $comment = null): void
     {
-            DB::transaction(function () use ($task) {
+        dd($this->all());
+        if (! $this->canUpdateTaskStatusFromTable($task)) {
+            Notification::make()
+                ->title('Not allowed')
+                ->body('You are not allowed to update this task status.')
+                ->danger()
+                ->send();
 
-                $task->update([
-                    'status' => 'pending',
-                ]);
+            return;
+        }
 
-                DB::table('task_updates')
-                    ->where('task_id', $task->id)
-                    ->delete();
+        if (! in_array($status, ['in_progress', 'completed'], true)) {
+            Notification::make()
+                ->title('Invalid status')
+                ->danger()
+                ->send();
 
+            return;
+        }
+
+        $userId = Auth::id();
+        $comment = trim((string) $comment);
+
+        if ($status === 'completed' && $userId !== optional($task->creator)->id) {
+            $this->requestCompletion($task, $comment);
+            return;
+        }
+
+        DB::transaction(function () use ($task, $status, $comment, $userId) {
+            if ($status === 'in_progress') {
                 TaskCompletionRequest::where('task_id', $task->id)
+                    ->where('user_id', $userId)
                     ->where('request_status', 'pending')
                     ->update([
                         'request_status' => 'rejected',
+                        'reviewed_at' => now(),
                     ]);
+            }
 
-                foreach ($task->taskAssignments as $assignment) {
-                    DB::table('task_updates')->insert([
-                        'task_id' => $task->id,
-                        'user_id' => $assignment->user_id,
-                        'status' => 'pending',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            });
+            $task->update([
+                'status' => $status,
+            ]);
+
+            DB::table('task_updates')->insert([
+                'task_id' => $task->id,
+                'user_id' => $userId,
+                'status' => $status,
+                'comment' => $comment,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            if ($status === 'completed') {
+                $this->stopTaskMailFlowIfCompleted($task);
+            }
+        });
+
+        Notification::make()
+            ->title('Task status updated')
+            ->body('Task status has been updated successfully.')
+            ->success()
+            ->send();
+
+        $this->dispatch('$refresh');
+        $this->dispatch('taskStatusUpdated');
     }
 
-    public function requestCompletion(Task $task): void
+    private function canUpdateTaskStatusFromTable(Task $task): bool
     {
         $userId = Auth::id();
 
-        DB::transaction(function () use ($task, $userId) {
+        if (! $userId) {
+            return false;
+        }
+
+        $isCreator = optional($task->creator)->id === $userId || (int) $task->user_id === (int) $userId;
+
+        $isAssigned = DB::table('task_assignments')
+            ->where('task_id', $task->id)
+            ->where('user_id', $userId)
+            ->exists();
+
+        if (! $isCreator && ! $isAssigned && Auth::user()?->role !== 'admin') {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function getCurrentTaskStatusForUser(Task $task): string
+    {
+        if ($this->taskView === 'my_tasks') {
+            $userStatus = DB::table('task_updates')
+                ->where('task_id', $task->id)
+                ->where('user_id', Auth::id())
+                ->orderByDesc('updated_at')
+                ->value('status');
+
+            return $userStatus ?: $task->status;
+        }
+
+        return $task->status;
+    }
+
+    private function getStatusOptions(Task $task): array
+    {
+        return [
+            'in_progress' => 'In Progress',
+            'completed' => 'Complete',
+        ];
+    }
+
+    private function getDefaultNextStatus(Task $task): string
+    {
+        return 'in_progress';
+    }
+
+    private function getStatusActionLabel(Task $task): string
+    {
+        return 'In Progress';
+    }
+
+    private function getStatusActionColor(Task $task): string
+    {
+        return 'info';
+    }
+
+    public function resetTaskWorkflowAfterEdit(Task $task): void
+    {
+        DB::transaction(function () use ($task) {
+
+            $task->update([
+                'status' => 'pending',
+            ]);
+
+            DB::table('task_updates')
+                ->where('task_id', $task->id)
+                ->delete();
+
+            TaskCompletionRequest::where('task_id', $task->id)
+                ->where('request_status', 'pending')
+                ->update([
+                    'request_status' => 'rejected',
+                ]);
+
+            foreach ($task->taskAssignments as $assignment) {
+                DB::table('task_updates')->insert([
+                    'task_id' => $task->id,
+                    'user_id' => $assignment->user_id,
+                    'status' => 'pending',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        });
+    }
+
+    public function requestCompletion(Task $task, ?string $comment = null): void
+    {
+        $userId = Auth::id();
+        $comment = trim((string) $comment);
+
+        DB::transaction(function () use ($task, $userId, $comment) {
             $alreadyPending = TaskCompletionRequest::where('task_id', $task->id)
                 ->where('user_id', $userId)
                 ->where('request_status', 'pending')
@@ -502,10 +603,15 @@ class TaskTable extends Component implements HasForms, HasTable
                 'requested_at' => now(),
             ]);
 
+            $task->update([
+                'status' => 'complete_intimation',
+            ]);
+
             DB::table('task_updates')->insert([
                 'task_id' => $task->id,
                 'user_id' => $userId,
                 'status' => 'complete_intimation',
+                'comment' => $comment,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -534,6 +640,8 @@ class TaskTable extends Component implements HasForms, HasTable
 
             $pendingRequest->update([
                 'request_status' => 'approved',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::id(),
             ]);
 
             $task->update([
@@ -574,6 +682,12 @@ class TaskTable extends Component implements HasForms, HasTable
 
             $pendingRequest->update([
                 'request_status' => 'rejected',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::id(),
+            ]);
+
+            $task->update([
+                'status' => 'in_progress',
             ]);
 
             DB::table('task_updates')->insert([
@@ -679,8 +793,67 @@ class TaskTable extends Component implements HasForms, HasTable
 
     public function delete(Task $task): void
     {
-        DB::transaction(function () use ($task) {
+        if (! $this->canDeleteTask($task)) {
+            Notification::make()
+                ->title('Not allowed')
+                ->body('You are not allowed to delete this task.')
+                ->danger()
+                ->send();
 
+            return;
+        }
+
+        $this->deleteTaskWithRelatedData($task);
+
+        Notification::make()
+            ->title('Task deleted')
+            ->success()
+            ->send();
+    }
+
+    public function deleteSelectedTasks(Collection $records): void
+    {
+        $deletedCount = 0;
+
+        DB::transaction(function () use ($records, &$deletedCount) {
+            foreach ($records as $task) {
+                if (! $this->canDeleteTask($task)) {
+                    continue;
+                }
+
+                $this->deleteTaskWithRelatedData($task, false);
+                $deletedCount++;
+            }
+        });
+
+        if ($deletedCount === 0) {
+            Notification::make()
+                ->title('No task deleted')
+                ->body('You are not allowed to delete the selected tasks.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        Notification::make()
+            ->title('Tasks deleted')
+            ->body($deletedCount . ' selected task(s) deleted successfully.')
+            ->success()
+            ->send();
+
+        $this->dispatch('$refresh');
+    }
+
+    private function canDeleteTask(Task $task): bool
+    {
+        return Auth::check()
+            && in_array(Auth::user()->role, ['admin', 'user'], true);
+    }
+
+    private function deleteTaskWithRelatedData(Task $task, bool $useTransaction = true): void
+    {
+        $callback = function () use ($task) {
             DB::table('task_updates')
                 ->where('task_id', $task->id)
                 ->delete();
@@ -700,7 +873,14 @@ class TaskTable extends Component implements HasForms, HasTable
                 ->delete();
 
             $task->delete();
-        });
+        };
+
+        if ($useTransaction) {
+            DB::transaction($callback);
+            return;
+        }
+
+        $callback();
     }
 
     // Stop Task Mail flow if task is completed and has a pending reminder

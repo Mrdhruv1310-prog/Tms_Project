@@ -58,6 +58,7 @@ return array(
     'App\\Mail\\SendResetPasswordEmail' => $baseDir . '/app/Mail/SendResetPasswordEmail.php',
     'App\\Mail\\TaskAssignedMail' => $baseDir . '/app/Mail/TaskAssignedMail.php',
     'App\\Mail\\TaskStatusUpdateMail' => $baseDir . '/app/Mail/TaskStatusUpdateMail.php',
+    'App\\Mail\\TimeWiseReminderMail' => $baseDir . '/app/Mail/TimeWiseReminderMail.php',
     'App\\Models\\Category' => $baseDir . '/app/Models/Category.php',
     'App\\Models\\Group' => $baseDir . '/app/Models/Group.php',
     'App\\Models\\GroupUser' => $baseDir . '/app/Models/GroupUser.php',

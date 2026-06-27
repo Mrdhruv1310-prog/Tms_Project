@@ -53,6 +53,7 @@ class ComposerStaticInit7e8c3c14ff33b199b4a0838993eb8423
         '801c31d8ed748cfa537fa45402288c95' => __DIR__ . '/..' . '/psy/psysh/src/functions.php',
         'b0b808d855d8f6fc568ca07586cb55de' => __DIR__ . '/..' . '/livewire/volt/functions.php',
         'd634523d799d97a8ab4807b650bf5cea' => __DIR__ . '/..' . '/pestphp/pest-plugin-laravel/src/Autoload.php',
+        'ef157334f1067da991ff8953983afdb3' => __DIR__ . '/../..' . '/app/Helpers/helper.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -855,6 +856,7 @@ class ComposerStaticInit7e8c3c14ff33b199b4a0838993eb8423
         'App\\Mail\\SendResetPasswordEmail' => __DIR__ . '/../..' . '/app/Mail/SendResetPasswordEmail.php',
         'App\\Mail\\TaskAssignedMail' => __DIR__ . '/../..' . '/app/Mail/TaskAssignedMail.php',
         'App\\Mail\\TaskStatusUpdateMail' => __DIR__ . '/../..' . '/app/Mail/TaskStatusUpdateMail.php',
+        'App\\Mail\\TimeWiseReminderMail' => __DIR__ . '/../..' . '/app/Mail/TimeWiseReminderMail.php',
         'App\\Models\\Category' => __DIR__ . '/../..' . '/app/Models/Category.php',
         'App\\Models\\Group' => __DIR__ . '/../..' . '/app/Models/Group.php',
         'App\\Models\\GroupUser' => __DIR__ . '/../..' . '/app/Models/GroupUser.php',
