@@ -44,10 +44,12 @@ class TaskUpdateModal extends Component
         try {
             // Update the task status in the task_updates table for the current user
             DB::table('task_updates')->insert([
-                'task_id' => $this->task->id,
                 'user_id' => Auth::user()->id,
+                'task_id' => $this->task->id,
                 'status' => $this->status,
                 'comment' => $this->remark,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             // If the status is 'complete_intimation', add a record in task_completion_requests table
@@ -97,8 +99,9 @@ class TaskUpdateModal extends Component
             $this->taskUpdateModalOpen = false;
             $this->notify('Task Status Updated Successfully.', 'success');
             $this->dispatch('taskStatusUpdated');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
+            logException($e);
             $this->taskUpdateModalOpen = false;
             $this->notify('Failed to update task status. Please try again.', 'error');
         }

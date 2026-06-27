@@ -7,8 +7,8 @@ use App\Models\PasswordResetToken;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Livewire\Component;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 class ForgetPasswordForm extends Component
 {
@@ -56,21 +56,14 @@ class ForgetPasswordForm extends Component
         ]);
 
         try {
-            Mail::to($user->email)
-                ->send(new SendResetPasswordEmail($user, $token));
+            Mail::to($user->email)->send(new SendResetPasswordEmail($user, $token));
 
-            $message = 'Password reset link sent successfully.';
-            $type = 'success';
+            $this->notify('Password reset link sent successfully.', 'success');
         } catch (\Exception $e) {
             Log::error('Forgot Password Mail Error: ' . $e->getMessage());
 
-            $message = 'Error in sending password reset email.';
-            $type = 'error';
+            $this->notify('Error in sending password reset email.', 'error');
         }
-
-        $this->notify($message, $type);
-
-        return;
     }
 
     public function render()

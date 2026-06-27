@@ -157,63 +157,59 @@
             {{-- <form wire:submit.prevent="saveTask"> --}}
             <form wire:submit.prevent="{{ $taskId ? 'updateTask' : 'saveTask' }}" novalidate>
                 <div x-data="{
-                    due_date: '',
-                    reminderTime: '',
+                    due_date: @entangle('due_date'),
+                    reminderTime: @entangle('reminderTime').defer,
                     errorMessage: '',
-                    reminderUnit: '',
+                    reminderUnit: @entangle('reminderUnit').defer,
 
                     updateReminderTime(event) {
                         const updatedField = event.target;
                         const fieldId = updatedField.id;
 
-                        // Update respective fields based on the field's ID
                         if (fieldId === 'reminder_time') {
-                            this.reminderTime = Number(updatedField.value); // Convert to number
+                            this.reminderTime = updatedField.value ? Number(updatedField.value) : '';
                         } else if (fieldId === 'reminder_unit') {
                             this.reminderUnit = updatedField.value;
                         } else if (fieldId === 'duedatecalendar') {
-                            this.due_ate = updatedField.value;
+                            this.due_date = updatedField.value;
                         }
 
-                        // Check if all required fields are filled
-                        if (!this.due_date || !this.reminderTime || !this.reminderUnit) {
-                            (!this.due_date) ? this.errorMessage = 'Please select due date first': this.errorMessage = '';
+                        /*
+                         * Due Date and Task Reminder Before Due Date are separate fields.
+                         * So reminder value/unit can be selected even when due date is empty.
+                         */
+                        this.errorMessage = '';
+
+                        // If reminder is incomplete, do not validate.
+                        if (!this.reminderTime || !this.reminderUnit) {
                             return;
                         }
 
-                        // Parse the due date
+                        // If due date is not selected, allow reminder selection and skip due-date based validation.
+                        if (!this.due_date) {
+                            return;
+                        }
+
                         const [day, month, yearWithTime] = this.due_date.split('/');
-                        const [year, time] = yearWithTime.split(' ');
-                        const [hours, minutes] = time.split(':');
+                        const [year, time = '00:00'] = yearWithTime.split(' ');
+                        const [hours = '00', minutes = '00'] = time.split(':');
                         const dueDateObj = new Date(year, month - 1, day, hours, minutes);
 
-                        // Check if due date is valid
                         if (isNaN(dueDateObj.getTime())) {
                             this.errorMessage = 'Invalid due date';
                             return;
                         }
 
-                        // Format the due date as 'YYYY-MM-DD HH:mm:00'
-                        const formattedDueDate = `${dueDateObj.getFullYear()}-${String(dueDateObj.getMonth() + 1).padStart(2, '0')}-${String(dueDateObj.getDate()).padStart(2, '0')} ${String(dueDateObj.getHours()).padStart(2, '0')}:${String(dueDateObj.getMinutes()).padStart(2, '0')}:00`;
-
-                        // Calculate reminder duration in milliseconds
                         const unitMultipliers = {
                             minutes: 60 * 1000,
                             hours: 60 * 60 * 1000,
                             days: 24 * 60 * 60 * 1000,
                         };
+
                         const reminderInMilliseconds = this.reminderTime * unitMultipliers[this.reminderUnit];
+                        const validReminderTime = dueDateObj.getTime() - Date.now();
 
-                        const currentDate = Date.now();
-                        const dueDateTime = dueDateObj.getTime(); // Use the parsed dueDateObj directly
-
-                        // Calculate valid reminder time
-                        const validReminderTime = dueDateTime - currentDate;
-
-                        // Validate reminder time
-                        if (reminderInMilliseconds <= validReminderTime) {
-                            this.errorMessage = '';
-                        } else {
+                        if (reminderInMilliseconds > validReminderTime) {
                             this.reminderTime = '';
                             this.reminderUnit = '';
                             this.errorMessage = 'Reminder time is NOT valid.';
@@ -414,7 +410,7 @@
                     <div x-data="{ isReminderEnabled: @entangle('isReminderEnabled') }">
                         <label for="duedate"
                             class="flex flex-row items-center block mb-2 text-sm font-medium text-gray-900 dark:text-white">Due
-                            Date & Time <span class="text-red-500">*</span>
+                            Date & Time
                             <button data-tooltip-target="duedatepin" data-tooltip-trigger="click"
                                 class="tooltip-button ml-1 text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white">
                                 <svg class="h-5 w-5" inert xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -486,25 +482,14 @@
                             </div>
 
                             <!-- Modal body for reminder details -->
-                            <div x-data="{
-                                reminderTime: @entangle('reminderTime').defer,
-                                reminderUnit: @entangle('reminderUnit').defer,
-                                dueDate: @entangle('dueDate').defer,
-                                isReminderEnabled: false,
-                                checkReminder() {
-                                    // Enable reminder field if due date exists or reminder is being edited
-                                    this.isReminderEnabled = this.dueDate !== null && this.dueDate !== '' || this.reminderTime !== null;
-                                }
-                            }" x-init="checkReminder" class="flex flex-row space-x-4">
+                            <div class="flex flex-row space-x-4">
 
                                 <input type="number" id="reminder_time" name="reminder_time"
-                                    x-bind:disabled="!isReminderEnabled" wire:model="reminderTime"
-                                    x-model="reminderTime"
+                                    wire:model="reminderTime" x-model="reminderTime"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                                     placeholder="Enter time" x-on:input="updateReminderTime($event)">
 
-                                <select id="reminder_unit" wire:model="reminderUnit"
-                                    x-bind:disabled="!isReminderEnabled" x-model="reminderUnit"
+                                <select id="reminder_unit" wire:model="reminderUnit" x-model="reminderUnit"
                                     x-on:change="updateReminderTime($event)"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
                                     <option value="">Select Option</option>
