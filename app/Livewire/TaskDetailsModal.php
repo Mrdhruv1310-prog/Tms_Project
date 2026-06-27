@@ -280,11 +280,11 @@ class TaskDetailsModal extends Component
             $this->validate();
 
             $dueDate = filled($this->due_date)
-                ? Carbon::createFromFormat('d/m/Y H:i', $this->due_date)->format('Y-m-d H:i:00')
+                ? Carbon::createFromFormat('d/m/Y H:i', $this->due_date, config('app.timezone'))->seconds(0)->format('Y-m-d H:i:s')
                 : null;
 
             $recurrenceEndDate = $this->recurrence_end_date
-                ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date)->format('Y-m-d')
+                ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date, config('app.timezone'))->format('Y-m-d')
                 : null;
 
             $this->selectedUsers = array_values(array_unique(array_filter($this->selectedUsers)));
@@ -337,14 +337,20 @@ class TaskDetailsModal extends Component
             }
 
             throw $e;
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
 
             if ($cacheKey) {
                 Cache::forget($cacheKey);
             }
 
-            Log::error('Task Save Error: ' . $e->getMessage());
+            Log::error('Task Save Error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
 
             $this->notify('Task Save Error: ' . $e->getMessage(), 'error');
         } finally {
@@ -449,45 +455,24 @@ class TaskDetailsModal extends Component
         });
     }
 
-    private function updatehandleTaskAssignments(Task $task)
+    private function updatehandleTaskAssignments(Task $task): void
     {
-        try {
-            DB::beginTransaction();
+        $selectedUsers = array_values(array_unique(array_filter($this->selectedUsers)));
 
-            if (!empty($this->selectedUsers)) {
+        DB::table('task_assignments')
+            ->where('task_id', $task->id)
+            ->whereNotIn('user_id', $selectedUsers ?: [0])
+            ->delete();
 
-                $this->selectedUsers = array_unique($this->selectedUsers);
-
-                foreach ($this->selectedUsers as $userId) {
-
-                    $exists = DB::table('task_assignments')
-                        ->where('task_id', $task->id)
-                        ->where('user_id', $userId)
-                        ->exists();
-
-                    if ($exists) {
-
-                        DB::table('task_assignments')
-                            ->where('task_id', $task->id)
-                            ->where('user_id', $userId)
-                            ->update([
-                                'assigned_at' => now(),
-                            ]);
-                    }
-                }
-            }
-
-            DB::commit();
-        } catch (\Exception $e) {
-
-            DB::rollBack();
-
-            Log::error(
-                "Failed to update task assignments for task ID {$task->id}: {$e->getMessage()}"
-            );
-
-            throw new \Exception(
-                "Unable to update task assignments."
+        foreach ($selectedUsers as $userId) {
+            DB::table('task_assignments')->updateOrInsert(
+                [
+                    'task_id' => $task->id,
+                    'user_id' => (int) $userId,
+                ],
+                [
+                    'assigned_at' => now(),
+                ]
             );
         }
     }
@@ -611,35 +596,60 @@ class TaskDetailsModal extends Component
         $this->reminderUnit = (string) $reminder->reminder_unit;
     }
 
-    // Handle Task Edit and Update the form with existing task details
-    public function edit(Task $taskId)
+    // Handle Task Edit and fill every saved field back into the form.
+    public function edit(Task $taskId): void
     {
         $task = Task::findOrFail($taskId->id);
-        $this->taskId = $task->id;
-        $this->title = $task->title;
-        $this->description = $task->description;
-        $this->category_id = $task->category_id;
-        $this->priority = $task->priority;
-        $this->label_id = $task->label_id;
-        $this->enableRepeatTask = $task->recurrence !== 'none';
-        $this->recurrence = $task->recurrence;
-        $this->due_date = $task->due_date
-            ? Carbon::parse($task->due_date)->format('d/m/Y H:i')
-            : null;
-        $this->recurrence_end_date = $task->recurrence_end_date ? Carbon::parse($task->recurrence_end_date)->format('d/m/Y') : null;
-        $this->status = $task->status;
-        $this->isEditMode = true;
 
-        $this->fillReminderFields($task);
+        // Refresh dropdown data before opening edit form. This avoids stale/cached data on VPS.
+        $this->categories = Category::all();
+        $this->labels = Group::all();
+        $this->label = Group::select('id', 'label')->get();
+        $this->users = User::where('status', 1)
+            ->get()
+            ->map(function ($user) {
+                $user->randomcolor = $this->getRandomColor();
+                return $user;
+            });
+        $this->groupUserMap = GroupUser::all()
+            ->groupBy('group_id')
+            ->map(fn($items) => $items->pluck('user_id')->map(fn($id) => (int) $id)->toArray())
+            ->toArray();
+
+        $this->taskId = $task->id;
+        $this->title = (string) $task->title;
+        $this->description = (string) $task->description;
+        $this->category_id = $task->category_id ? (string) $task->category_id : null;
+        $this->priority = (string) ($task->priority ?: 'low');
+        $this->label_id = $task->label_id ? (string) $task->label_id : null;
+        $this->recurrence = (string) ($task->recurrence ?: 'none');
+        $this->enableRepeatTask = $this->recurrence !== 'none';
+        $this->due_date = filled($task->due_date)
+            ? Carbon::parse($task->due_date, config('app.timezone'))->format('d/m/Y H:i')
+            : null;
+        $this->recurrence_end_date = filled($task->recurrence_end_date)
+            ? Carbon::parse($task->recurrence_end_date, config('app.timezone'))->format('d/m/Y')
+            : null;
+        $this->status = (string) ($task->status ?: 'pending');
+
         $this->selectedUsers = DB::table('task_assignments')
             ->where('task_id', $this->taskId)
             ->pluck('user_id')
+            ->map(fn($userId) => (int) $userId)
             ->toArray();
+
         $this->selectedDays = DB::table('task_recurrence_days')
             ->where('task_id', $this->taskId)
             ->pluck('day')
+            ->map(fn($day) => (string) $day)
             ->toArray();
+
+        $this->fillReminderFields($task);
+        $this->isEditMode = true;
         $this->isOpen = true;
+
+        // Let Alpine/datepicker re-read Livewire values after modal opens.
+        $this->dispatch('task-edit-form-filled');
     }
 
     public function updateTask()
@@ -651,27 +661,21 @@ class TaskDetailsModal extends Component
                 ->toArray();
         }
 
-        $this->validate();
-
-        $this->due_date = filled($this->due_date)
-            ? Carbon::createFromFormat(
-                'd/m/Y H:i',
-                $this->due_date
-            )->format('Y-m-d H:i:00')
-            : null;
-
-        if ($this->recurrence_end_date) {
-            $this->recurrence_end_date = Carbon::createFromFormat(
-                'd/m/Y',
-                $this->recurrence_end_date
-            )->format('Y-m-d');
-        } else {
-            $this->recurrence_end_date = null;
-        }
-
-        DB::beginTransaction();
-
         try {
+            $this->validate();
+
+            $dueDate = filled($this->due_date)
+                ? Carbon::createFromFormat('d/m/Y H:i', $this->due_date, config('app.timezone'))->seconds(0)->format('Y-m-d H:i:s')
+                : null;
+
+            $recurrenceEndDate = filled($this->recurrence_end_date)
+                ? Carbon::createFromFormat('d/m/Y', $this->recurrence_end_date, config('app.timezone'))->format('Y-m-d')
+                : null;
+
+            $this->selectedUsers = array_values(array_unique(array_filter($this->selectedUsers)));
+
+            DB::beginTransaction();
+
             $task = Task::findOrFail($this->taskId);
 
             $this->label_id = filled($this->label_id)
@@ -685,8 +689,8 @@ class TaskDetailsModal extends Component
                 'priority' => $this->priority,
                 'label_id' => $this->label_id,
                 'recurrence' => $this->recurrence,
-                'due_date' => $this->due_date,
-                'recurrence_end_date' => $this->recurrence_end_date,
+                'due_date' => $dueDate,
+                'recurrence_end_date' => $recurrenceEndDate,
                 'status' => $this->status,
             ]);
 
@@ -694,36 +698,39 @@ class TaskDetailsModal extends Component
             $this->UpdatehandleTaskRecurrence($task);
             $this->UpdatehandleNotificationsAndReminders($task);
 
+            DB::afterCommit(function () use ($task) {
+                $task->refresh();
+
+                foreach ($task->assignedUsers as $user) {
+                    SendTaskUpdateJob::dispatch(
+                        $task,
+                        $user,
+                        $task->status,
+                        'Task details updated successfully.'
+                    );
+                }
+            });
+
             DB::commit();
 
-            $task->refresh();
-
-            foreach ($task->assignedUsers as $user) {
-                SendTaskUpdateJob::dispatch(
-                    $task,
-                    $user,
-                    $task->status,
-                    'Task details updated successfully.'
-                );
+            $this->dispatch('taskUpdated');
+            $this->close();
+            $this->notify('Task updated successfully.', 'success');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
             }
 
-            $this->dispatch('taskUpdated');
+            Log::error('Task Update Error', [
+                'task_id' => $this->taskId,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
 
-            $this->close();
-
-            $this->notify(
-                'Task updated successfully.',
-                'success'
-            );
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('Task Update Error: ' . $e->getMessage());
-
-            $this->notify(
-                'Update Error: ' . $e->getMessage(),
-                'error'
-            );
+            $this->notify('Update Error: ' . $e->getMessage(), 'error');
         }
     }
 
@@ -768,14 +775,28 @@ class TaskDetailsModal extends Component
         }
     }
 
-    public function updateInstantNotifications(Task $task)
+    public function updateInstantNotifications(Task $task): void
     {
-        $this->selectedUsers = array_unique($this->selectedUsers);
+        $this->selectedUsers = array_values(array_unique(array_filter($this->selectedUsers)));
+
+        Notification::where('task_id', $task->id)
+            ->whereNotIn('user_id', $this->selectedUsers ?: [0])
+            ->delete();
+
         foreach ($this->selectedUsers as $userId) {
-            Notification::where('task_id', $task->id)
-                ->where('user_id', $userId)
-                ->delete();
-            DB::table('notifications')->update(['user_id' => $userId, 'task_id' => $task->id, 'type' => 'due_date', 'message' => 'You have been assigned to task "' . $task->title . '".', 'sent_at' => $task->due_date]);
+            DB::table('notifications')->updateOrInsert(
+                [
+                    'task_id' => $task->id,
+                    'user_id' => (int) $userId,
+                    'type' => $task->due_date,
+                ],
+                [
+                    'message' => 'You have been assigned to task "' . $task->title . '".',
+                    'sent_at' => $task->due_date,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
         }
     }
     // Send Reminder Email Notification
@@ -1002,7 +1023,7 @@ class TaskDetailsModal extends Component
                 ]);
 
                 SendReminderJob::dispatch(
-                    $model,
+                    $model->id,
                     $this->reminderChannel,
                     $reminderTime
                 )->delay($reminderTime);
