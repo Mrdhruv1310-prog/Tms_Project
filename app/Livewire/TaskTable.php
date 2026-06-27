@@ -424,7 +424,6 @@ class TaskTable extends Component implements HasForms, HasTable
 
     public function updateTaskStatusFromTable(Task $task, string $status, ?string $comment = null): void
     {
-        dd($this->all());
         if (! $this->canUpdateTaskStatusFromTable($task)) {
             Notification::make()
                 ->title('Not allowed')
