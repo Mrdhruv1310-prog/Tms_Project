@@ -15,7 +15,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $fillable = ['first_name', 'last_name', 'email', 'password', 'phone_number', 'role', 'reporting_manager_id', 'status'];
+    protected $fillable = ['first_name', 'last_name', 'email', 'password', 'phone_number', 'role', 'reporting_manager_id'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -68,5 +68,10 @@ class User extends Authenticatable
     public function scopeActive($query)
     {
         return $query->where('status', 1);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
     }
 }

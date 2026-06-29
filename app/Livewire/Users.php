@@ -22,29 +22,28 @@ class Users extends Component
 
     public function delete(User $user)
     {
+
+        if (!auth()->check() || auth()->user()->role !== 'admin') {
+            $this->dispatch('notify', message: 'You are not authorized to delete users.', type: 'error');
+            return;
+        }
+
+        if ($user->tasks()->count() > 0) {
+            $this->dispatch('notify', message: 'User has assigned tasks. Cannot delete.', type: 'warning');
+            return;
+        }
+
         try {
-
-            if (!auth()->check() || auth()->user()->role !== 'admin') {
-                $this->dispatch('notify', message: 'You are not authorized to delete users.', type: 'error');
-                return;
-            }
-
-            if ($user->tasks()->count() > 0) {
-                $this->dispatch('notify', message: 'User has assigned tasks. Cannot delete.', type: 'warning');
-                return;
-            }
-
             DB::transaction(function () use ($user) {
-
                 $user->notifications()->delete();
                 $user->reminders()->delete();
-                $user->tasks()->detach();
+                // $user->tasks()->delete();
+                DB::table('task_assignments')->where('user_id', $user->id)->delete();
                 $user->groups()->detach();
                 $user->delete();
             });
 
             $this->users = User::whereStatus(1)->latest()->get();
-
             $this->dispatch('userdeleted');
             $this->dispatch('notify', message: 'User deleted successfully.', type: 'success');
         } catch (\Throwable $e) {
