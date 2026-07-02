@@ -810,6 +810,7 @@ class ComposerStaticInit7e8c3c14ff33b199b4a0838993eb8423
         'AnourValar\\EloquentSerialize\\Grammars\\QueryBuilderGrammar' => __DIR__ . '/..' . '/anourvalar/eloquent-serialize/src/Grammars/QueryBuilderGrammar.php',
         'AnourValar\\EloquentSerialize\\Package' => __DIR__ . '/..' . '/anourvalar/eloquent-serialize/src/Package.php',
         'AnourValar\\EloquentSerialize\\Service' => __DIR__ . '/..' . '/anourvalar/eloquent-serialize/src/Service.php',
+        'App\\Console\\Commands\\GenerateRecurringTasks' => __DIR__ . '/../..' . '/app/Console/Commands/GenerateRecurringTasks.php',
         'App\\Console\\Commands\\RepeatTaskCron' => __DIR__ . '/../..' . '/app/Console/Commands/RepeatTaskCron.php',
         'App\\Exports\\CompletedTaskReportExport' => __DIR__ . '/../..' . '/app/Exports/CompletedTaskReportExport.php',
         'App\\Exports\\MyTasksSummaryExport' => __DIR__ . '/../..' . '/app/Exports/MyTasksSummaryExport.php',

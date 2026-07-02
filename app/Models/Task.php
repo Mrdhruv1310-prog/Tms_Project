@@ -12,7 +12,7 @@ class Task extends Model
     protected $casts = [
         'due_date' => 'datetime',
     ];
-    
+
     protected $fillable = [
         'id',
         'title',
@@ -25,13 +25,14 @@ class Task extends Model
         'due_date',
         'status',
         'user_id',
+        'parent_task_id',
     ];
 
     public function updates()
     {
         return $this->hasMany(TaskUpdate::class);
     }
-    
+
     // Relationship with User model through task_assignments
     public function assignedUsers()
     {
@@ -42,7 +43,7 @@ class Task extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -53,7 +54,8 @@ class Task extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
@@ -70,5 +72,15 @@ class Task extends Model
     public function group()
     {
         return $this->belongsTo(Group::class, 'label_id', 'id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Task::class, 'parent_task_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Task::class, 'parent_task_id');
     }
 }

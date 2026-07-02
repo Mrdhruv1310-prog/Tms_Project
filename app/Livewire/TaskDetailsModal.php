@@ -63,8 +63,8 @@ class TaskDetailsModal extends Component
             'priority' => 'required|in:low,medium,high',
             'label_id' => 'nullable|exists:groups,id',
             'recurrence' => 'required|in:none,daily,weekly,monthly',
-            'due_date' => 'nullable|date_format:d/m/Y H:i|after:now',
-            'recurrence_end_date' => 'nullable|date_format:d/m/Y|after:today',
+            'due_date' => 'nullable|date_format:d/m/Y H:i',
+            'recurrence_end_date' => 'nullable|date_format:d/m/Y',
             'status' => 'required|in:pending,in_progress,completed',
             'selectedUsers' => 'required|array|min:1',
             'selectedUsers.*' => 'exists:users,id',
@@ -320,6 +320,12 @@ class TaskDetailsModal extends Component
                 'user_id' => Auth::id(),
             ]);
 
+            // $task->update([
+            //     'parent_task_id' => $task->id,
+            // ]);
+            $task->parent_task_id = $task->id;
+            $task->save();
+
             $this->handleTaskRecurrence($task);
             $this->handleTaskAssignments($task);
             $this->createInstantNotifications($task);
@@ -327,7 +333,6 @@ class TaskDetailsModal extends Component
 
             DB::commit();
 
-            $this->createNextRecurringTask($task);
             $this->dispatch('taskCreated');
             $this->close();
 
@@ -353,94 +358,7 @@ class TaskDetailsModal extends Component
         }
     }
 
-    /**
-     * Auto create next recurring task
-     */
-    private function createNextRecurringTask(Task $task): void
-    {
-        if ($task->recurrence === 'none') {
-            return;
-        }
 
-        if (empty($task->due_date)) {
-            return;
-        }
-
-        $nextDueDate = Carbon::parse($task->due_date);
-        switch ($task->recurrence) {
-            case 'daily':
-                $nextDueDate->addDay();
-                break;
-            case 'weekly':
-                $nextDueDate->addWeek();
-                break;
-            case 'monthly':
-                $nextDueDate->addMonth();
-                break;
-            default:
-                return;
-        }
-
-        if (!empty($task->recurrence_end_date)) {
-            $endDate = Carbon::parse($task->recurrence_end_date)->endOfDay();
-            if ($nextDueDate->gt($endDate)) {
-                return;
-            }
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $newTask = Task::create([
-                'title'               => $task->title,
-                'description'         => $task->description,
-                'category_id'         => $task->category_id,
-                'priority'            => $task->priority,
-                'label_id'            => $task->label_id,
-                'recurrence'          => $task->recurrence,
-                'due_date'            => $nextDueDate,
-                'recurrence_end_date' => $task->recurrence_end_date,
-                'status'              => 'pending',
-                'user_id'             => $task->user_id,
-            ]);
-
-            $assignments = DB::table('task_assignments')
-                ->where('task_id', $task->id)
-                ->get();
-
-            foreach ($assignments as $assignment) {
-
-                DB::table('task_assignments')->insert([
-                    'task_id'     => $newTask->id,
-                    'user_id'     => $assignment->user_id,
-                    'assigned_at' => now(),
-                ]);
-            }
-
-            $days = DB::table('task_recurrence_days')
-                ->where('task_id', $task->id)
-                ->get();
-
-            foreach ($days as $day) {
-
-                DB::table('task_recurrence_days')->insert([
-                    'task_id' => $newTask->id,
-                    'day'     => $day->day,
-                ]);
-            }
-
-            $users = $assignments->pluck('user_id')->toArray();
-            $this->createInstantNotifications($newTask);
-            $this->scheduleTaskMailFlow($newTask, $users);
-
-            DB::commit();
-        } catch (\Throwable $e) {
-
-            DB::rollBack();
-
-            Log::error('Recurring Task Create Error : ' . $e->getMessage());
-        }
-    }
     // Manage weekly task recurrence days
     private function handleTaskRecurrence(Task $task)
     {
@@ -811,6 +729,9 @@ class TaskDetailsModal extends Component
                 'status' => $this->status,
             ]);
 
+            $task->parent_task_id = $task->id;
+            $task->save();
+
             $this->updatehandleTaskAssignments($task);
             $this->UpdatehandleTaskRecurrence($task);
             $this->UpdatehandleNotificationsAndReminders($task);
@@ -945,7 +866,7 @@ class TaskDetailsModal extends Component
     //             ->delay($reminderValue);
     //     }
     // }
-    private function scheduleTaskMailFlow(Task $task, array $selectedUsers): void
+    public function scheduleTaskMailFlow(Task $task, array $selectedUsers): void
     {
         $selectedUsers = array_values(array_unique(array_filter($selectedUsers)));
 
