@@ -44,7 +44,7 @@ class LoginForm extends Component
             return;
         }
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, true)) {
             $request->session()->regenerate();
             return $this->redirect('dashboard');
         }
