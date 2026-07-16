@@ -1,811 +1,866 @@
 <div data-tms-sidebar-shell x-data="{ mobileSidebarOpen: false }">
 
-{{-- Sidebar custom design: Nexo style --}}
-<style>
-    /* Sidebar design matched with Category Management page colors */
-    [data-tms-sidebar-shell] {
-        --tms-primary: #2563eb;      /* bg-blue-600 */
-        --tms-primary-hover: #1d4ed8;/* hover:bg-blue-700 */
-        --tms-primary-soft: #dbeafe; /* blue-100 */
-        --tms-primary-light: #eff6ff;/* blue-50 */
-        --tms-indigo: #4f46e5;
-        --tms-danger: #ef4444;
-        --tms-danger-dark: #e11d48;
-        --tms-bg: #f9fafb;           /* bg-gray-50 */
-        --tms-card: #ffffff;
-        --tms-card-dark: #111827;    /* dark:bg-gray-900 */
-        --tms-card-dark-2: #1f2937;  /* dark:bg-gray-800 */
-        --tms-text: #374151;         /* text-gray-700 */
-        --tms-muted: #6b7280;        /* text-gray-500 */
-        --tms-heading: #111827;      /* text-gray-900 */
-        --tms-border: #e5e7eb;       /* ring/border gray-200 */
-        --tms-border-dark: #374151;  /* dark border gray-700 */
-        --tms-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 28px rgba(15, 23, 42, .08);
-    }
+    {{-- Sidebar custom design: Nexo style --}}
+    <style>
+        /* Sidebar design matched with Category Management page colors */
+        [data-tms-sidebar-shell] {
+            --tms-primary: #2563eb;
+            /* bg-blue-600 */
+            --tms-primary-hover: #1d4ed8;
+            /* hover:bg-blue-700 */
+            --tms-primary-soft: #dbeafe;
+            /* blue-100 */
+            --tms-primary-light: #eff6ff;
+            /* blue-50 */
+            --tms-indigo: #4f46e5;
+            --tms-danger: #ef4444;
+            --tms-danger-dark: #e11d48;
+            --tms-bg: #f9fafb;
+            /* bg-gray-50 */
+            --tms-card: #ffffff;
+            --tms-card-dark: #111827;
+            /* dark:bg-gray-900 */
+            --tms-card-dark-2: #1f2937;
+            /* dark:bg-gray-800 */
+            --tms-text: #374151;
+            /* text-gray-700 */
+            --tms-muted: #6b7280;
+            /* text-gray-500 */
+            --tms-heading: #111827;
+            /* text-gray-900 */
+            --tms-border: #e5e7eb;
+            /* ring/border gray-200 */
+            --tms-border-dark: #374151;
+            /* dark border gray-700 */
+            --tms-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 28px rgba(15, 23, 42, .08);
+        }
 
-    [data-tms-sidebar-shell] .tms-sidebar-brand,
-    [data-tms-sidebar-shell] .tms-sidebar-user {
-        display: none !important;
-    }
+        [data-tms-sidebar-shell] .tms-sidebar-brand,
+        [data-tms-sidebar-shell] .tms-sidebar-user {
+            display: none !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mini-sidebar {
-        background: var(--tms-card) !important;
-        border-right: 1px solid var(--tms-border) !important;
-        box-shadow: var(--tms-shadow) !important;
-        border-radius: 0 24px 24px 0 !important;
-        overflow: hidden;
-    }
+        [data-tms-sidebar-shell] .tms-mini-sidebar {
+            background: var(--tms-card) !important;
+            border-right: 1px solid var(--tms-border) !important;
+            box-shadow: var(--tms-shadow) !important;
+            border-radius: 0 24px 24px 0 !important;
+            overflow: hidden;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-mini-sidebar {
-        background: var(--tms-card-dark) !important;
-        border-right-color: var(--tms-border-dark) !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-mini-sidebar {
+            background: var(--tms-card-dark) !important;
+            border-right-color: var(--tms-border-dark) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mini-sidebar::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 18px;
-        bottom: 18px;
-        width: 4px;
-        border-radius: 0 999px 999px 0;
-        background: linear-gradient(180deg, var(--tms-primary), var(--tms-indigo));
-    }
+        [data-tms-sidebar-shell] .tms-mini-sidebar::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 18px;
+            bottom: 18px;
+            width: 4px;
+            border-radius: 0 999px 999px 0;
+            background: linear-gradient(180deg, var(--tms-primary), var(--tms-indigo));
+        }
 
-    [data-tms-sidebar-shell] .tms-mini-sidebar button {
-        width: 44px !important;
-        height: 44px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: var(--tms-card) !important;
-        color: var(--tms-muted) !important;
-        border: 1px solid var(--tms-border) !important;
-        border-radius: 14px !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, .06) !important;
-        transition: all .22s ease !important;
-    }
+        [data-tms-sidebar-shell] .tms-mini-sidebar button {
+            width: 44px !important;
+            height: 44px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: var(--tms-card) !important;
+            color: var(--tms-muted) !important;
+            border: 1px solid var(--tms-border) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .06) !important;
+            transition: all .22s ease !important;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-mini-sidebar button {
-        background: var(--tms-card-dark-2) !important;
-        color: #d1d5db !important;
-        border-color: var(--tms-border-dark) !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-mini-sidebar button {
+            background: var(--tms-card-dark-2) !important;
+            color: #d1d5db !important;
+            border-color: var(--tms-border-dark) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mini-sidebar button:hover,
-    [data-tms-sidebar-shell] .tms-mini-sidebar button.bg-blue-600,
-    [data-tms-sidebar-shell] .tms-mini-sidebar button[class*='bg-blue-600'] {
-        transform: translateY(-2px);
-        background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
-        color: #ffffff !important;
-        border-color: transparent !important;
-        box-shadow: 0 12px 24px rgba(37, 99, 235, .28) !important;
-        outline: none !important;
-        --tw-ring-shadow: 0 0 #0000 !important;
-    }
+        [data-tms-sidebar-shell] .tms-mini-sidebar button:hover,
+        [data-tms-sidebar-shell] .tms-mini-sidebar button.bg-blue-600,
+        [data-tms-sidebar-shell] .tms-mini-sidebar button[class*='bg-blue-600'] {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
+            color: #ffffff !important;
+            border-color: transparent !important;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, .28) !important;
+            outline: none !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mini-sidebar svg {
-        width: 20px !important;
-        height: 20px !important;
-        color: currentColor !important;
-        fill: currentColor !important;
-        stroke: currentColor !important;
-    }
+        [data-tms-sidebar-shell] .tms-mini-sidebar svg {
+            width: 20px !important;
+            height: 20px !important;
+            color: currentColor !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-expanded-sidebar {
-        background: var(--tms-card) !important;
-        border-right: 1px solid var(--tms-border) !important;
-        box-shadow: var(--tms-shadow) !important;
-        border-radius: 0 24px 24px 0 !important;
-        overflow: hidden;
-    }
+        [data-tms-sidebar-shell] .tms-expanded-sidebar {
+            background: var(--tms-card) !important;
+            border-right: 1px solid var(--tms-border) !important;
+            box-shadow: var(--tms-shadow) !important;
+            border-radius: 0 24px 24px 0 !important;
+            overflow: hidden;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-expanded-sidebar {
-        background: var(--tms-card-dark) !important;
-        border-right-color: var(--tms-border-dark) !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-expanded-sidebar {
+            background: var(--tms-card-dark) !important;
+            border-right-color: var(--tms-border-dark) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-expanded-sidebar::before {
-        content: 'MENU';
-        display: block;
-        padding: 28px 22px 12px 22px;
-        color: var(--tms-muted);
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-    }
+        [data-tms-sidebar-shell] .tms-expanded-sidebar::before {
+            content: 'MENU';
+            display: block;
+            padding: 28px 22px 12px 22px;
+            color: var(--tms-muted);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-expanded-sidebar::before {
-        color: #9ca3af;
-    }
+        .dark [data-tms-sidebar-shell] .tms-expanded-sidebar::before {
+            color: #9ca3af;
+        }
 
-    [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
-        content: '';
-        position: absolute;
-        left: 22px;
-        right: 22px;
-        top: 54px;
-        height: 1px;
-        background: var(--tms-border);
-        pointer-events: none;
-    }
+        [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
+            content: '';
+            position: absolute;
+            left: 22px;
+            right: 22px;
+            top: 54px;
+            height: 1px;
+            background: var(--tms-border);
+            pointer-events: none;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
-        background: var(--tms-border-dark);
-    }
+        .dark [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
+            background: var(--tms-border-dark);
+        }
 
-    [data-tms-sidebar-shell] .tms-nav-heading {
-        background: transparent !important;
-        color: var(--tms-muted) !important;
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: .06em;
-        padding: 20px 22px 10px 22px;
-        text-transform: uppercase;
-        border-bottom: 0 !important;
-    }
+        [data-tms-sidebar-shell] .tms-nav-heading {
+            background: transparent !important;
+            color: var(--tms-muted) !important;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: .06em;
+            padding: 20px 22px 10px 22px;
+            text-transform: uppercase;
+            border-bottom: 0 !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block {
-        margin-top: 0 !important;
-        padding: 10px 14px 20px 14px !important;
-        overflow-y: auto !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block {
+            margin-top: 0 !important;
+            padding: 10px 14px 20px 14px !important;
+            overflow-y: auto !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block::-webkit-scrollbar {
-        width: 4px;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block::-webkit-scrollbar {
+            width: 4px;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block::-webkit-scrollbar-thumb {
-        background: #d1d5db;
-        border-radius: 999px;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 999px;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block a {
-        position: relative;
-        display: flex !important;
-        align-items: center !important;
-        gap: 13px !important;
-        min-height: 52px;
-        margin: 5px 0 !important;
-        padding: 12px 14px !important;
-        border-radius: 14px !important;
-        background: transparent !important;
-        color: var(--tms-text) !important;
-        border: 1px solid transparent !important;
-        box-shadow: none !important;
-        font-size: 15px !important;
-        font-weight: 650 !important;
-        transition: all .22s ease !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block a {
+            position: relative;
+            display: flex !important;
+            align-items: center !important;
+            gap: 13px !important;
+            min-height: 52px;
+            margin: 5px 0 !important;
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+            background: transparent !important;
+            color: var(--tms-text) !important;
+            border: 1px solid transparent !important;
+            box-shadow: none !important;
+            font-size: 15px !important;
+            font-weight: 650 !important;
+            transition: all .22s ease !important;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-menu-block a {
-        color: #d1d5db !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-menu-block a {
+            color: #d1d5db !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block a:hover {
-        transform: translateX(3px);
-        background: var(--tms-primary-light) !important;
-        color: var(--tms-primary) !important;
-        border-color: var(--tms-primary-soft) !important;
-        box-shadow: 0 8px 18px rgba(37, 99, 235, .10) !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block a:hover {
+            transform: translateX(3px);
+            background: var(--tms-primary-light) !important;
+            color: var(--tms-primary) !important;
+            border-color: var(--tms-primary-soft) !important;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, .10) !important;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-menu-block a:hover {
-        background: rgba(37, 99, 235, .12) !important;
-        border-color: rgba(37, 99, 235, .35) !important;
-        color: #93c5fd !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-menu-block a:hover {
+            background: rgba(37, 99, 235, .12) !important;
+            border-color: rgba(37, 99, 235, .35) !important;
+            color: #93c5fd !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600,
-    [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] {
-        background: var(--tms-primary-light) !important;
-        color: var(--tms-primary) !important;
-        border-color: var(--tms-primary-soft) !important;
-        font-weight: 800 !important;
-        box-shadow: 0 10px 22px rgba(37, 99, 235, .12) !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600,
+        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] {
+            background: var(--tms-primary-light) !important;
+            color: var(--tms-primary) !important;
+            border-color: var(--tms-primary-soft) !important;
+            font-weight: 800 !important;
+            box-shadow: 0 10px 22px rgba(37, 99, 235, .12) !important;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600,
-    .dark [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] {
-        background: rgba(37, 99, 235, .16) !important;
-        color: #93c5fd !important;
-        border-color: rgba(37, 99, 235, .40) !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600,
+        .dark [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] {
+            background: rgba(37, 99, 235, .16) !important;
+            color: #93c5fd !important;
+            border-color: rgba(37, 99, 235, .40) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block a::after {
-        display: none !important;
-        content: none !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block a::after {
+            display: none !important;
+            content: none !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600::before,
-    [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600']::before {
-        content: '';
-        position: absolute;
-        left: -14px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 28px;
-        border-radius: 0 999px 999px 0;
-        background: var(--tms-primary);
-        display: block !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600::before,
+        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600']::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 28px;
+            border-radius: 0 999px 999px 0;
+            background: var(--tms-primary);
+            display: block !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block a span[aria-hidden="true"] {
-        width: 36px !important;
-        min-width: 36px !important;
-        height: 36px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 0 !important;
-        border-radius: 12px !important;
-        background: #f3f4f6 !important;
-        color: var(--tms-muted) !important;
-        box-shadow: inset 0 0 0 1px var(--tms-border) !important;
-        transition: all .22s ease !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block a span[aria-hidden="true"] {
+            width: 36px !important;
+            min-width: 36px !important;
+            height: 36px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            border-radius: 12px !important;
+            background: #f3f4f6 !important;
+            color: var(--tms-muted) !important;
+            box-shadow: inset 0 0 0 1px var(--tms-border) !important;
+            transition: all .22s ease !important;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-menu-block a span[aria-hidden="true"] {
-        background: var(--tms-card-dark-2) !important;
-        color: #d1d5db !important;
-        box-shadow: inset 0 0 0 1px var(--tms-border-dark) !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-menu-block a span[aria-hidden="true"] {
+            background: var(--tms-card-dark-2) !important;
+            color: #d1d5db !important;
+            box-shadow: inset 0 0 0 1px var(--tms-border-dark) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block a:hover span[aria-hidden="true"],
-    [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600 span[aria-hidden="true"],
-    [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] span[aria-hidden="true"] {
-        background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
-        color: #ffffff !important;
-        box-shadow: 0 10px 20px rgba(37, 99, 235, .25) !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block a:hover span[aria-hidden="true"],
+        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600 span[aria-hidden="true"],
+        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] span[aria-hidden="true"] {
+            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
+            color: #ffffff !important;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, .25) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-menu-block svg {
-        width: 18px !important;
-        height: 18px !important;
-        color: currentColor !important;
-        fill: currentColor !important;
-        stroke: currentColor !important;
-    }
+        [data-tms-sidebar-shell] .tms-menu-block svg {
+            width: 18px !important;
+            height: 18px !important;
+            color: currentColor !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mobile-bottom {
-        background: rgba(255, 255, 255, .96) !important;
-        backdrop-filter: blur(16px);
-        border: 1px solid var(--tms-border) !important;
-        box-shadow: 0 14px 34px rgba(15, 23, 42, .16) !important;
-    }
+        [data-tms-sidebar-shell] .tms-mobile-bottom {
+            background: rgba(255, 255, 255, .96) !important;
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--tms-border) !important;
+            box-shadow: 0 14px 34px rgba(15, 23, 42, .16) !important;
+        }
 
-    .dark [data-tms-sidebar-shell] .tms-mobile-bottom {
-        background: rgba(17, 24, 39, .96) !important;
-        border-color: var(--tms-border-dark) !important;
-    }
+        .dark [data-tms-sidebar-shell] .tms-mobile-bottom {
+            background: rgba(17, 24, 39, .96) !important;
+            border-color: var(--tms-border-dark) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mobile-bottom a,
-    [data-tms-sidebar-shell] .tms-mobile-bottom button {
-        color: var(--tms-muted) !important;
-        transition: all .22s ease !important;
-    }
+        [data-tms-sidebar-shell] .tms-mobile-bottom a,
+        [data-tms-sidebar-shell] .tms-mobile-bottom button {
+            color: var(--tms-muted) !important;
+            transition: all .22s ease !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mobile-bottom a:hover,
-    [data-tms-sidebar-shell] .tms-mobile-bottom button:hover {
-        background: var(--tms-primary-light) !important;
-        color: var(--tms-primary) !important;
-    }
+        [data-tms-sidebar-shell] .tms-mobile-bottom a:hover,
+        [data-tms-sidebar-shell] .tms-mobile-bottom button:hover {
+            background: var(--tms-primary-light) !important;
+            color: var(--tms-primary) !important;
+        }
 
-    [data-tms-sidebar-shell] .tms-mobile-bottom a:hover svg,
-    [data-tms-sidebar-shell] .tms-mobile-bottom button:hover svg {
-        color: var(--tms-primary) !important;
-        fill: currentColor !important;
-        stroke: currentColor !important;
-    }
+        [data-tms-sidebar-shell] .tms-mobile-bottom a:hover svg,
+        [data-tms-sidebar-shell] .tms-mobile-bottom button:hover svg {
+            color: var(--tms-primary) !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
 
-    @media (max-width: 767px) {
+        @media (max-width: 767px) {
+            [data-tms-sidebar-shell] .tms-mobile-bottom {
+                max-width: calc(100% - 24px) !important;
+                height: 64px !important;
+                bottom: 14px !important;
+                border-radius: 999px !important;
+            }
+        }
+
+
+        /* Final responsive sidebar polish - matched with Category Management UI */
+        [data-tms-sidebar-shell] {
+            --tms-primary: #2563eb;
+            --tms-primary-hover: #1d4ed8;
+            --tms-primary-soft: #dbeafe;
+            --tms-primary-light: #eff6ff;
+            --tms-indigo: #4f46e5;
+            --tms-card: #ffffff;
+            --tms-bg: #f9fafb;
+            --tms-heading: #111827;
+            --tms-text: #374151;
+            --tms-muted: #6b7280;
+            --tms-border: #e5e7eb;
+            --tms-shadow-soft: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 28px rgba(15, 23, 42, .08);
+            --tms-shadow-blue: 0 12px 24px rgba(37, 99, 235, .28);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        [data-tms-sidebar-shell] .fixed.inset-y-0.z-10.w-16 {
+            background: var(--tms-card) !important;
+            border-right: 1px solid var(--tms-border) !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-mini-sidebar {
+            width: 64px !important;
+            background: var(--tms-card) !important;
+            border-right: 1px solid var(--tms-border) !important;
+            box-shadow: var(--tms-shadow-soft) !important;
+            border-radius: 0 22px 22px 0 !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-mini-sidebar::before {
+            background: linear-gradient(180deg, var(--tms-primary), var(--tms-indigo)) !important;
+            width: 4px !important;
+            top: 18px !important;
+            bottom: 18px !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-mini-sidebar button {
+            position: relative !important;
+            overflow: hidden !important;
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 14px !important;
+            background: #ffffff !important;
+            color: var(--tms-muted) !important;
+            border: 1px solid var(--tms-border) !important;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .06) !important;
+            transition: all .25s ease !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-mini-sidebar button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .10);
+            opacity: 0;
+            transition: opacity .3s ease;
+            pointer-events: none;
+        }
+
+        [data-tms-sidebar-shell] .tms-mini-sidebar button:hover::after {
+            opacity: 1;
+        }
+
+        [data-tms-sidebar-shell] .tms-mini-sidebar button:hover,
+        [data-tms-sidebar-shell] .tms-mini-sidebar button.bg-blue-600,
+        [data-tms-sidebar-shell] .tms-mini-sidebar button[class*='bg-blue-600'] {
+            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
+            color: #ffffff !important;
+            border-color: transparent !important;
+            transform: translateY(-2px) scale(1.04) !important;
+            box-shadow: var(--tms-shadow-blue) !important;
+            outline: none !important;
+            --tw-ring-shadow: 0 0 #0000 !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-mini-sidebar button svg {
+            position: relative !important;
+            z-index: 10 !important;
+            width: 20px !important;
+            height: 20px !important;
+            color: currentColor !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-expanded-sidebar {
+            width: 276px !important;
+            background: var(--tms-card) !important;
+            border-right: 1px solid var(--tms-border) !important;
+            box-shadow: var(--tms-shadow-soft) !important;
+            border-radius: 0 24px 24px 0 !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-expanded-sidebar::before {
+            content: 'MENU';
+            color: var(--tms-muted) !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            letter-spacing: .06em !important;
+            padding: 28px 22px 12px 22px !important;
+            text-transform: uppercase !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
+            top: 54px !important;
+            left: 22px !important;
+            right: 22px !important;
+            height: 1px !important;
+            background: var(--tms-border) !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block {
+            margin-top: 0 !important;
+            padding: 12px 14px 22px 14px !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block a {
+            min-height: 52px !important;
+            padding: 12px 14px !important;
+            margin: 6px 0 !important;
+            border-radius: 14px !important;
+            color: var(--tms-text) !important;
+            background: transparent !important;
+            border: 1px solid transparent !important;
+            box-shadow: none !important;
+            font-size: 15px !important;
+            font-weight: 650 !important;
+            letter-spacing: 0 !important;
+            transition: all .25s ease !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block a:hover {
+            transform: translateX(3px) !important;
+            background: var(--tms-primary-light) !important;
+            color: var(--tms-primary) !important;
+            border-color: var(--tms-primary-soft) !important;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, .10) !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600,
+        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] {
+            background: var(--tms-primary-light) !important;
+            color: var(--tms-primary) !important;
+            border-color: var(--tms-primary-soft) !important;
+            box-shadow: 0 10px 22px rgba(37, 99, 235, .12) !important;
+            font-weight: 800 !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block a::after {
+            display: none !important;
+            content: none !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600::before,
+        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600']::before {
+            width: 4px !important;
+            height: 28px !important;
+            left: -14px !important;
+            border-radius: 0 999px 999px 0 !important;
+            background: var(--tms-primary) !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block a span[aria-hidden="true"] {
+            width: 36px !important;
+            min-width: 36px !important;
+            height: 36px !important;
+            padding: 0 !important;
+            border-radius: 12px !important;
+            background: #f3f4f6 !important;
+            color: var(--tms-muted) !important;
+            box-shadow: inset 0 0 0 1px var(--tms-border) !important;
+            transition: all .25s ease !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block a:hover span[aria-hidden="true"],
+        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600 span[aria-hidden="true"],
+        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] span[aria-hidden="true"] {
+            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
+            color: #ffffff !important;
+            box-shadow: var(--tms-shadow-blue) !important;
+        }
+
+        [data-tms-sidebar-shell] .tms-menu-block svg {
+            width: 18px !important;
+            height: 18px !important;
+            color: currentColor !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
+
         [data-tms-sidebar-shell] .tms-mobile-bottom {
             max-width: calc(100% - 24px) !important;
             height: 64px !important;
             bottom: 14px !important;
+            background: rgba(255, 255, 255, .96) !important;
+            backdrop-filter: blur(16px) !important;
+            border: 1px solid var(--tms-border) !important;
+            box-shadow: 0 14px 34px rgba(15, 23, 42, .16) !important;
             border-radius: 999px !important;
         }
-    }
 
-
-    /* Final responsive sidebar polish - matched with Category Management UI */
-    [data-tms-sidebar-shell] {
-        --tms-primary: #2563eb;
-        --tms-primary-hover: #1d4ed8;
-        --tms-primary-soft: #dbeafe;
-        --tms-primary-light: #eff6ff;
-        --tms-indigo: #4f46e5;
-        --tms-card: #ffffff;
-        --tms-bg: #f9fafb;
-        --tms-heading: #111827;
-        --tms-text: #374151;
-        --tms-muted: #6b7280;
-        --tms-border: #e5e7eb;
-        --tms-shadow-soft: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 28px rgba(15, 23, 42, .08);
-        --tms-shadow-blue: 0 12px 24px rgba(37, 99, 235, .28);
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    [data-tms-sidebar-shell] .fixed.inset-y-0.z-10.w-16 {
-        background: var(--tms-card) !important;
-        border-right: 1px solid var(--tms-border) !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mini-sidebar {
-        width: 64px !important;
-        background: var(--tms-card) !important;
-        border-right: 1px solid var(--tms-border) !important;
-        box-shadow: var(--tms-shadow-soft) !important;
-        border-radius: 0 22px 22px 0 !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mini-sidebar::before {
-        background: linear-gradient(180deg, var(--tms-primary), var(--tms-indigo)) !important;
-        width: 4px !important;
-        top: 18px !important;
-        bottom: 18px !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mini-sidebar button {
-        position: relative !important;
-        overflow: hidden !important;
-        width: 44px !important;
-        height: 44px !important;
-        border-radius: 14px !important;
-        background: #ffffff !important;
-        color: var(--tms-muted) !important;
-        border: 1px solid var(--tms-border) !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, .06) !important;
-        transition: all .25s ease !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mini-sidebar button::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 14px;
-        background: rgba(255,255,255,.10);
-        opacity: 0;
-        transition: opacity .3s ease;
-        pointer-events: none;
-    }
-
-    [data-tms-sidebar-shell] .tms-mini-sidebar button:hover::after {
-        opacity: 1;
-    }
-
-    [data-tms-sidebar-shell] .tms-mini-sidebar button:hover,
-    [data-tms-sidebar-shell] .tms-mini-sidebar button.bg-blue-600,
-    [data-tms-sidebar-shell] .tms-mini-sidebar button[class*='bg-blue-600'] {
-        background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
-        color: #ffffff !important;
-        border-color: transparent !important;
-        transform: translateY(-2px) scale(1.04) !important;
-        box-shadow: var(--tms-shadow-blue) !important;
-        outline: none !important;
-        --tw-ring-shadow: 0 0 #0000 !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mini-sidebar button svg {
-        position: relative !important;
-        z-index: 10 !important;
-        width: 20px !important;
-        height: 20px !important;
-        color: currentColor !important;
-        fill: currentColor !important;
-        stroke: currentColor !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-expanded-sidebar {
-        width: 276px !important;
-        background: var(--tms-card) !important;
-        border-right: 1px solid var(--tms-border) !important;
-        box-shadow: var(--tms-shadow-soft) !important;
-        border-radius: 0 24px 24px 0 !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-expanded-sidebar::before {
-        content: 'MENU';
-        color: var(--tms-muted) !important;
-        font-size: 13px !important;
-        font-weight: 800 !important;
-        letter-spacing: .06em !important;
-        padding: 28px 22px 12px 22px !important;
-        text-transform: uppercase !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
-        top: 54px !important;
-        left: 22px !important;
-        right: 22px !important;
-        height: 1px !important;
-        background: var(--tms-border) !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block {
-        margin-top: 0 !important;
-        padding: 12px 14px 22px 14px !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block a {
-        min-height: 52px !important;
-        padding: 12px 14px !important;
-        margin: 6px 0 !important;
-        border-radius: 14px !important;
-        color: var(--tms-text) !important;
-        background: transparent !important;
-        border: 1px solid transparent !important;
-        box-shadow: none !important;
-        font-size: 15px !important;
-        font-weight: 650 !important;
-        letter-spacing: 0 !important;
-        transition: all .25s ease !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block a:hover {
-        transform: translateX(3px) !important;
-        background: var(--tms-primary-light) !important;
-        color: var(--tms-primary) !important;
-        border-color: var(--tms-primary-soft) !important;
-        box-shadow: 0 8px 18px rgba(37, 99, 235, .10) !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600,
-    [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] {
-        background: var(--tms-primary-light) !important;
-        color: var(--tms-primary) !important;
-        border-color: var(--tms-primary-soft) !important;
-        box-shadow: 0 10px 22px rgba(37, 99, 235, .12) !important;
-        font-weight: 800 !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block a::after {
-        display: none !important;
-        content: none !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600::before,
-    [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600']::before {
-        width: 4px !important;
-        height: 28px !important;
-        left: -14px !important;
-        border-radius: 0 999px 999px 0 !important;
-        background: var(--tms-primary) !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block a span[aria-hidden="true"] {
-        width: 36px !important;
-        min-width: 36px !important;
-        height: 36px !important;
-        padding: 0 !important;
-        border-radius: 12px !important;
-        background: #f3f4f6 !important;
-        color: var(--tms-muted) !important;
-        box-shadow: inset 0 0 0 1px var(--tms-border) !important;
-        transition: all .25s ease !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block a:hover span[aria-hidden="true"],
-    [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600 span[aria-hidden="true"],
-    [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] span[aria-hidden="true"] {
-        background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
-        color: #ffffff !important;
-        box-shadow: var(--tms-shadow-blue) !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-menu-block svg {
-        width: 18px !important;
-        height: 18px !important;
-        color: currentColor !important;
-        fill: currentColor !important;
-        stroke: currentColor !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mobile-bottom {
-        max-width: calc(100% - 24px) !important;
-        height: 64px !important;
-        bottom: 14px !important;
-        background: rgba(255,255,255,.96) !important;
-        backdrop-filter: blur(16px) !important;
-        border: 1px solid var(--tms-border) !important;
-        box-shadow: 0 14px 34px rgba(15, 23, 42, .16) !important;
-        border-radius: 999px !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mobile-bottom a,
-    [data-tms-sidebar-shell] .tms-mobile-bottom button {
-        color: var(--tms-muted) !important;
-        transition: all .25s ease !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mobile-bottom a:hover,
-    [data-tms-sidebar-shell] .tms-mobile-bottom button:hover {
-        background: var(--tms-primary-light) !important;
-        color: var(--tms-primary) !important;
-    }
-
-    [data-tms-sidebar-shell] .tms-mobile-bottom svg {
-        color: currentColor !important;
-        fill: currentColor !important;
-        stroke: currentColor !important;
-    }
-
-    @media (max-width: 767px) {
-        [data-tms-sidebar-shell] .tms-mobile-bottom {
-            left: 50% !important;
-            width: calc(100% - 24px) !important;
-            max-width: 520px !important;
-        }
-    }
-
-
-    /* Mobile off-canvas sidebar: visible below 768px only */
-    [data-tms-mobile-toggle] {
-        position: fixed;
-        top: 14px;
-        left: 14px;
-        z-index: 100000;
-        width: 44px;
-        height: 44px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        border-radius: 14px;
-        background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo));
-        color: #ffffff;
-        box-shadow: 0 12px 24px rgba(37, 99, 235, .28);
-        border: 0;
-        transition: all .25s ease;
-    }
-
-    [data-tms-mobile-toggle]:active {
-        transform: scale(.96);
-    }
-
-    [data-tms-mobile-overlay] {
-        position: fixed;
-        inset: 0;
-        z-index: 99990;
-        background: rgba(15, 23, 42, .42);
-        backdrop-filter: blur(5px);
-    }
-
-    [data-tms-mobile-drawer] {
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 99999;
-        width: min(82vw, 310px);
-        height: 100vh;
-        background: var(--tms-card);
-        border-right: 1px solid var(--tms-border);
-        box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
-        border-radius: 0 24px 24px 0;
-        overflow-y: auto;
-        padding: 18px 14px 22px;
-    }
-
-    .dark [data-tms-mobile-drawer] {
-        background: var(--tms-card-dark);
-        border-right-color: var(--tms-border-dark);
-    }
-
-    [data-tms-mobile-header] {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 4px 4px 16px;
-        border-bottom: 1px solid var(--tms-border);
-        margin-bottom: 14px;
-    }
-
-    .dark [data-tms-mobile-header] {
-        border-bottom-color: var(--tms-border-dark);
-    }
-
-    [data-tms-mobile-title] {
-        font-size: 13px;
-        font-weight: 800;
-        color: var(--tms-muted);
-        letter-spacing: .06em;
-        text-transform: uppercase;
-    }
-
-    [data-tms-mobile-close] {
-        width: 38px;
-        height: 38px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        background: #f3f4f6;
-        color: var(--tms-text);
-        border: 1px solid var(--tms-border);
-        transition: all .22s ease;
-    }
-
-    [data-tms-mobile-close]:hover {
-        background: var(--tms-primary-light);
-        color: var(--tms-primary);
-        border-color: var(--tms-primary-soft);
-    }
-
-    [data-tms-mobile-menu] {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    [data-tms-mobile-menu] a,
-    [data-tms-mobile-menu] button {
-        position: relative;
-        width: 100%;
-        min-height: 52px;
-        display: flex;
-        align-items: center;
-        gap: 13px;
-        padding: 12px 14px;
-        border-radius: 14px;
-        color: var(--tms-text);
-        background: transparent;
-        border: 1px solid transparent;
-        font-size: 15px;
-        font-weight: 500;
-        text-align: left;
-        transition: all .22s ease;
-    }
-
-    [data-tms-mobile-menu] a:hover,
-    [data-tms-mobile-menu] button:hover {
-        background: var(--tms-primary-light);
-        color: var(--tms-primary);
-        border-color: var(--tms-primary-soft);
-    }
-
-    [data-tms-mobile-menu] .tms-mobile-active {
-        background: var(--tms-primary-light);
-        color: var(--tms-primary);
-        border-color: var(--tms-primary-soft);
-    }
-
-    [data-tms-mobile-menu] .tms-mobile-active::before {
-        content: '';
-        position: absolute;
-        left: -14px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 28px;
-        border-radius: 0 999px 999px 0;
-        background: var(--tms-primary);
-    }
-
-    [data-tms-mobile-icon] {
-        width: 36px;
-        min-width: 36px;
-        height: 36px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        background: #f3f4f6;
-        color: var(--tms-muted);
-        box-shadow: inset 0 0 0 1px var(--tms-border);
-        transition: all .22s ease;
-    }
-
-    [data-tms-mobile-menu] a:hover [data-tms-mobile-icon],
-    [data-tms-mobile-menu] button:hover [data-tms-mobile-icon],
-    [data-tms-mobile-menu] .tms-mobile-active [data-tms-mobile-icon] {
-        background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo));
-        color: #ffffff;
-        box-shadow: 0 10px 20px rgba(37, 99, 235, .25);
-    }
-
-    [data-tms-mobile-menu] svg {
-        width: 18px;
-        height: 18px;
-        color: currentColor;
-        fill: currentColor;
-        stroke: currentColor;
-    }
-
-    @media (max-width: 767px) {
-        [data-tms-mobile-toggle] {
-            display: inline-flex;
-        }
-
-        [data-tms-sidebar-shell] .tms-mobile-bottom {
-            display: none !important;
-        }
-    }
-
-    @media (min-width: 768px) {
-        [data-tms-mobile-toggle],
-        [data-tms-mobile-overlay],
-        [data-tms-mobile-drawer] {
-            display: none !important;
-        }
-    }
-
-
-
-
-    /* Mobile hamburger: TMS logo ke just right side, logo par overlap nahi hoga */
-    @media (max-width: 767px) {
-        [data-tms-mobile-toggle] {
-            position: fixed !important;
-            top: 5px !important;
-            left: 120px !important;
-            z-index: 70 !important;
-            width: 44px !important;
-            height: 44px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            border-radius: 14px !important;
-            background: #eff6ff !important;
-            color: #2563eb !important;
-            border: 1px solid #dbeafe !important;
-            box-shadow: 0 10px 22px rgba(37, 99, 235, .16) !important;
+        [data-tms-sidebar-shell] .tms-mobile-bottom a,
+        [data-tms-sidebar-shell] .tms-mobile-bottom button {
+            color: var(--tms-muted) !important;
             transition: all .25s ease !important;
         }
 
-        [data-tms-mobile-toggle]:hover,
-        [data-tms-mobile-toggle]:focus {
-            background: #2563eb !important;
-            color: #ffffff !important;
-            border-color: #2563eb !important;
-            box-shadow: 0 14px 28px rgba(37, 99, 235, .26) !important;
-            outline: none !important;
+        [data-tms-sidebar-shell] .tms-mobile-bottom a:hover,
+        [data-tms-sidebar-shell] .tms-mobile-bottom button:hover {
+            background: var(--tms-primary-light) !important;
+            color: var(--tms-primary) !important;
         }
-    }
 
-    @media (max-width: 480px) {
+        [data-tms-sidebar-shell] .tms-mobile-bottom svg {
+            color: currentColor !important;
+            fill: currentColor !important;
+            stroke: currentColor !important;
+        }
+
+        @media (max-width: 767px) {
+            [data-tms-sidebar-shell] .tms-mobile-bottom {
+                left: 50% !important;
+                width: calc(100% - 24px) !important;
+                max-width: 520px !important;
+            }
+        }
+
+
+        /* Mobile off-canvas sidebar: visible below 768px only */
         [data-tms-mobile-toggle] {
-            left: 156px !important;
-            top: 22px !important;
-            width: 42px !important;
-            height: 42px !important;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 100000;
+            width: 44px;
+            height: 44px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo));
+            color: #ffffff;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, .28);
+            border: 0;
+            transition: all .25s ease;
         }
+
+        [data-tms-mobile-toggle]:active {
+            transform: scale(.96);
+        }
+
+        [data-tms-mobile-overlay] {
+            position: fixed;
+            inset: 0;
+            z-index: 99990;
+            background: rgba(15, 23, 42, .42);
+            backdrop-filter: blur(5px);
+        }
+
+        [data-tms-mobile-drawer] {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 99999;
+            width: min(82vw, 310px);
+            height: 100vh;
+            background: var(--tms-card);
+            border-right: 1px solid var(--tms-border);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
+            border-radius: 0 24px 24px 0;
+            overflow-y: auto;
+            padding: 18px 14px 22px;
+        }
+
+        .dark [data-tms-mobile-drawer] {
+            background: var(--tms-card-dark);
+            border-right-color: var(--tms-border-dark);
+        }
+
+        [data-tms-mobile-header] {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 4px 4px 16px;
+            border-bottom: 1px solid var(--tms-border);
+            margin-bottom: 14px;
+        }
+
+        .dark [data-tms-mobile-header] {
+            border-bottom-color: var(--tms-border-dark);
+        }
+
+        [data-tms-mobile-title] {
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--tms-muted);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+
+        [data-tms-mobile-close] {
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #f3f4f6;
+            color: var(--tms-text);
+            border: 1px solid var(--tms-border);
+            transition: all .22s ease;
+        }
+
+        [data-tms-mobile-close]:hover {
+            background: var(--tms-primary-light);
+            color: var(--tms-primary);
+            border-color: var(--tms-primary-soft);
+        }
+
+        [data-tms-mobile-menu] {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        [data-tms-mobile-menu] a,
+        [data-tms-mobile-menu] button {
+            position: relative;
+            width: 100%;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            color: var(--tms-text);
+            background: transparent;
+            border: 1px solid transparent;
+            font-size: 15px;
+            font-weight: 500;
+            text-align: left;
+            transition: all .22s ease;
+        }
+
+        [data-tms-mobile-menu] a:hover,
+        [data-tms-mobile-menu] button:hover {
+            background: var(--tms-primary-light);
+            color: var(--tms-primary);
+            border-color: var(--tms-primary-soft);
+        }
+
+        [data-tms-mobile-menu] .tms-mobile-active {
+            background: var(--tms-primary-light);
+            color: var(--tms-primary);
+            border-color: var(--tms-primary-soft);
+        }
+
+        [data-tms-mobile-menu] .tms-mobile-active::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 28px;
+            border-radius: 0 999px 999px 0;
+            background: var(--tms-primary);
+        }
+
+        [data-tms-mobile-icon] {
+            width: 36px;
+            min-width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: #f3f4f6;
+            color: var(--tms-muted);
+            box-shadow: inset 0 0 0 1px var(--tms-border);
+            transition: all .22s ease;
+        }
+
+        [data-tms-mobile-menu] a:hover [data-tms-mobile-icon],
+        [data-tms-mobile-menu] button:hover [data-tms-mobile-icon],
+        [data-tms-mobile-menu] .tms-mobile-active [data-tms-mobile-icon] {
+            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo));
+            color: #ffffff;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, .25);
+        }
+
+        [data-tms-mobile-menu] svg {
+            width: 18px;
+            height: 18px;
+            color: currentColor;
+            fill: currentColor;
+            stroke: currentColor;
+        }
+
+        @media (max-width: 767px) {
+            [data-tms-mobile-toggle] {
+                display: inline-flex;
+            }
+
+            [data-tms-sidebar-shell] .tms-mobile-bottom {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 768px) {
+
+            [data-tms-mobile-toggle],
+            [data-tms-mobile-overlay],
+            [data-tms-mobile-drawer] {
+                display: none !important;
+            }
+        }
+
+
+
+
+        /* Mobile hamburger: TMS logo ke just right side, logo par overlap nahi hoga */
+        /* Mobile hamburger placement fix */
+        @media (max-width: 767px) {
+    /* 1. Pure Header Container ko responsive aur clean banane ke liye */
+    /* Agar aapke header class ka naam alag hai, toh toggle ke wrapper ko handles karein */
+    .header-container,
+    header,
+    .tms-navbar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 10px 16px !important;
+        position: relative !important;
     }
 
-    @media (max-width: 390px) {
-        [data-tms-mobile-toggle] {
-            left: 144px !important;
-        }
+    /* Logo wrapper layout fix */
+    .logo-class, [data-tms-logo] {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important; /* Logo aur button ke beech space */
     }
 
-    @media (min-width: 768px) {
-        [data-tms-mobile-toggle] {
-            display: none !important;
-        }
+    /* 2. Toggle Button ko proper positioning dena bina crash kiye */
+    [data-tms-mobile-toggle] {
+        position: static !important; /* Fixed/Absolute ko delete karega taaki overlapping na ho */
+        order: -1 !important;        /* Yeh line toggle button ko LOGO SE PEHLE (Left side) shift kar degi */
+
+        /* Button Styles */
+        width: 42px !important;
+        height: 42px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 12px !important;
+        background: #eff6ff !important;
+        color: #2563eb !important;
+        border: 1px solid #dbeafe !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+        transition: all 0.2s ease !important;
+        cursor: pointer !important;
+        margin-right: 12px !important; /* Logo se specific distance */
     }
 
-</style>
+    /* Hover & Active States */
+    [data-tms-mobile-toggle]:hover,
+    [data-tms-mobile-toggle]:focus {
+        background: #2563eb !important;
+        color: #ffffff !important;
+        border-color: #2563eb !important;
+        outline: none !important;
+    }
+}
+
+/* Chhote mobile screens (iPhone SE, etc.) ke liye minor adjustments */
+@media (max-width: 380px) {
+    [data-tms-mobile-toggle] {
+        width: 38px !important;
+        height: 38px !important;
+        margin-right: 8px !important;
+    }
+
+    /* Install app button text ko thoda chhota karne ke liye agar screen bohot chhoti ho */
+    .install-btn-class, button:contains("Install") {
+        padding: 6px 12px !important;
+        font-size: 13px !important;
+    }
+}
+
+        @media (max-width: 480px) {
+            [data-tms-mobile-toggle] {
+                right: 14px !important;
+                top: 14px !important;
+                width: 42px !important;
+                height: 42px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            [data-tms-mobile-toggle] {
+                left: 156px !important;
+                top: 22px !important;
+                width: 42px !important;
+                height: 42px !important;
+            }
+        }
+
+        @media (max-width: 390px) {
+            [data-tms-mobile-toggle] {
+                left: 144px !important;
+            }
+        }
+
+        @media (min-width: 768px) {
+            [data-tms-mobile-toggle] {
+                display: none !important;
+            }
+        }
+    </style>
 
     {{-- Mobile sidebar button and drawer --}}
     <button type="button" data-tms-mobile-toggle @click="mobileSidebarOpen = true" aria-label="Open sidebar">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor" stroke-width="2.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
     </button>
 
-    <div x-show="mobileSidebarOpen" x-cloak data-tms-mobile-overlay
-        x-transition.opacity
+    <div x-show="mobileSidebarOpen" x-cloak data-tms-mobile-overlay x-transition.opacity
         @click="mobileSidebarOpen = false"></div>
 
     <aside x-show="mobileSidebarOpen" x-cloak data-tms-mobile-drawer
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="-translate-x-full opacity-0"
-        x-transition:enter-end="translate-x-0 opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="translate-x-0 opacity-100"
-        x-transition:leave-end="-translate-x-full opacity-0">
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full opacity-0"
+        x-transition:enter-end="translate-x-0 opacity-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-x-0 opacity-100" x-transition:leave-end="-translate-x-full opacity-0">
         <div data-tms-mobile-header>
             <div data-tms-mobile-title>Menu</div>
             <button type="button" data-tms-mobile-close @click="mobileSidebarOpen = false" aria-label="Close sidebar">
@@ -817,8 +872,7 @@
         </div>
 
         <nav data-tms-mobile-menu aria-label="Mobile sidebar">
-            <a href="{{ route('dashboard') }}" wire:navigate
-                @click="mobileSidebarOpen = false"
+            <a href="{{ route('dashboard') }}" wire:navigate @click="mobileSidebarOpen = false"
                 :class="{ 'tms-mobile-active': $wire.activeMenu === 'dashboard' }">
                 <span data-tms-mobile-icon>
                     <svg fill="currentColor" viewBox="0 0 20 20">
@@ -847,7 +901,8 @@
                 :class="{ 'tms-mobile-active': $wire.activeMenu === 'assigned_to_others' }">
                 <span data-tms-mobile-icon>
                     <svg fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                        <path
+                            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                     </svg>
                 </span>
                 <span>Assigned Task</span>
@@ -858,7 +913,8 @@
                 :class="{ 'tms-mobile-active': $wire.activeMenu === 'tasks' }">
                 <span data-tms-mobile-icon>
                     <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm1 5a1 1 0 100 2h12a1 1 0 100-2H4z"/>
+                        <path
+                            d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm1 5a1 1 0 100 2h12a1 1 0 100-2H4z" />
                     </svg>
                 </span>
                 <span>All Tasks</span>
@@ -866,34 +922,34 @@
 
             @auth
                 @if (auth()->user()->role === 'admin')
-                    <a href="{{ route('categories') }}" wire:navigate
-                        @click="mobileSidebarOpen = false"
+                    <a href="{{ route('categories') }}" wire:navigate @click="mobileSidebarOpen = false"
                         :class="{ 'tms-mobile-active': $wire.activeMenu === 'categories' }">
                         <span data-tms-mobile-icon>
                             <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zm0 7.8L6.47 7 12 4.2 17.53 7 12 9.8zM2 17l10 5 10-5v-2.2l-10 5-10-5V17zm0-5l10 5 10-5V9.8l-10 5-10-5V12z"/>
+                                <path
+                                    d="M12 2L2 7l10 5 10-5-10-5zm0 7.8L6.47 7 12 4.2 17.53 7 12 9.8zM2 17l10 5 10-5v-2.2l-10 5-10-5V17zm0-5l10 5 10-5V9.8l-10 5-10-5V12z" />
                             </svg>
                         </span>
                         <span>Categories</span>
                     </a>
 
-                    <a href="{{ route('users') }}" wire:navigate
-                        @click="mobileSidebarOpen = false"
+                    <a href="{{ route('users') }}" wire:navigate @click="mobileSidebarOpen = false"
                         :class="{ 'tms-mobile-active': $wire.activeMenu === 'users' }">
                         <span data-tms-mobile-icon>
                             <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                <path
+                                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                             </svg>
                         </span>
                         <span>Manage Users</span>
                     </a>
 
-                    <a href="{{ route('manageusergroup') }}" wire:navigate
-                        @click="mobileSidebarOpen = false"
+                    <a href="{{ route('manageusergroup') }}" wire:navigate @click="mobileSidebarOpen = false"
                         :class="{ 'tms-mobile-active': $wire.activeMenu === 'manageusergroup' }">
                         <span data-tms-mobile-icon>
                             <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm8 0c-.31 0-.65.02-1 .06 1.24.9 2 2.05 2 3.44V19h7v-2c0-2.66-5.33-4-8-4z"/>
+                                <path
+                                    d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm8 0c-.31 0-.65.02-1 .06 1.24.9 2 2.05 2 3.44V19h7v-2c0-2.66-5.33-4-8-4z" />
                             </svg>
                         </span>
                         <span>User Groups</span>
@@ -901,13 +957,11 @@
                 @endif
             @endauth
 
-            <button type="button"
-                wire:click="$dispatch('openExportModal', { component: 'export-task-modal' })"
-                @click="mobileSidebarOpen = false"
-                :class="{ 'tms-mobile-active': $wire.activeMenu === 'export' }">
+            <button type="button" wire:click="$dispatch('openExportModal', { component: 'export-task-modal' })"
+                @click="mobileSidebarOpen = false" :class="{ 'tms-mobile-active': $wire.activeMenu === 'export' }">
                 <span data-tms-mobile-icon>
                     <svg fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/>
+                        <path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z" />
                     </svg>
                 </span>
                 <span>Export Report</span>
@@ -925,31 +979,29 @@
             class="tms-mini-sidebar z-20 flex-col items-center flex-shrink-0 hidden w-16 py-4 bg-white border-r-2 border-indigo-100 shadow-md sm:flex rounded-tr-3xl rounded-br-3xl">
             <div class="flex flex-col items-center flex-1 p-2 space-y-4 mt-14">
                 <!-- Dashboard Button -->
-                <button
-                    @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'dashboardTab'; contentVisible = true"
+                <button @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'dashboardTab'; contentVisible = true"
                     @mouseleave="hoverTimeout = setTimeout(() => { if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 250)"
                     @click="hoveredTab === 'dashboardTab' ? (contentVisible = !contentVisible) : (hoveredTab = 'dashboardTab', contentVisible = true)"
                     class="group relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl p-2 text-gray-500 shadow-md transition-all duration-300 hover:scale-105 hover:bg-blue-600 hover:text-white sm:h-11 sm:w-11 md:h-11 md:w-11"
                     :class="{
-                        'bg-blue-600 text-white outline-none ring ring-blue-600 ring-offset-white ring-offset-2': $wire.activeMenu === 'dashboard',
+                        'bg-blue-600 text-white outline-none ring ring-blue-600 ring-offset-white ring-offset-2': $wire
+                            .activeMenu === 'dashboard',
                         'bg-white text-gray-500 hover:bg-blue-600 hover:text-white': $wire.activeMenu !== 'dashboard'
                     }"
                     title="Dashboard">
 
-                    <span class="absolute inset-0 rounded-xl bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
+                    <span
+                        class="absolute inset-0 rounded-xl bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
 
                     <span class="sr-only">Toggle sidebar</span>
 
-                    <svg
-                        x-bind:class="{ 'text-blue-800': activeTab === 'dashboardTab' }"
+                    <svg x-bind:class="{ 'text-blue-800': activeTab === 'dashboardTab' }"
                         class="relative z-10 h-5 w-5 transition duration-300 group-hover:text-white sm:h-6 sm:w-6"
                         :class="{
                             'text-white': $wire.activeMenu === 'dashboard',
                             'text-gray-500 dark:text-gray-400 group-hover:text-white': $wire.activeMenu !== 'dashboard'
                         }"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg">
+                        fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                         <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
                         <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
                     </svg>
@@ -1036,7 +1088,8 @@
                             }"
                             title="Users">
                             <span class="sr-only">Users</span>
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg"
                                 :class="{
                                     'text-white': ['users', 'manageusergroup'].includes($wire
                                         .activeMenu),
@@ -1132,17 +1185,18 @@
 
             <div class="tms-sidebar-user">
                 <div class="tms-sidebar-avatar">
-                    {{ strtoupper(substr(auth()->user()->first_name ?? auth()->user()->name ?? 'U', 0, 1)) }}
+                    {{ strtoupper(substr(auth()->user()->first_name ?? (auth()->user()->name ?? 'U'), 0, 1)) }}
                 </div>
                 <div class="min-w-0 flex-1">
                     <p class="truncate text-lg font-bold leading-tight">
-                        {{ auth()->user()->first_name ?? auth()->user()->name ?? 'User' }}
+                        {{ auth()->user()->first_name ?? (auth()->user()->name ?? 'User') }}
                     </p>
                     <p class="truncate text-sm font-medium">
                         {{ auth()->user()->email ?? '' }}
                     </p>
                 </div>
-                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
             </div>
@@ -1922,32 +1976,32 @@
                                                 <g>
                                                     <path
                                                         d="M330.691,85.346h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                        c-29.419,0-53.333,23.936-53.333,53.333v138.667h-53.333c-5.888,0-10.667,4.779-10.667,10.667s4.779,10.667,10.667,10.667h53.333
-                                                                                                        v138.667c0,29.397,23.915,53.333,53.333,53.333h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                        c-17.643,0-32-14.357-32-32V277.346h74.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-74.667V117.346
-                                                                                                        C298.691,99.703,313.049,85.346,330.691,85.346z"
+                                                                                                            c-29.419,0-53.333,23.936-53.333,53.333v138.667h-53.333c-5.888,0-10.667,4.779-10.667,10.667s4.779,10.667,10.667,10.667h53.333
+                                                                                                            v138.667c0,29.397,23.915,53.333,53.333,53.333h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
+                                                                                                            c-17.643,0-32-14.357-32-32V277.346h74.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-74.667V117.346
+                                                                                                            C298.691,99.703,313.049,85.346,330.691,85.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M177.646,179.831c-3.349-29.525-26.752-51.819-54.4-51.819H68.782c-27.648,0-51.051,22.272-54.4,51.819L0.238,303.735
-                                                                                                        c-1.173,10.368,2.027,20.651,8.768,28.224c5.803,6.528,13.547,10.304,21.909,10.773l11.776,159.403
-                                                                                                        c0.427,5.568,5.056,9.877,10.645,9.877h85.333c5.589,0,10.219-4.309,10.645-9.877l11.776-159.403
-                                                                                                        c8.384-0.469,16.107-4.267,21.909-10.773c6.741-7.552,9.941-17.856,8.768-28.224L177.646,179.831z"
+                                                                                                            c-1.173,10.368,2.027,20.651,8.768,28.224c5.803,6.528,13.547,10.304,21.909,10.773l11.776,159.403
+                                                                                                            c0.427,5.568,5.056,9.877,10.645,9.877h85.333c5.589,0,10.219-4.309,10.645-9.877l11.776-159.403
+                                                                                                            c8.384-0.469,16.107-4.267,21.909-10.773c6.741-7.552,9.941-17.856,8.768-28.224L177.646,179.831z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M96.025,106.679c29.461,0,53.333-23.872,53.333-53.333c0-29.461-23.872-53.333-53.333-53.333
-                                                                                                        c-29.461,0-53.333,23.872-53.333,53.333C42.691,82.807,66.563,106.679,96.025,106.679z"
+                                                                                                            c-29.461,0-53.333,23.872-53.333,53.333C42.691,82.807,66.563,106.679,96.025,106.679z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,405.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                        v-42.667C512.025,419.703,497.667,405.346,480.025,405.346z"
+                                                                                                            v-42.667C512.025,419.703,497.667,405.346,480.025,405.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,213.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                        v-42.667C512.025,227.703,497.667,213.346,480.025,213.346z"
+                                                                                                            v-42.667C512.025,227.703,497.667,213.346,480.025,213.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,21.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                        V53.346C512.025,35.703,497.667,21.346,480.025,21.346z"
+                                                                                                            V53.346C512.025,35.703,497.667,21.346,480.025,21.346z"
                                                         fill="currentColor" />
                                                 </g>
                                             </g>

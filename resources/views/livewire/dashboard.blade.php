@@ -1,8 +1,8 @@
 <div>
     @php
         $authUser = Auth::user();
-        $isAdmin = $authUser->role === 'admin';
-        $isUser = $authUser->role === 'user';
+        $isAdmin = $authUser ? $authUser->role === 'admin' : false;
+        $isUser = $authUser ? $authUser->role === 'user' : false;
 
         $visibleCategories = collect($categories ?? []);
         $visibleTeam = collect($team ?? []);
@@ -10,391 +10,315 @@
         $visibleTasks = collect($tasksAssignedByUser ?? []);
     @endphp
 
-    <div class="min-h-screen bg-[#eef3fb] antialiased">
-        <main class="scrollcontainer h-auto px-3 pb-16 pt-14 sm:px-4 md:ml-16 lg:px-6">
+    <div class="min-h-screen bg-[#F8FAFC] antialiased selection:bg-blue-500 selection:text-white">
 
-            {{-- Header --}}
-            <div class="mb-6 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        {{-- Yahan pt-24 lagaya hai jo navbar ke thik niche space generate karega --}}
+        <main class="scrollcontainer h-auto px-4 pb-16 pt-24 sm:px-6 md:ml-16 lg:px-8 max-w-[1600px] mx-auto transition-all duration-300">
+
+            {{-- Header Line --}}
+            <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/60 pb-6">
                 <div>
-                    <div class="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-500">
-                        <span>Home</span>
-                        <span>/</span>
-                        <span class="text-[#001b4d]">Dashboard</span>
+                    <div class="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        <span class="hover:text-slate-600 transition cursor-pointer">Home</span>
+                        <svg class="h-2.5 w-2.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                        <span class="text-[#001b4d] font-extrabold">Dashboard</span>
                     </div>
 
-                    <h1 class="text-2xl font-black tracking-tight text-[#001b4d] sm:text-3xl">
+                    <h1 class="text-2xl font-black tracking-tight text-[#001b4d] sm:text-3xl lg:text-4xl">
                         Hi, welcome back!
                     </h1>
 
-                    <p class="mt-1 text-sm font-medium text-slate-500">
+                    <p class="mt-1.5 text-xs sm:text-sm font-medium text-slate-500/90 flex items-center gap-1.5">
+                        <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         {{ $isAdmin ? 'Welcome back, here is your team task overview.' : 'Welcome back, here is your assigned task overview.' }}
                     </p>
                 </div>
             </div>
 
-            {{-- Summary Cards --}}
-            <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {{-- Summary Cards Grid: Mobile me 1 column, Tablet me 2, Large screens me 4 --}}
+            <div class="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($labels as $label)
                     @php
                         $title = strtolower($label['title']);
 
                         $cardGradient = match ($title) {
-                            'pending' => 'from-[#F40202] to-[#FF0F11]',
-                            'in progress' => 'from-[#FFCE1B] to-[#FBC500]',
-                            'completed' => 'from-[#00a06a] to-[#006d4c]',
-                            'total' => 'from-[#0067f4] to-[#6aaeff]',
-                            default => 'from-[#0067f4] to-[#6aaeff]',
+                            'pending' => 'from-rose-500 to-rose-600 shadow-rose-100/80 ring-rose-400/20',
+                            'in progress' => 'from-amber-400 to-amber-500 shadow-amber-100/80 ring-amber-400/20',
+                            'completed' => 'from-emerald-500 to-teal-600 shadow-emerald-100/80 ring-emerald-400/20',
+                            'total' => 'from-[#0067f4] to-blue-600 shadow-blue-100/80 ring-blue-400/20',
+                            default => 'from-slate-700 to-slate-800 shadow-slate-100/80 ring-slate-400/20',
                         };
                     @endphp
 
-                    <div
-                        class="relative min-h-[145px] overflow-hidden rounded-xl bg-gradient-to-r {{ $cardGradient }} p-5 text-white shadow-sm">
+                    <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br {{ $cardGradient }} p-5 sm:p-6 text-white shadow-lg ring-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                        <div class="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10 blur-xl transition-all duration-700 group-hover:scale-150 group-hover:bg-white/15"></div>
+                        <div class="absolute -bottom-8 -left-8 h-24 w-24 rounded-full bg-black/5 blur-lg transition-all duration-500 group-hover:translate-x-2"></div>
+
                         <div class="relative z-10 flex items-start justify-between gap-3">
-                            <div>
-                                <p class="text-xs font-bold uppercase tracking-wide sm:text-sm">
+                            <div class="space-y-3 sm:space-y-4">
+                                <p class="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-white/75">
                                     {{ $label['title'] }}
                                 </p>
 
-                                <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+                                <h2 class="text-2xl sm:text-3xl font-black tracking-tight font-mono">
                                     {{ $label['count'] }}
                                 </h2>
 
-                                <p class="mt-2 text-xs font-medium text-white/85 sm:text-sm">
-                                    Compared to last week
-                                </p>
+                                <div class="flex items-center gap-1.5 pt-0.5 text-[11px] font-semibold text-white/90 bg-white/10 rounded-full px-2.5 py-0.5 w-fit border border-white/5 backdrop-blur-sm">
+                                    <svg class="h-3.5 w-3.5 opacity-90 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                    </svg>
+                                    <span>Compared to last week</span>
+                                </div>
                             </div>
 
-                            <div
-                                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 backdrop-blur sm:h-10 sm:w-10">
+                            <div class="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 shadow-md border border-white/20 backdrop-blur-md transition-transform duration-300 group-hover:rotate-6">
                                 @if ($title === 'pending')
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z" />
-                                        <path
-                                            d="M7.5 3a.5.5 0 0 1 .5.5V9l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 @elseif ($title === 'in progress')
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        fill="currentColor" viewBox="0 0 16 16">
-                                        <path
-                                            d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9" />
-                                        <path fill-rule="evenodd"
-                                            d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
                                     </svg>
                                 @elseif ($title === 'completed')
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        fill="currentColor" viewBox="0 0 16 16">
-                                        <path
-                                            d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 @else
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                        fill="currentColor" viewBox="0 0 16 16">
-                                        <path
-                                            d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
                                 @endif
                             </div>
                         </div>
-
-                        <svg class="absolute bottom-0 left-0 h-14 w-full opacity-35 sm:h-16" viewBox="0 0 400 80"
-                            preserveAspectRatio="none">
-                            <path
-                                d="M0,60 L25,48 L50,62 L75,58 L100,65 L125,40 L150,25 L175,35 L200,48 L225,34 L250,42 L275,62 L300,52 L325,60 L350,35 L375,58 L400,42 L400,80 L0,80 Z"
-                                fill="white"></path>
-                        </svg>
                     </div>
                 @endforeach
             </div>
 
-            {{-- Category Report --}}
-            <section class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div
-                    class="flex flex-col gap-4 border-b border-slate-100 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            {{-- Category Report Section --}}
+            <section class="mb-10 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm ring-1 ring-slate-100/50">
+                <div class="flex flex-col gap-3 border-b border-slate-100 px-4 sm:px-6 py-4 sm:flex-row sm:items-center sm:justify-between bg-slate-50/50">
                     <div>
-                        <h2 class="text-base font-black uppercase text-[#001b4d] sm:text-lg">Category Report</h2>
-                        <p class="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+                        <h2 class="text-xs sm:text-sm font-black uppercase tracking-widest text-[#001b4d]">Category Report</h2>
+                        <p class="mt-0.5 text-[11px] sm:text-xs font-medium text-slate-400">
                             {{ $isAdmin ? 'Category-wise task completion progress' : 'Your assigned category-wise task progress' }}
                         </p>
                     </div>
-
                     <a href="{{ route('categoryReport') }}" wire:navigate
-                        class="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-[#001b4d] shadow-sm hover:bg-[#f3f7ff] sm:w-auto">
+                        class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#001b4d] shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow active:scale-95 w-full sm:w-auto">
                         View All
                     </a>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-2 2xl:grid-cols-3">
+                <div class="grid grid-cols-1 gap-4 p-4 sm:p-6 sm:grid-cols-2 xl:grid-cols-3">
                     @forelse ($visibleCategories as $category)
                         @php
-                            $circumference = 565.48;
-                            $percentage =
-                                isset($category['percentage']) && is_numeric($category['percentage'])
-                                    ? (float) $category['percentage']
-                                    : 0;
+                            $percentage = isset($category['percentage']) && is_numeric($category['percentage']) ? (float) $category['percentage'] : 0;
+                            $circumference = 251.2;
                             $offset = $circumference - ($circumference * $percentage) / 100;
 
-                            if ($percentage >= 71) {
-                                $dotColor = 'bg-green-500';
-                                $strokeColor = '#22c55e';
-                                $badgeBg = 'bg-green-50 text-green-700';
-                            } elseif ($percentage >= 31) {
-                                $dotColor = 'bg-yellow-400';
-                                $strokeColor = '#facc15';
-                                $badgeBg = 'bg-yellow-50 text-yellow-700';
-                            } else {
-                                $dotColor = 'bg-red-500';
-                                $strokeColor = '#ef4444';
-                                $badgeBg = 'bg-red-50 text-red-700';
-                            }
+                            $strokeColor = match(true) {
+                                $percentage >= 71 => '#10B981',
+                                $percentage >= 31 => '#F59E0B',
+                                default => '#EF4444',
+                            };
+                            $badgeColor = match(true) {
+                                $percentage >= 71 => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                $percentage >= 31 => 'bg-amber-50 text-amber-700 border-amber-200',
+                                default => 'bg-rose-50 text-rose-700 border-rose-200',
+                            };
                         @endphp
 
-                        <div
-                            class="relative rounded-xl border border-slate-200 bg-[#f8fbff] p-4 transition hover:bg-white hover:shadow-md sm:p-5">
-                            <div class="mb-5 flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <h3 class="truncate text-sm font-semibold text-slate-900 sm:text-base">
+                        <div class="group relative rounded-xl border border-slate-150 bg-white p-4 sm:p-5 transition-all duration-300 hover:border-blue-300/80 hover:shadow-md hover:shadow-blue-500/5">
+                            <div class="mb-4 sm:mb-6 flex items-start justify-between gap-2">
+                                <div class="truncate">
+                                    <h3 class="truncate text-sm sm:text-base font-bold text-slate-800 transition-colors group-hover:text-blue-600">
                                         {{ ucwords($category['title']) }}
                                     </h3>
-                                    <p class="mt-1 text-xs font-semibold text-slate-500">
-                                        Task completion status
-                                    </p>
+                                    <p class="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5">Task completion status</p>
                                 </div>
                             </div>
 
-                            <div class="flex flex-col gap-4 xs:flex-row sm:flex-row sm:items-center">
-                                <div class="mx-auto h-20 w-20 shrink-0 sm:mx-0">
-                                    <svg width="100%" height="100%" viewBox="-25 -25 250 250"
-                                        xmlns="http://www.w3.org/2000/svg" style="transform: rotate(-90deg)">
-                                        <circle r="90" cx="100" cy="100" fill="transparent" stroke="#e5e7eb"
-                                            stroke-width="16" stroke-dasharray="565.48" stroke-dashoffset="0" />
-                                        <circle r="90" cx="100" cy="100" fill="transparent"
-                                            stroke="{{ $strokeColor }}" stroke-width="16" stroke-linecap="round"
-                                            stroke-dasharray="565.48" stroke-dashoffset="{{ $offset }}" />
-                                        <text x="72px" y="108px" fill="#001b4d" font-size="30px" font-weight="bold"
-                                            style="transform: rotate(90deg) translate(0px, -196px)">
-                                            {{ $percentage }}%
-                                        </text>
+                            <div class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
+                                <div class="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center">
+                                    <svg class="h-full w-full -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
+                                        <circle r="40" cx="50" cy="50" fill="transparent" stroke="#F1F5F9" stroke-width="9" />
+                                        <circle r="40" cx="50" cy="50" fill="transparent" stroke="{{ $strokeColor }}" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ $circumference }}" stroke-dashoffset="{{ $offset }}" class="transition-all duration-700" />
                                     </svg>
+                                    <span class="absolute text-xs sm:text-sm font-black text-[#001b4d] font-mono">{{ $percentage }}%</span>
                                 </div>
 
                                 <div class="w-full text-center sm:text-left">
-                                    <p class="text-2xl font-black text-[#001b4d]">
-                                        {{ $category['completed'] }}/{{ $category['total'] }}
-                                    </p>
-                                    <p class="text-xs font-bold text-slate-500">Completed</p>
+                                    <div class="flex items-baseline justify-center gap-1 sm:justify-start">
+                                        <span class="text-xl sm:text-2xl font-black tracking-tight text-[#001b4d] font-mono">{{ $category['completed'] }}</span>
+                                        <span class="text-[11px] font-bold text-slate-400">/ {{ $category['total'] }} Tasks</span>
+                                    </div>
+                                    <p class="text-[11px] font-bold text-slate-400 mt-0.5">Completed</p>
 
-                                    <div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                                        <div class="h-full rounded-full"
-                                            style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}">
-                                        </div>
+                                    <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                        <div class="h-full rounded-full transition-all duration-700" style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     @empty
-                        <div
-                            class="col-span-full rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm font-semibold text-slate-500">
+                        <div class="col-span-full rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-8 sm:p-10 text-center text-xs sm:text-sm font-semibold text-slate-400/90">
                             No category data available.
                         </div>
                     @endforelse
                 </div>
             </section>
 
-            {{-- Team / My Performance --}}
-            <section class="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div
-                    class="flex flex-col gap-4 border-b border-slate-100 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            {{-- Team Performance Section --}}
+            <section class="mb-10 overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm ring-1 ring-slate-100/50">
+                <div class="flex flex-col gap-3 border-b border-slate-100 px-4 sm:px-6 py-4 sm:flex-row sm:items-center sm:justify-between bg-slate-50/50">
                     <div>
-                        <h2 class="text-base font-black uppercase text-[#001b4d] sm:text-lg">
+                        <h2 class="text-xs sm:text-sm font-black uppercase tracking-widest text-[#001b4d]">
                             {{ $isAdmin ? 'Team Performance' : 'My Performance' }}
                         </h2>
-
-                        <p class="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+                        <p class="mt-0.5 text-[11px] sm:text-xs font-medium text-slate-400">
                             {{ $isAdmin ? 'User-wise task completion summary' : 'Your assigned task completion summary' }}
                         </p>
                     </div>
-
                     <a href="{{ route('teamPerformance') }}" wire:navigate
-                        class="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-[#001b4d] shadow-sm hover:bg-[#f3f7ff] sm:w-auto">
+                        class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#001b4d] shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 hover:shadow active:scale-95 w-full sm:w-auto">
                         View All
                     </a>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <div class="grid grid-cols-1 gap-4 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                     @forelse ($visibleTeam as $member)
                         @php
-                            $circumference = 565.48;
-                            $percentage =
-                                isset($member['percentage']) && is_numeric($member['percentage'])
-                                    ? (float) $member['percentage']
-                                    : 0;
+                            $percentage = isset($member['percentage']) && is_numeric($member['percentage']) ? (float) $member['percentage'] : 0;
+                            $circumference = 251.2;
                             $offset = $circumference - ($circumference * $percentage) / 100;
 
-                            if ($percentage >= 71) {
-                                $dotColor = 'bg-green-500';
-                                $strokeColor = '#22c55e';
-                                $badgeBg = 'bg-green-50 text-green-700';
-                            } elseif ($percentage >= 31) {
-                                $dotColor = 'bg-yellow-400';
-                                $strokeColor = '#facc15';
-                                $badgeBg = 'bg-yellow-50 text-yellow-700';
-                            } else {
-                                $dotColor = 'bg-red-500';
-                                $strokeColor = '#ef4444';
-                                $badgeBg = 'bg-red-50 text-red-700';
-                            }
+                            $strokeColor = match(true) {
+                                $percentage >= 71 => '#10B981',
+                                $percentage >= 31 => '#F59E0B',
+                                default => '#EF4444',
+                            };
                         @endphp
 
-                        <div
-                            class="relative rounded-xl border border-slate-200 bg-[#f8fbff] p-4 transition hover:bg-white hover:shadow-md sm:p-5">
-                            <div class="mb-5 flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <h3 class="truncate text-sm font-semibold text-slate-900 sm:text-base">
+                        <div class="group relative rounded-xl border border-slate-150 bg-white p-4 sm:p-5 transition-all duration-300 hover:border-blue-300/80 hover:shadow-md hover:shadow-blue-500/5">
+                            <div class="mb-4 sm:mb-6 flex items-center justify-between gap-3">
+                                <div class="truncate">
+                                    <h3 class="truncate text-sm sm:text-base font-bold text-slate-800 transition-colors group-hover:text-blue-600">
                                         {{ ucwords($member['name']) }}
                                     </h3>
-                                    <p class="mt-1 text-xs font-semibold text-slate-500">
-                                        Member task progress
-                                    </p>
+                                    <p class="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5">Member task progress</p>
+                                </div>
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 font-bold text-xs text-slate-600 border border-slate-200 uppercase">
+                                    {{ substr($member['name'] ?? 'U', 0, 2) }}
                                 </div>
                             </div>
 
-                            <div class="flex flex-col gap-4 xs:flex-row sm:flex-row sm:items-center">
-                                <div class="mx-auto h-20 w-20 shrink-0 sm:mx-0">
-                                    <svg width="100%" height="100%" viewBox="-25 -25 250 250"
-                                        xmlns="http://www.w3.org/2000/svg" style="transform: rotate(-90deg)">
-                                        <circle r="90" cx="100" cy="100" fill="transparent"
-                                            stroke="#e5e7eb" stroke-width="16" stroke-dasharray="565.48"
-                                            stroke-dashoffset="0" />
-                                        <circle r="90" cx="100" cy="100" fill="transparent"
-                                            stroke="{{ $strokeColor }}" stroke-width="16" stroke-linecap="round"
-                                            stroke-dasharray="565.48" stroke-dashoffset="{{ $offset }}" />
-                                        <text x="72px" y="108px" fill="#001b4d" font-size="30px" font-weight="bold"
-                                            style="transform: rotate(90deg) translate(0px, -196px)">
-                                            {{ $percentage }}%
-                                        </text>
+                            <div class="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
+                                <div class="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center">
+                                    <svg class="h-full w-full -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
+                                        <circle r="40" cx="50" cy="50" fill="transparent" stroke="#F1F5F9" stroke-width="9" />
+                                        <circle r="40" cx="50" cy="50" fill="transparent" stroke="{{ $strokeColor }}" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ $circumference }}" stroke-dashoffset="{{ $offset }}" class="transition-all duration-700" />
                                     </svg>
+                                    <span class="absolute text-xs sm:text-sm font-black text-[#001b4d] font-mono">{{ $percentage }}%</span>
                                 </div>
 
                                 <div class="w-full text-center sm:text-left">
-                                    <p class="text-2xl font-black text-[#001b4d]">
-                                        {{ $member['completed'] }}/{{ $member['total'] }}
-                                    </p>
-                                    <p class="text-xs font-bold text-slate-500">Completed</p>
+                                    <div class="flex items-baseline justify-center gap-1 sm:justify-start">
+                                        <span class="text-xl sm:text-2xl font-black tracking-tight text-[#001b4d] font-mono">{{ $member['completed'] }}</span>
+                                        <span class="text-[11px] font-bold text-slate-400">/ {{ $member['total'] }} Tasks</span>
+                                    </div>
+                                    <p class="text-[11px] font-bold text-slate-400 mt-0.5">Completed</p>
 
-                                    <div class="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                                        <div class="h-full rounded-full"
-                                            style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}">
-                                        </div>
+                                    <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                        <div class="h-full rounded-full transition-all duration-700" style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     @empty
-                        <div
-                            class="col-span-full rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm font-semibold text-slate-500">
+                        <div class="col-span-full rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-8 sm:p-10 text-center text-xs sm:text-sm font-semibold text-slate-400/90">
                             No performance data available.
                         </div>
                     @endforelse
                 </div>
             </section>
 
-            {{-- Groups Overview --}}
-            <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <div class="border-b border-slate-100 px-4 py-5 sm:px-6">
-                    <h2 class="text-base font-black uppercase text-[#001b4d] sm:text-lg">Groups Overview</h2>
-                    <p class="mt-1 text-xs font-medium text-slate-500 sm:text-sm">
+            {{-- Groups Overview Section --}}
+            <section class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm ring-1 ring-slate-100/50">
+                <div class="border-b border-slate-100 px-4 sm:px-6 py-4 bg-slate-50/50">
+                    <h2 class="text-xs sm:text-sm font-black uppercase tracking-widest text-[#001b4d]">Groups Overview</h2>
+                    <p class="mt-0.5 text-[11px] sm:text-xs font-medium text-slate-400">
                         {{ $isAdmin ? 'Group-wise task status overview' : 'Your group-wise task status overview' }}
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 p-4 sm:p-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <div class="grid grid-cols-1 gap-4 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                     @forelse ($visibleGroups as $group)
                         @php
-                            $circumference = 565.48;
-                            $percentage =
-                                isset($group['percentage']) && is_numeric($group['percentage'])
-                                    ? (float) $group['percentage']
-                                    : 0;
+                            $percentage = isset($group['percentage']) && is_numeric($group['percentage']) ? (float) $group['percentage'] : 0;
+                            $circumference = 251.2;
                             $offset = $circumference - ($circumference * $percentage) / 100;
 
-                            if ($percentage >= 71) {
-                                $dotColor = 'bg-green-500';
-                                $strokeColor = '#22c55e';
-                            } elseif ($percentage >= 31) {
-                                $dotColor = 'bg-yellow-400';
-                                $strokeColor = '#facc15';
-                            } else {
-                                $dotColor = 'bg-red-500';
-                                $strokeColor = '#ef4444';
-                            }
+                            $strokeColor = match(true) {
+                                $percentage >= 71 => '#10B981',
+                                $percentage >= 31 => '#F59E0B',
+                                default => '#EF4444',
+                            };
                         @endphp
 
-                        <a href="{{ route('group.details', ['id' => $group['id'] ?? 0]) }}" wire:navigate
-                            class="block h-full">
-                            <div
-                                class="relative h-full rounded-xl border border-slate-200 bg-[#f8fbff] p-4 transition hover:bg-white hover:shadow-md sm:p-5">
-                                <div class="mb-5 flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <h3 class="truncate text-sm font-semibold text-slate-900 sm:text-base">
-                                            {{ !empty($group['name']) ? ucwords($group['name']) : 'No Group Name' }}
-                                        </h3>
-                                        <p class="mt-1 text-xs font-semibold text-slate-500">
-                                            Group task overview
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                                    <div class="mx-auto h-20 w-20 shrink-0 sm:mx-0">
-                                        <svg width="100%" height="100%" viewBox="-25 -25 250 250"
-                                            xmlns="http://www.w3.org/2000/svg" style="transform: rotate(-90deg)">
-                                            <circle r="90" cx="100" cy="100" fill="transparent"
-                                                stroke="#e5e7eb" stroke-width="16" stroke-dasharray="565.48"
-                                                stroke-dashoffset="0" />
-                                            <circle r="90" cx="100" cy="100" fill="transparent"
-                                                stroke="{{ $strokeColor }}" stroke-width="16"
-                                                stroke-linecap="round" stroke-dasharray="565.48"
-                                                stroke-dashoffset="{{ $offset }}" />
-                                            <text x="72px" y="108px" fill="#001b4d" font-size="30px"
-                                                font-weight="bold"
-                                                style="transform: rotate(90deg) translate(0px, -196px)">
-                                                {{ $percentage }}%
-                                            </text>
-                                        </svg>
+                        <a href="{{ route('group.details', ['id' => $group['id'] ?? 0]) }}" wire:navigate class="block h-full group outline-none">
+                            <div class="relative flex h-full flex-col justify-between rounded-xl border border-slate-150 bg-white p-4 sm:p-5 transition-all duration-300 hover:border-blue-300/80 hover:shadow-md hover:shadow-blue-500/5">
+                                <div>
+                                    <div class="mb-4 sm:mb-6 flex items-start justify-between gap-2">
+                                        <div class="truncate">
+                                            <h3 class="truncate text-sm sm:text-base font-bold text-slate-800 transition-colors group-hover:text-blue-600">
+                                                {{ !empty($group['name']) ? ucwords($group['name']) : 'No Group Name' }}
+                                            </h3>
+                                            <p class="text-[10px] sm:text-[11px] font-medium text-slate-400 mt-0.5">Group task status summary</p>
+                                        </div>
+                                        <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors border border-slate-100">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                                            </svg>
+                                        </div>
                                     </div>
 
-                                    <div class="w-full space-y-2 text-xs font-bold text-slate-600">
-                                        <div class="flex justify-between gap-3">
-                                            <span>Pending</span>
-                                            <span
-                                                class="text-[#001b4d]">{{ $group['pending'] ?? 0 }}/{{ $group['total'] ?? 0 }}</span>
+                                    <div class="flex flex-col items-center gap-4 sm:flex-row sm:gap-5">
+                                        <div class="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center">
+                                            <svg class="h-full w-full -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
+                                                <circle r="40" cx="50" cy="50" fill="transparent" stroke="#F1F5F9" stroke-width="9" />
+                                                <circle r="40" cx="50" cy="50" fill="transparent" stroke="{{ $strokeColor }}" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ $circumference }}" stroke-dashoffset="{{ $offset }}" class="transition-all duration-700" />
+                                            </svg>
+                                            <span class="absolute text-xs sm:text-sm font-black text-[#001b4d] font-mono">{{ $percentage }}%</span>
                                         </div>
 
-                                        <div class="flex justify-between gap-3">
-                                            <span>In Progress</span>
-                                            <span
-                                                class="text-[#001b4d]">{{ $group['in_progress'] ?? 0 }}/{{ $group['total'] ?? 0 }}</span>
-                                        </div>
+                                        <div class="w-full space-y-2 text-[11px] sm:text-xs font-bold text-slate-500">
+                                            <div class="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                                                <span class="flex items-center gap-2 font-semibold text-slate-400"><span class="h-2 w-2 rounded-full bg-rose-500"></span>Pending</span>
+                                                <span class="font-black text-slate-750 font-mono">{{ $group['pending'] ?? 0 }}</span>
+                                            </div>
 
-                                        <div class="flex justify-between gap-3">
-                                            <span>Completed</span>
-                                            <span
-                                                class="text-[#001b4d]">{{ $group['completed'] ?? 0 }}/{{ $group['total'] ?? 0 }}</span>
+                                            <div class="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                                                <span class="flex items-center gap-2 font-semibold text-slate-400"><span class="h-2 w-2 rounded-full bg-amber-400"></span>In Progress</span>
+                                                <span class="font-black text-slate-750 font-mono">{{ $group['pending'] ?? 0 }}</span>
+                                            </div>
+
+                                            <div class="flex justify-between items-center pt-0.5">
+                                                <span class="flex items-center gap-2 font-semibold text-slate-400"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Completed</span>
+                                                <span class="font-black text-slate-750 font-mono">{{ $group['completed'] ?? 0 }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="mt-5 h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                                    <div class="h-full rounded-full"
-                                        style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}">
-                                    </div>
+                                <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                    <div class="h-full rounded-full transition-all duration-700" style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}"></div>
                                 </div>
                             </div>
                         </a>
                     @empty
-                        <div
-                            class="col-span-full rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm font-semibold text-slate-500">
+                        <div class="col-span-full rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-8 sm:p-10 text-center text-xs sm:text-sm font-semibold text-slate-400/90">
                             No group data available.
                         </div>
                     @endforelse
