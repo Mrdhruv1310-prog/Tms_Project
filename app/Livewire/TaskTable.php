@@ -17,8 +17,6 @@ use Filament\Support\Enums\ActionSize;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkAction;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -53,134 +51,116 @@ class TaskTable extends Component implements HasForms, HasTable
         return $table
             ->query(fn() => $this->getTaskQuery())
             ->columns([
-                Split::make([
-                    Stack::make([
-                        TextColumn::make('title')
-                            ->action(function (Task $record): void {
-                                $this->dispatch('openTaskViewModal', $record->id);
-                            })
-                            ->searchable()
-                            ->label('Task Title')
-                            ->tooltip(fn($record, $column) => $column->getLabel())
-                            ->weight(FontWeight::Bold)
-                            ->icon('heroicon-o-clipboard-document-list')
-                            ->extraAttributes([
-                                'class' => 'text-base font-semibold text-gray-950 dark:text-white cursor-pointer hover:text-primary-600 transition',
-                            ]),
+                TextColumn::make('title')
+                    ->label('Task Title')
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Bold)
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->action(function (Task $record): void {
+                        $this->dispatch('openTaskViewModal', $record->id);
+                    })
+                    ->extraAttributes([
+                        'class' => 'cursor-pointer text-primary-600 hover:underline dark:text-primary-400',
+                    ]),
 
-                        TextColumn::make('creator.first_name')
-                            ->label('Assigned By')
-                            ->formatStateUsing(fn($record) => 'Assigned By: ' . $record->creator->first_name . ' ' . $record->creator->last_name)
-                            ->tooltip(fn($record, $column) => $column->getLabel())
-                            ->icon('heroicon-o-user-circle')
-                            ->extraAttributes([
-                                'class' => 'text-sm text-gray-600 dark:text-gray-300',
-                            ]),
+                TextColumn::make('creator.first_name')
+                    ->label('Assigned By')
+                    ->searchable()
+                    ->sortable()
+                    ->icon('heroicon-o-user-circle')
+                    ->formatStateUsing(fn($record) => $record->creator ? $record->creator->first_name . ' ' . $record->creator->last_name : 'N/A'),
 
-                        Split::make([
-                            TextColumn::make('due_date')
-                                ->sortable()
-                                ->searchable()
-                                ->label('Due Date')
-                                ->tooltip(fn($record, $column) => $column->getLabel())
-                                ->icon('heroicon-o-calendar-days')
-                                ->placeholder('Non')
-                                ->formatStateUsing(function ($state) {
-                                    if (blank($state)) {
-                                        return 'Non';
-                                    }
+                TextColumn::make('assignedUsers')
+                    ->label('Assigned To')
+                    ->icon('heroicon-o-users')
+                    ->formatStateUsing(fn($state, $record) => $record->assignedUsers->map(function ($user) {
+                        return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
+                    })->join(', ')),
 
-                                    return Carbon::parse($state)->format('d-m-Y H:i');
-                                })
-                                ->extraAttributes(['class' => 'whitespace-nowrap rounded-xl bg-gray-50 px-3 py-2 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700']),
+                TextColumn::make('due_date')
+                    ->label('Due Date')
+                    ->sortable()
+                    ->icon('heroicon-o-calendar-days')
+                    ->formatStateUsing(function ($state) {
+                        if (blank($state)) {
+                            return 'Non';
+                        }
+                        return Carbon::parse($state)->format('d-m-Y H:i');
+                    }),
 
-                            TextColumn::make('assignedUsers')
-                                ->label('Assigned To')
-                                ->tooltip(fn($record, $column) => $column->getLabel())
-                                ->icon('heroicon-o-users')
-                                ->formatStateUsing(fn($state, $record) => $record->assignedUsers->map(function ($user) {
-                                    return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
-                                })->join(', '))
-                                ->extraAttributes(['class' => 'whitespace-nowrap rounded-xl bg-gray-50 px-3 py-2 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700']),
+                TextColumn::make('category.name')
+                    ->label('Category')
+                    ->icon('heroicon-o-tag')
+                    ->sortable()
+                    ->placeholder('No Category'),
 
-                            TextColumn::make('category.name')
-                                ->label('Category')
-                                ->tooltip(fn($record, $column) => $column->getLabel())
-                                ->icon('heroicon-o-tag')
-                                ->extraAttributes(['class' => 'whitespace-nowrap rounded-xl bg-gray-50 px-3 py-2 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700']),
+                TextColumn::make('recurrence')
+                    ->label('Repeat')
+                    ->icon('heroicon-o-arrow-path')
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'daily' => 'Daily',
+                        'weekly' => 'Weekly',
+                        'monthly' => 'Monthly',
+                        'none' => 'No Repeat',
+                        default => ucfirst(strtolower($state)),
+                    }),
 
-                            TextColumn::make('recurrence')
-                                ->label('Repeat')
-                                ->tooltip(fn($record, $column) => $column->getLabel())
-                                ->icon('heroicon-o-arrow-path')
-                                ->formatStateUsing(fn($state) => match ($state) {
-                                    'daily' => 'Daily',
-                                    'weekly' => 'Weekly',
-                                    'monthly' => 'Monthly',
-                                    'none' => 'No Repeat',
-                                    default => ucfirst(strtolower($state)),
-                                })
-                                ->extraAttributes(['class' => 'whitespace-nowrap rounded-xl bg-gray-50 px-3 py-2 ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700']),
+                TextColumn::make('priority')
+                    ->label('Priority')
+                    ->badge()
+                    ->icon('heroicon-o-exclamation-circle')
+                    ->color(fn(string $state): string => match ($state) {
+                        'low' => 'success',
+                        'medium' => 'info',
+                        'high' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn($state) => Str::ucfirst($state) . ' Priority'),
 
-                            TextColumn::make('priority')
-                                ->badge()
-                                ->color(fn(string $state): string => match ($state) {
-                                    'low' => 'success',
-                                    'medium' => 'info',
-                                    'high' => 'danger',
-                                    default => 'gray',
-                                })
-                                ->formatStateUsing(fn($state) => Str::ucfirst($state) . ' Priority')
-                                ->label('Priority')
-                                ->tooltip(fn($record, $column) => $column->getLabel()),
+                TextColumn::make('group.label')
+                    ->label('Group')
+                    ->badge()
+                    ->icon('heroicon-o-folder')
+                    ->color('info')
+                    ->sortable()
+                    ->searchable()
+                    ->formatStateUsing(fn($state) => $state ? 'Group: ' . $state : 'No Group'),
 
-                            TextColumn::make('group.label')
-                                ->badge()
-                                ->color('info')
-                                ->label('Group')
-                                ->tooltip(fn($record, $column) => $column->getLabel())
-                                ->sortable()
-                                ->searchable()
-                                ->formatStateUsing(fn($state) => $state ? 'Group: ' . $state : 'No Group')
-                                ->extraAttributes(['class' => 'whitespace-nowrap']),
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->icon('heroicon-o-check-badge')
+                    ->color(fn(string $state): string => match ($state) {
+                        'pending' => 'primary',
+                        'in_progress' => 'warning',
+                        'complete_intimation' => 'info',
+                        'completed' => 'success',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(function ($state, $record) {
+                        $loggedInUserId = Auth::id();
 
-                            TextColumn::make('status')
-                                ->badge()
-                                ->color(fn(string $state): string => match ($state) {
-                                    'pending' => 'primary',
-                                    'in_progress' => 'warning',
-                                    'complete_intimation' => 'info',
-                                    'completed' => 'success',
-                                    default => 'gray',
-                                })
-                                ->label('Status')
-                                ->formatStateUsing(function ($state, $record) {
-                                    $loggedInUserId = Auth::id();
+                        if ($this->taskView === 'assigned_to_others') {
+                            if (optional($record->creator)->id === $loggedInUserId) {
+                                return $state === 'complete_intimation' ? 'Request Complete' : Str::headline($state);
+                            }
+                        } elseif ($this->taskView === 'my_tasks') {
+                            $userStatus = DB::table('task_updates')
+                                ->where('task_id', $record->id)
+                                ->where('user_id', $loggedInUserId)
+                                ->orderByDesc('updated_at')
+                                ->value('status');
 
-                                    if ($this->taskView === 'assigned_to_others') {
-                                        if (optional($record->creator)->id === $loggedInUserId) {
-                                            return $state === 'complete_intimation' ? 'Request Complete' : Str::headline($state);
-                                        }
-                                    } elseif ($this->taskView === 'my_tasks') {
-                                        $userStatus = DB::table('task_updates')
-                                            ->where('task_id', $record->id)
-                                            ->where('user_id', $loggedInUserId)
-                                            ->orderByDesc('updated_at')
-                                            ->value('status');
+                            $displayStatus = $userStatus ?: $state;
 
-                                        $displayStatus = $userStatus ?: $state;
+                            return $displayStatus === 'complete_intimation'
+                                ? 'Request Complete'
+                                : Str::headline($displayStatus);
+                        }
 
-                                        return $displayStatus === 'complete_intimation'
-                                            ? 'Request Complete'
-                                            : Str::headline($displayStatus);
-                                    }
-
-                                    return $state === 'complete_intimation' ? 'Request Complete' : Str::headline($state);
-                                })
-                                ->tooltip(fn($record, $column) => $column->getLabel()),
-                        ])->from('md'),
-                    ])->space(2),
-                ])->from('md'),
+                        return $state === 'complete_intimation' ? 'Request Complete' : Str::headline($state);
+                    }),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -882,7 +862,6 @@ class TaskTable extends Component implements HasForms, HasTable
         $callback();
     }
 
-    // Stop Task Mail flow if task is completed and has a pending reminder
     private function stopTaskMailFlowIfCompleted(Task $task): void
     {
         $hasCompletedUpdate = DB::table('task_updates')
