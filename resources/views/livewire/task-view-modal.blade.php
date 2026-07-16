@@ -34,141 +34,155 @@
 
                         <div class="relative px-4 py-6 sm:px-6 overflow-y-auto">
                             @if ($taskList)
-                                <div class="bg-gray-100 p-3 rounded-md">
-                                    <h2 class="text-md font-bold text-gray-900">{{ $taskList->title ?? 'N/A' }}</h2>
+                                <div class="mt-6 bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
 
-                                    <div class="flex flex-col lg:flex-row mt-5">
-                                        <div class="flex w-full gap-4 lg:w-1/2">
-                                            <div class="flex-col mb-2 w-24">
-                                                <p class="font-semibold text-gray-900 whitespace-normal break-words">
-                                                    Assigned To</p>
-                                            </div>
-                                            <div class="flex-col space-y-4">
-                                                @forelse ($taskList->assignedUsers as $user)
-                                                    <div class="flex items-center space-x-4" style="margin-top: 2px;"
-                                                        wire:key="assigned-user-{{ $taskList->id }}-{{ $user->id }}">
-                                                        <div
-                                                            class="w-10 h-10 bg-green-400 text-white rounded-full flex items-center justify-center">
-                                                            {{ strtoupper(substr($user->first_name ?? '', 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
-                                                        </div>
-                                                        <div>
-                                                            <p class="text-gray-900">{{ $user->first_name }}
-                                                                {{ $user->last_name }}</p>
-                                                            <p class="text-gray-500 text-xs">{{ $user->email }}</p>
-                                                        </div>
-                                                    </div>
-                                                @empty
-                                                    <p>No users assigned</p>
-                                                @endforelse
-                                            </div>
-                                        </div>
-
-                                        <hr style="border-color: #a9a9a9;margin-top: 10px;margin-bottom: 10px;">
-
-                                        <div class="flex w-full gap-4 lg:w-1/2">
-                                            <div class="flex-col mb-2 w-24">
-                                                <p class="font-semibold text-gray-900 whitespace-normal break-words">
-                                                    Assigned By</p>
-                                            </div>
-                                            <div class="flex-col space-y-4">
-                                                @if ($taskList->assignedBy)
-                                                    <div class="flex items-center space-x-4">
-                                                        <div
-                                                            class="w-10 h-10 bg-blue-400 text-white rounded-full flex items-center justify-center">
-                                                            {{ strtoupper(substr($taskList->assignedBy->first_name ?? '', 0, 1)) }}{{ strtoupper(substr($taskList->assignedBy->last_name ?? '', 0, 1)) }}
-                                                        </div>
-                                                        <div>
-                                                            <p class="text-gray-900">
-                                                                {{ $taskList->assignedBy->first_name }}
-                                                                {{ $taskList->assignedBy->last_name }}</p>
-                                                            <p class="text-gray-500 text-xs">
-                                                                {{ $taskList->assignedBy->email }}</p>
-                                                        </div>
-                                                    </div>
-                                                @else
-                                                    <p>No assigned by information available</p>
-                                                @endif
-                                            </div>
-                                        </div>
+                                    <div class="bg-gray-50 px-4 py-3 border-b">
+                                        <h3 class="font-semibold text-lg text-gray-800">
+                                            Task Information
+                                        </h3>
                                     </div>
 
-                                    <div class="mt-5">
-                                        <p class="text-sm"><strong>Created At:</strong>
-                                            {{ $taskList->created_at ? $taskList->created_at->format('D, M j, Y - g:i A') : 'N/A' }}
-                                        </p>
-                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full divide-y divide-gray-200">
 
-                                    <div class="mt-5">
-                                        <p class="text-sm mt-1"><strong>Due Date:</strong>
-                                            <span
-                                                class="{{ $taskList->due_date && now()->greaterThan(\Carbon\Carbon::parse($taskList->due_date)) ? 'text-red-600' : 'text-green-600' }}">
-                                                {{ $taskList->due_date ? \Carbon\Carbon::parse($taskList->due_date)->format('D, M j, Y - g:i A') : 'N/A' }}
-                                            </span>
-                                        </p>
-                                    </div>
+                                            <tbody class="divide-y divide-gray-200">
 
-                                    <div class="flex items-center justify-between mt-5">
-                                        <p><strong>Status:</strong>
-                                            @switch($taskList->status)
-                                                @case('pending')
-                                                    <span
-                                                        class="px-2 py-1 text-sm font-medium text-yellow-800 bg-yellow-100 rounded">Pending</span>
-                                                @break
+                                                <tr>
+                                                    <th
+                                                        class="w-56 bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                                        Created At
+                                                    </th>
+                                                    <td class="px-4 py-3 text-sm text-gray-900">
+                                                        {{ $taskList->created_at ? $taskList->created_at->format('D, M j, Y - g:i A') : 'N/A' }}
+                                                    </td>
+                                                </tr>
 
-                                                @case('in_progress')
-                                                    <span
-                                                        class="px-2 py-1 text-sm font-medium text-blue-800 bg-blue-100 rounded">In
-                                                        Progress</span>
-                                                @break
+                                                <tr>
+                                                    <th
+                                                        class="bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                                        Due Date
+                                                    </th>
+                                                    <td class="px-4 py-3 text-sm">
+                                                        <span
+                                                            class="{{ $taskList->due_date && now()->greaterThan(\Carbon\Carbon::parse($taskList->due_date)) ? 'text-red-600 font-medium' : 'text-green-600 font-medium' }}">
+                                                            {{ $taskList->due_date ? \Carbon\Carbon::parse($taskList->due_date)->format('D, M j, Y - g:i A') : 'N/A' }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
 
-                                                @case('complete_intimation')
-                                                    <span
-                                                        class="px-2 py-1 text-sm font-medium text-amber-800 bg-amber-100 rounded">Requested
-                                                        for Complete</span>
-                                                @break
+                                                <tr>
+                                                    <th
+                                                        class="bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                                        Status
+                                                    </th>
+                                                    <td class="px-4 py-3">
 
-                                                @case('completed')
-                                                    <span
-                                                        class="px-2 py-1 text-sm font-medium text-green-800 bg-green-100 rounded">Completed</span>
-                                                @break
+                                                        @switch($taskList->status)
+                                                            @case('pending')
+                                                                <span
+                                                                    class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                                    Pending
+                                                                </span>
+                                                            @break
 
-                                                @default
-                                                    <span
-                                                        class="px-2 py-1 text-sm font-medium text-gray-800 bg-gray-100 rounded">{{ ucfirst($taskList->status) }}</span>
-                                            @endswitch
-                                        </p>
-                                    </div>
+                                                            @case('in_progress')
+                                                                <span
+                                                                    class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                                    In Progress
+                                                                </span>
+                                                            @break
 
-                                    <div class="mt-5">
-                                        <p class="mt-1"><strong>Category:</strong>
-                                            {{ $taskList->category ? ucfirst($taskList->category->name) : 'N/A' }}</p>
-                                    </div>
+                                                            @case('complete_intimation')
+                                                                <span
+                                                                    class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                                                                    Requested For Complete
+                                                                </span>
+                                                            @break
 
-                                    <div class="mt-5">
-                                        <p><strong>Priority:</strong> {{ ucfirst($taskList->priority ?? 'N/A') }}</p>
-                                    </div>
+                                                            @case('completed')
+                                                                <span
+                                                                    class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                                    Completed
+                                                                </span>
+                                                            @break
 
-                                    <div class="mt-5">
-                                        <div class="text-sm">
-                                            <p><strong>Reminder:</strong></p>
-                                            @if ($taskList->reminders && $taskList->reminders->count())
-                                                <ul class="mt-1 ml-4 list-disc text-gray-700">
-                                                    @foreach ($taskList->reminders as $reminder)
-                                                        <li wire:key="reminder-{{ $reminder->id }}">
-                                                            {{ $reminder->user->first_name ?? 'Unknown User' }}:
-                                                            {{ \Carbon\Carbon::parse($reminder->reminder_time)->format('d-m-Y h:i a') }}
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-                                            @else
-                                                <span class="px-2 py-1 text-sm font-medium text-gray-800">N/A</span>
-                                            @endif
-                                        </div>
-                                    </div>
+                                                            @default
+                                                                <span
+                                                                    class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                                    {{ ucfirst($taskList->status) }}
+                                                                </span>
+                                                        @endswitch
 
-                                    <div class="mt-5">
-                                        <p class="text-sm"><strong>Description:</strong>
-                                            {{ $taskList->description ?? 'N/A' }}</p>
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <th
+                                                        class="bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                                        Category
+                                                    </th>
+                                                    <td class="px-4 py-3 text-sm text-gray-900">
+                                                        {{ $taskList->category ? ucfirst($taskList->category->name) : 'N/A' }}
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <th
+                                                        class="bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                                                        Priority
+                                                    </th>
+                                                    <td class="px-4 py-3 text-sm text-gray-900">
+                                                        {{ ucfirst($taskList->priority ?? 'N/A') }}
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <th
+                                                        class="bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700 align-top">
+                                                        Reminder
+                                                    </th>
+                                                    <td class="px-4 py-3 text-sm text-gray-900">
+
+                                                        @if ($taskList->reminders && $taskList->reminders->count())
+
+                                                            <div class="space-y-2">
+
+                                                                @foreach ($taskList->reminders as $reminder)
+                                                                    <div class="bg-gray-50 rounded px-3 py-2">
+
+                                                                        <strong>
+                                                                            {{ $reminder->user->first_name ?? 'Unknown User' }}
+                                                                        </strong>
+
+                                                                        <br>
+
+                                                                        {{ \Carbon\Carbon::parse($reminder->reminder_time)->format('d-m-Y h:i a') }}
+
+                                                                    </div>
+                                                                @endforeach
+
+                                                            </div>
+                                                        @else
+                                                            N/A
+
+                                                        @endif
+
+                                                    </td>
+                                                </tr>
+
+                                                <tr>
+                                                    <th
+                                                        class="bg-gray-50 px-4 py-3 text-left text-sm font-semibold text-gray-700 align-top">
+                                                        Description
+                                                    </th>
+                                                    <td class="px-4 py-3 text-sm text-gray-900">
+                                                        {{ $taskList->description ?? 'N/A' }}
+                                                    </td>
+                                                </tr>
+
+                                            </tbody>
+
+                                        </table>
                                     </div>
                                 </div>
 
