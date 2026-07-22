@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -284,7 +285,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visible(fn(Task $task) => $this->canUpdateTaskStatusFromTable($task)),
 
                 Action::make('task_chat')
-                    ->label('Chat')
+                    ->label('Comment')
                     ->button()
                     ->size(ActionSize::Small)
                     ->color('gray')
@@ -404,70 +405,84 @@ class TaskTable extends Component implements HasForms, HasTable
 
     public function updateTaskStatusFromTable(Task $task, string $status, ?string $comment = null): void
     {
-        if (! $this->canUpdateTaskStatusFromTable($task)) {
-            Notification::make()
-                ->title('Not allowed')
-                ->body('You are not allowed to update this task status.')
-                ->danger()
-                ->send();
+        try {
+            if (! $this->canUpdateTaskStatusFromTable($task)) {
+                Notification::make()
+                    ->title('Not allowed')
+                    ->body('You are not allowed to update this task status.')
+                    ->danger()
+                    ->send();
 
-            return;
-        }
-
-        if (! in_array($status, ['in_progress', 'completed'], true)) {
-            Notification::make()
-                ->title('Invalid status')
-                ->danger()
-                ->send();
-
-            return;
-        }
-
-        $userId = Auth::id();
-        $comment = trim((string) $comment);
-
-        if ($status === 'completed' && $userId !== optional($task->creator)->id) {
-            $this->requestCompletion($task, $comment);
-            return;
-        }
-
-        DB::transaction(function () use ($task, $status, $comment, $userId) {
-            if ($status === 'in_progress') {
-                TaskCompletionRequest::where('task_id', $task->id)
-                    ->where('user_id', $userId)
-                    ->where('request_status', 'pending')
-                    ->update([
-                        'request_status' => 'rejected',
-                        'reviewed_at' => now(),
-                    ]);
+                return;
             }
 
-            $task->update([
-                'status' => $status,
-            ]);
+            if (! in_array($status, ['in_progress', 'completed'], true)) {
+                Notification::make()
+                    ->title('Invalid status')
+                    ->danger()
+                    ->send();
 
-            DB::table('task_updates')->insert([
-                'task_id' => $task->id,
-                'user_id' => $userId,
-                'status' => $status,
-                'comment' => $comment,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            if ($status === 'completed') {
-                $this->stopTaskMailFlowIfCompleted($task);
+                return;
             }
-        });
 
-        Notification::make()
-            ->title('Task status updated')
-            ->body('Task status has been updated successfully.')
-            ->success()
-            ->send();
+            $userId = Auth::id();
+            $comment = trim((string) $comment);
 
-        $this->dispatch('$refresh');
-        $this->dispatch('taskStatusUpdated');
+            // Checking creator safely
+            $creatorId = $task->creator ? $task->creator->id : $task->user_id;
+
+            if ($status === 'completed' && (int)$userId !== (int)$creatorId) {
+                $this->requestCompletion($task, $comment);
+                return;
+            }
+
+            DB::transaction(function () use ($task, $status, $comment, $userId) {
+                if ($status === 'in_progress') {
+                    TaskCompletionRequest::where('task_id', $task->id)
+                        ->where('user_id', $userId)
+                        ->where('request_status', 'pending')
+                        ->update([
+                            'request_status' => 'rejected',
+                            'reviewed_at' => now(),
+                        ]);
+                }
+
+                $task->update([
+                    'status' => $status,
+                ]);
+
+                DB::table('task_updates')->insert([
+                    'task_id' => $task->id,
+                    'user_id' => $userId,
+                    'status' => $status,
+                    'comment' => $comment,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                if ($status === 'completed') {
+                    $this->stopTaskMailFlowIfCompleted($task);
+                }
+            });
+
+            Notification::make()
+                ->title('Task status updated')
+                ->body('Task status has been updated successfully.')
+                ->success()
+                ->send();
+
+            $this->dispatch('$refresh');
+            $this->dispatch('taskStatusUpdated');
+
+        } catch (\Throwable $e) {
+            Log::error('Task status update error: ' . $e->getMessage());
+
+            Notification::make()
+                ->title('Error Updating Status')
+                ->body('Something went wrong while updating status: ' . $e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     private function canUpdateTaskStatusFromTable(Task $task): bool
@@ -864,15 +879,19 @@ class TaskTable extends Component implements HasForms, HasTable
 
     private function stopTaskMailFlowIfCompleted(Task $task): void
     {
-        $hasCompletedUpdate = DB::table('task_updates')
-            ->where('task_id', $task->id)
-            ->where('status', 'completed')
-            ->exists();
+        try {
+            $hasCompletedUpdate = DB::table('task_updates')
+                ->where('task_id', $task->id)
+                ->where('status', 'completed')
+                ->exists();
 
-        if (! $hasCompletedUpdate) {
-            return;
+            if (! $hasCompletedUpdate) {
+                return;
+            }
+
+            Reminder::where('task_id', $task->id)->delete();
+        } catch (\Throwable $e) {
+            Log::warning('Could not clear reminders for completed task: ' . $e->getMessage());
         }
-
-        Reminder::where('task_id', $task->id)->delete();
     }
 }
