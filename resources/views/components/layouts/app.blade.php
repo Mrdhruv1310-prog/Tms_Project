@@ -8,13 +8,16 @@
     <meta http-equiv="pragma" content="no-cache">
     <meta http-equiv="expires" content="0">
     <link rel="icon" type="image/png" href="{{ asset('icons/nslogo.png') }}">
-    <meta name="theme-color" content="#1a56db"/>
+    <meta name="theme-color" content="#1a56db" />
     <link rel="apple-touch-icon" href="{{ asset('icons/nslogo.png') }}">
     <link rel="manifest" href="{{ asset('/1manifest.json') }}">
     <title>{{ $title ?? 'Page Title' }}</title>
     <!-- Include jQuery from a CDN -->
     <script src="{{ asset('/sw.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Flatpickr CSS & JS CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     @vite(['resources/js/app.js', 'resources/css/app.css'])
     @filamentStyles
@@ -23,6 +26,7 @@
             height: 7px !important;
             background: #ff0800 !important;
         }
+
         /* add background color */
         /* Full page loader styles */
         #loader {
@@ -115,21 +119,21 @@
     {{-- </div> --}}
 
     <script>
-            // Re-initialize components after Livewire navigation
+        // Re-initialize components after Livewire navigation
         document.addEventListener('livewire:navigated', () => {
-        initFlowbite();
-        console.log('Flowbite initialized after Livewire navigation');
-        // let user = @json(auth()->user());
+            initFlowbite();
+            console.log('Flowbite initialized after Livewire navigation');
+            // let user = @json(auth()->user());
 
-        // if (window.location.pathname === '/login') {
-        //     if (user) {
-        //         // Redirect authenticated users to the dashboard
-        //         window.location.href = '/dashboard';
-        //         return;
-        //     }
-        // }
-        //call datepicker destroyer function
-        // destroyDatepicker();
+            // if (window.location.pathname === '/login') {
+            //     if (user) {
+            //         // Redirect authenticated users to the dashboard
+            //         window.location.href = '/dashboard';
+            //         return;
+            //     }
+            // }
+            //call datepicker destroyer function
+            // destroyDatepicker();
         });
     </script>
     {{-- <script data-navigate-once>
@@ -193,7 +197,7 @@
         });
 
     </script> --}}
-        @filamentScripts
+    @filamentScripts
 </body>
 
 </html>
