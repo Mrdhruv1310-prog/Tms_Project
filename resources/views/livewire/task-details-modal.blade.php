@@ -81,6 +81,7 @@
 
         this.$watch('show', value => {
             if (value) {
+                document.body.classList.remove('overflow-hidden');
                 document.body.classList.add('overflow-hidden');
                 this.syncSelectedUserNames();
                 if (this.isEditMode) {
@@ -106,11 +107,31 @@
     },
 
     initDatepicker() {
+        // Fallback-Safe Datepicker Initialization
         if (typeof window.initializeDateTimepicker === 'function') {
             window.initializeDateTimepicker('#duedatecalendar', '.scrollcontainer', this.due_date);
+        } else if (typeof flatpickr === 'function') {
+            flatpickr('#duedatecalendar', {
+                enableTime: true,
+                dateFormat: 'd/m/Y H:i',
+                defaultDate: this.due_date,
+                onChange: (selectedDates, dateStr) => {
+                    this.due_date = dateStr;
+                }
+            });
         }
+
         if (typeof window.initializeDatepicker === 'function') {
             window.initializeDatepicker('#repeatenddatecalendar', '.scrollcontainer', this.recurrence_end_date);
+        } else if (typeof flatpickr === 'function') {
+            flatpickr('#repeatenddatecalendar', {
+                enableTime: false,
+                dateFormat: 'd/m/Y',
+                defaultDate: this.recurrence_end_date,
+                onChange: (selectedDates, dateStr) => {
+                    this.recurrence_end_date = dateStr;
+                }
+            });
         }
     },
 
@@ -270,16 +291,22 @@
                                 </select>
                             </div>
 
+                            <!-- FIX: Recurrence End Date Picker With Fallback Pointer Direct Click -->
                             <div x-show="enableRepeatTask" class="transition-opacity duration-300 ease-in-out">
-                                <div class="relative">
+                                <div class="relative cursor-pointer" @click="initDatepicker()">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
                                         <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
                                         </svg>
                                     </div>
-                                    <input id="repeatenddatecalendar" name="recurrence_end_date" wire:model.live="recurrence_end_date" x-model="recurrence_end_date" type="text"
-                                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        placeholder="Recurrence End Date" readonly>
+                                    <input id="repeatenddatecalendar"
+                                           name="recurrence_end_date"
+                                           wire:model.live="recurrence_end_date"
+                                           x-model="recurrence_end_date"
+                                           type="text"
+                                           class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-pointer"
+                                           placeholder="Recurrence End Date"
+                                           @focus="initDatepicker()">
                                 </div>
                             </div>
                         </div>
@@ -299,18 +326,23 @@
                         @error('recurrence') <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p> @enderror
                     </div>
 
-                    <!-- Due Date -->
+                    <!-- FIX: Due Date Calendar Popup Fix -->
                     <div>
-                        <label for="duedate" class="flex flex-row items-center block mb-2 text-sm font-medium text-gray-900 dark:text-white">Due Date & Time</label>
-                        <div class="relative">
+                        <label for="duedatecalendar" class="flex flex-row items-center block mb-2 text-sm font-medium text-gray-900 dark:text-white">Due Date & Time</label>
+                        <div class="relative cursor-pointer" @click="initDatepicker()">
                             <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
                                 <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
+                                    <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0 2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
                                 </svg>
                             </div>
-                            <input id="duedatecalendar" name="due_date" wire:model.live="due_date" x-model="due_date" type="text"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                placeholder="Select date & time" readonly>
+                            <input id="duedatecalendar"
+                                   name="due_date"
+                                   wire:model.live="due_date"
+                                   x-model="due_date"
+                                   type="text"
+                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-pointer"
+                                   placeholder="Select date & time"
+                                   @focus="initDatepicker()">
                         </div>
                         @error('due_date') <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p> @enderror
                     </div>
