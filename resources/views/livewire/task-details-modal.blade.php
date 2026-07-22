@@ -23,6 +23,9 @@
     groupUserMap: @js($groupUserMap),
     userManuallyChanged: false,
 
+    dueDatePickerInstance: null,
+    repeatDatePickerInstance: null,
+
     updateUserSelection(event, id) {
         this.userManuallyChanged = true;
         id = Number(id);
@@ -87,7 +90,6 @@
                 if (this.isEditMode) {
                     this.syncGroupUsersOnEdit();
                 }
-                this.$nextTick(() => this.initDatepicker());
             } else {
                 document.body.classList.remove('overflow-hidden');
                 this.destroyDatepicker();
@@ -98,47 +100,51 @@
             if (value) {
                 this.isReminderEnabled = true;
             }
+            if (this.dueDatePickerInstance && value !== this.dueDatePickerInstance.input.value) {
+                this.dueDatePickerInstance.setDate(value, false);
+            }
+        });
+
+        this.$watch('recurrence_end_date', value => {
+            if (this.repeatDatePickerInstance && value !== this.repeatDatePickerInstance.input.value) {
+                this.repeatDatePickerInstance.setDate(value, false);
+            }
         });
 
         window.addEventListener('task-edit-form-filled', () => {
             this.syncSelectedUserNames();
-            this.$nextTick(() => this.initDatepicker());
         });
     },
 
-    initDatepicker() {
-        // Fallback-Safe Datepicker Initialization
-        if (typeof window.initializeDateTimepicker === 'function') {
-            window.initializeDateTimepicker('#duedatecalendar', '.scrollcontainer', this.due_date);
-        } else if (typeof flatpickr === 'function') {
-            flatpickr('#duedatecalendar', {
-                enableTime: true,
-                dateFormat: 'd/m/Y H:i',
-                defaultDate: this.due_date,
-                onChange: (selectedDates, dateStr) => {
-                    this.due_date = dateStr;
-                }
-            });
-        }
+    initDuePicker(el) {
+        if (!el || typeof flatpickr === 'undefined') return;
+        if (this.dueDatePickerInstance) this.dueDatePickerInstance.destroy();
+        this.dueDatePickerInstance = flatpickr(el, {
+            enableTime: true,
+            dateFormat: 'Y-m-d H:i',
+            defaultDate: this.due_date || null,
+            onChange: (selectedDates, dateStr) => {
+                this.due_date = dateStr;
+            }
+        });
+    },
 
-        if (typeof window.initializeDatepicker === 'function') {
-            window.initializeDatepicker('#repeatenddatecalendar', '.scrollcontainer', this.recurrence_end_date);
-        } else if (typeof flatpickr === 'function') {
-            flatpickr('#repeatenddatecalendar', {
-                enableTime: false,
-                dateFormat: 'd/m/Y',
-                defaultDate: this.recurrence_end_date,
-                onChange: (selectedDates, dateStr) => {
-                    this.recurrence_end_date = dateStr;
-                }
-            });
-        }
+    initRepeatPicker(el) {
+        if (!el || typeof flatpickr === 'undefined') return;
+        if (this.repeatDatePickerInstance) this.repeatDatePickerInstance.destroy();
+        this.repeatDatePickerInstance = flatpickr(el, {
+            enableTime: false,
+            dateFormat: 'Y-m-d',
+            defaultDate: this.recurrence_end_date || null,
+            onChange: (selectedDates, dateStr) => {
+                this.recurrence_end_date = dateStr;
+            }
+        });
     },
 
     destroyDatepicker() {
-        if (typeof window.destroyDatepicker === 'function') {
-            window.destroyDatepicker();
-        }
+        if (this.dueDatePickerInstance) this.dueDatePickerInstance.destroy();
+        if (this.repeatDatePickerInstance) this.repeatDatePickerInstance.destroy();
     },
 
     resetForm() {
@@ -291,22 +297,21 @@
                                 </select>
                             </div>
 
-                            <!-- FIX: Recurrence End Date Picker With Fallback Pointer Direct Click -->
-                            <div x-show="enableRepeatTask" class="transition-opacity duration-300 ease-in-out">
-                                <div class="relative cursor-pointer" @click="initDatepicker()">
+                            <div x-show="enableRepeatTask" class="transition-opacity duration-300 ease-in-out" wire:ignore>
+                                <div class="relative cursor-pointer">
                                     <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
                                         <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
+                                            <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0 2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
                                         </svg>
                                     </div>
                                     <input id="repeatenddatecalendar"
+                                           x-init="initRepeatPicker($el)"
                                            name="recurrence_end_date"
                                            wire:model.live="recurrence_end_date"
                                            x-model="recurrence_end_date"
                                            type="text"
                                            class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-pointer"
-                                           placeholder="Recurrence End Date"
-                                           @focus="initDatepicker()">
+                                           placeholder="Recurrence End Date">
                                 </div>
                             </div>
                         </div>
@@ -326,23 +331,22 @@
                         @error('recurrence') <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p> @enderror
                     </div>
 
-                    <!-- FIX: Due Date Calendar Popup Fix -->
                     <div>
                         <label for="duedatecalendar" class="flex flex-row items-center block mb-2 text-sm font-medium text-gray-900 dark:text-white">Due Date & Time</label>
-                        <div class="relative cursor-pointer" @click="initDatepicker()">
+                        <div class="relative cursor-pointer" wire:ignore>
                             <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
                                 <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0 2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z" />
                                 </svg>
                             </div>
                             <input id="duedatecalendar"
+                                   x-init="initDuePicker($el)"
                                    name="due_date"
                                    wire:model.live="due_date"
                                    x-model="due_date"
                                    type="text"
                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-pointer"
-                                   placeholder="Select date & time"
-                                   @focus="initDatepicker()">
+                                   placeholder="Select date & time">
                         </div>
                         @error('due_date') <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p> @enderror
                     </div>
@@ -352,7 +356,7 @@
                         <span class="inline-flex bg-gray-100 border-solid border-transparent rounded-3xl p-3">
                             <button @click="showReminderModal = true" type="button" class="text-gray-500 hover:text-gray-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24">
-                                    <path d="M13 12v-5h-1.999v6.999h5.999v-1.999h-4zm-12.197-4.285c-1.261-1.944-1.035-4.569.675-6.266 1.7-1.687 4.305-1.896 6.235-.645-3.171 1.219-5.692 3.741-6.91 6.911zm18.428 11.18c1.715-1.794 2.771-4.219 2.771-6.896 0-5.522-4.477-10-10.002-10-5.522 0-10 4.477-10 10 0 2.678 1.059 5.104 2.772 6.898l-1.736 4.506c-.159.394.288.759.643.522l3.581-3.122c1.412.761 3.026 1.195 4.742 1.195 1.717 0 3.334-.434 4.744-1.195l3.582 3.122c.355.237.803-.128.643-.522l-1.74-4.508zm-7.23 1.103c-4.412 0-8.001-3.588-8.001-8s3.589-8 8.001-8c4.412 0 8.002 3.588 8.002 8s-3.59 8-8.002 8zm10.553-18.52c-1.697-1.71-4.324-1.937-6.268-.675 3.17 1.218 5.693 3.739 6.912 6.91 1.25-1.931 1.041-4.535-.644-6.235z" />
+                                    <path d="M13 12v-5h-1.999v6.999h5.999v-1.999h-4zm-12.197-4.285c-1.261-1.944-1.035-4.569.675-6.266 1.7-1.687 4.305-1.896 6.235-.645-3.171 1.219-5.692 3.741-6.91 6.911zm18.428 11.18c1.715-1.794 2.771-4.219 2.771-6.896 0-5.522-4.477-10-10.002-10-5.522 0-10 4.477-10 10 0 2.678 1.059 5.104 2.772 6.898l-1.736 4.506c-.159.394.288.759.643.522l3.581-3.122c1.412.761 3.026 1.195 4.742 1.195 1.717 0 3.334-.434 4.744-1.195l3.582 3.122c.355.237.803-.128.643-.522l-1.74-4.508zm-7.23 1.103c-4.412 0-8.001-3.588-8.001-8s3.589-8 8.001-8c4.412 0 8.002 3.588 8.002 8zm10.553-18.52c-1.697-1.71-4.324-1.937-6.268-.675 3.17 1.218 5.693 3.739 6.912 6.91 1.25-1.931 1.041-4.535-.644-6.235z" />
                                 </svg>
                             </button>
                         </span>
