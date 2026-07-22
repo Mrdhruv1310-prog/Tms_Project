@@ -428,14 +428,7 @@ class TaskTable extends Component implements HasForms, HasTable
             $userId = Auth::id();
             $comment = trim((string) $comment);
 
-            // Checking creator safely
-            $creatorId = $task->creator ? $task->creator->id : $task->user_id;
-
-            if ($status === 'completed' && (int)$userId !== (int)$creatorId) {
-                $this->requestCompletion($task, $comment);
-                return;
-            }
-
+            // Directly updates status to selected value ('in_progress' or 'completed') for all users/admins
             DB::transaction(function () use ($task, $status, $comment, $userId) {
                 if ($status === 'in_progress') {
                     TaskCompletionRequest::where('task_id', $task->id)
@@ -447,10 +440,12 @@ class TaskTable extends Component implements HasForms, HasTable
                         ]);
                 }
 
+                // Update Task direct status
                 $task->update([
                     'status' => $status,
                 ]);
 
+                // Record status update & comment history
                 DB::table('task_updates')->insert([
                     'task_id' => $task->id,
                     'user_id' => $userId,
@@ -467,7 +462,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
             Notification::make()
                 ->title('Task status updated')
-                ->body('Task status has been updated successfully.')
+                ->body('Task status updated to ' . Str::headline($status) . ' successfully.')
                 ->success()
                 ->send();
 
@@ -479,7 +474,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
             Notification::make()
                 ->title('Error Updating Status')
-                ->body('Something went wrong while updating status: ' . $e->getMessage())
+                ->body('Something went wrong: ' . $e->getMessage())
                 ->danger()
                 ->send();
         }
@@ -575,51 +570,6 @@ class TaskTable extends Component implements HasForms, HasTable
         });
     }
 
-    public function requestCompletion(Task $task, ?string $comment = null): void
-    {
-        $userId = Auth::id();
-        $comment = trim((string) $comment);
-
-        DB::transaction(function () use ($task, $userId, $comment) {
-            $alreadyPending = TaskCompletionRequest::where('task_id', $task->id)
-                ->where('user_id', $userId)
-                ->where('request_status', 'pending')
-                ->exists();
-
-            if ($alreadyPending) {
-                return;
-            }
-
-            TaskCompletionRequest::create([
-                'task_id' => $task->id,
-                'user_id' => $userId,
-                'request_status' => 'pending',
-                'requested_at' => now(),
-            ]);
-
-            $task->update([
-                'status' => 'complete_intimation',
-            ]);
-
-            DB::table('task_updates')->insert([
-                'task_id' => $task->id,
-                'user_id' => $userId,
-                'status' => 'complete_intimation',
-                'comment' => $comment,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        });
-
-        Notification::make()
-            ->title('Completion request sent')
-            ->body('Your completion request has been sent for approval.')
-            ->success()
-            ->send();
-
-        $this->dispatch('$refresh');
-    }
-
     public function approveCompletionRequest(Task $task): void
     {
         DB::transaction(function () use ($task) {
@@ -660,6 +610,7 @@ class TaskTable extends Component implements HasForms, HasTable
             ->send();
 
         $this->dispatch('$refresh');
+        $this->dispatch('taskStatusUpdated');
     }
 
     public function rejectCompletionRequest(Task $task): void
@@ -700,6 +651,7 @@ class TaskTable extends Component implements HasForms, HasTable
             ->send();
 
         $this->dispatch('$refresh');
+        $this->dispatch('taskStatusUpdated');
     }
 
     public function sendTaskMessage(Task $task, string $message): void
