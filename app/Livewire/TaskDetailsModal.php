@@ -65,7 +65,7 @@ class TaskDetailsModal extends Component
             'label_id' => 'nullable|exists:groups,id',
             'recurrence' => 'required|in:none,daily,weekly,monthly',
             'due_date' => 'nullable',
-            'recurrence_end_date' => 'nullable|date_format:d/m/Y',
+            'recurrence_end_date' => 'nullable',
             'status' => 'required|in:pending,in_progress,completed',
             'selectedUsers' => 'required|array|min:1',
             'selectedUsers.*' => 'exists:users,id',
