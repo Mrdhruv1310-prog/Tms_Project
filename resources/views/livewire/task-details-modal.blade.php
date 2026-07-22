@@ -1,14 +1,15 @@
 <div>
 <div x-data="{
     show: @entangle('isOpen').live,
-    title: @entangle('title').live,
-    description: @entangle('description').live,
+    title: @entangle('title').blur,
+    description: @entangle('description').blur,
     category_id: @entangle('category_id').live,
     priority: @entangle('priority').live,
     due_date: @entangle('due_date').live,
     recurrence_end_date: @entangle('recurrence_end_date').live,
     selectedDays: @entangle('selectedDays').live,
     showReminderModal: false,
+    openDropdown: false,
     errorMessage: '',
     reminderUnit: @entangle('reminderUnit').live,
     reminderTime: @entangle('reminderTime').live,
@@ -93,6 +94,7 @@
             } else {
                 document.body.classList.remove('overflow-hidden');
                 this.destroyDatepicker();
+                this.openDropdown = false;
             }
         });
 
@@ -164,6 +166,7 @@
         this.userManuallyChanged = false;
         this.reminderTime = '';
         this.reminderUnit = '';
+        this.openDropdown = false;
     }
 }" x-cloak x-show="show" class="fixed inset-0 flex items-center justify-center z-50"
     aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -183,7 +186,7 @@
                 <div class="flex flex-col space-y-4 mb-4">
                     <div>
                         <label for="title" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Task Title <span class="text-red-500">*</span></label>
-                        <input type="text" id="title" wire:model.live="title" x-model="title" required
+                        <input type="text" id="title" wire:model.blur="title" x-model="title" required
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white @error('title') border-red-500 bg-red-50 @enderror"
                             placeholder="Enter Task Title" />
                         @error('title') <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p> @enderror
@@ -191,7 +194,7 @@
 
                     <div>
                         <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description <span class="text-red-500">*</span></label>
-                        <textarea id="description" wire:model.live="description" x-model="description" rows="4" required
+                        <textarea id="description" wire:model.blur="description" x-model="description" rows="4" required
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white @error('description') border-red-500 bg-red-50 @enderror"
                             placeholder="Enter Task Description"></textarea>
                         @error('description') <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p> @enderror
@@ -212,20 +215,22 @@
                             @error('category_id') <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p> @enderror
                         </div>
 
+                        <!-- Dropdown Fixed Section -->
                         <div class="w-1/2">
                             <label for="users" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Users <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                                <button id="dropdownUsersButton" data-dropdown-toggle="dropdownUsers"
+                            <div class="relative" @click.outside="openDropdown = false">
+                                <button id="dropdownUsersButton" @click="openDropdown = !openDropdown"
                                     class="flex flex-row justify-between items-center bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white @error('selectedUsers') border-red-500 bg-red-50 @enderror"
                                     type="button">
-                                    <span x-text="selectedUserNames.length ? selectedUserNames.join(', ') : 'Select Users'"></span>
-                                    <svg class="w-2.5 h-2.5 ms-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                                    <span class="truncate" x-text="selectedUserNames.length ? selectedUserNames.join(', ') : 'Select Users'"></span>
+                                    <svg class="w-2.5 h-2.5 ms-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
                                     </svg>
                                 </button>
 
-                                <div id="dropdownUsers" class="z-10 hidden bg-white rounded-lg shadow w-60 dark:bg-gray-700">
-                                    <ul class="h-48 px-3 pb-3 overflow-y-auto text-sm text-gray-700 dark:text-gray-200">
+                                <div id="dropdownUsers" x-show="openDropdown" x-transition
+                                    class="absolute left-0 top-full mt-1 z-20 bg-white rounded-lg shadow w-full dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+                                    <ul class="h-48 px-3 py-2 overflow-y-auto text-sm text-gray-700 dark:text-gray-200">
                                         @foreach ($users as $user)
                                             <li wire:key="user-item-{{ $user->id }}" class="flex items-center py-2 px-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
                                                 <input id="checkbox-user-{{ $user->id }}" type="checkbox"
@@ -236,7 +241,7 @@
                                                 <div class="w-7 h-7 ml-3 flex items-center justify-center text-white rounded-full me-0.5" style="background-color: #1d4ed8;">
                                                     {{ Str::upper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
                                                 </div>
-                                                <label for="checkbox-user-{{ $user->id }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                                <label for="checkbox-user-{{ $user->id }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">
                                                     {{ Str::ucfirst($user->first_name) . ' ' . Str::ucfirst($user->last_name) }}
                                                 </label>
                                             </li>
@@ -356,7 +361,7 @@
                         <span class="inline-flex bg-gray-100 border-solid border-transparent rounded-3xl p-3">
                             <button @click="showReminderModal = true" type="button" class="text-gray-500 hover:text-gray-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" viewBox="0 0 24 24">
-                                    <path d="M13 12v-5h-1.999v6.999h5.999v-1.999h-4zm-12.197-4.285c-1.261-1.944-1.035-4.569.675-6.266 1.7-1.687 4.305-1.896 6.235-.645-3.171 1.219-5.692 3.741-6.91 6.911zm18.428 11.18c1.715-1.794 2.771-4.219 2.771-6.896 0-5.522-4.477-10-10.002-10-5.522 0-10 4.477-10 10 0 2.678 1.059 5.104 2.772 6.898l-1.736 4.506c-.159.394.288.759.643.522l3.581-3.122c1.412.761 3.026 1.195 4.742 1.195 1.717 0 3.334-.434 4.744-1.195l3.582 3.122c.355.237.803-.128.643-.522l-1.74-4.508zm-7.23 1.103c-4.412 0-8.001-3.588-8.001-8s3.589-8 8.001-8c4.412 0 8.002 3.588 8.002 8zm10.553-18.52c-1.697-1.71-4.324-1.937-6.268-.675 3.17 1.218 5.693 3.739 6.912 6.91 1.25-1.931 1.041-4.535-.644-6.235z" />
+                                    <path d="M13 12v-5h-1.999v6.999h5.999v-1.999h-4zm-12.197-4.285c-1.261-1.944-1.035-4.569.675-6.266 1.7-1.687 4.305-1.896 6.235-.645-3.171 1.219-5.692 3.741-6.91 6.911zm18.428 11.18c1.715-1.794 2.771-4.219 2.771-6.896 0-5.522-4.477-10-10.002-10-5.522 0-10 4.477-10 10 0 2.678 1.059 5.104 2.772 6.898l-1.736 4.506c-.159.394.288.759.643.522l3.581-3.122c1.412.761 3.026 1.195 4.742 1.195 1.717 0 3.334-.434 4.744-1.195l3.582 3.122c.355.237.803-.128.643-.522l-1.74-4.508zm-7.23 1.103c-4.412 0-8.001-3.588-8.001-8s3.589-8 8.002-8c4.412 0 8.002 3.588 8.002 8zm10.553-18.52c-1.697-1.71-4.324-1.937-6.268-.675 3.17 1.218 5.693 3.739 6.912 6.91 1.25-1.931 1.041-4.535-.644-6.235z" />
                                 </svg>
                             </button>
                         </span>
@@ -373,7 +378,7 @@
                                 </button>
                             </div>
                             <div class="flex flex-row space-x-4">
-                                <input type="number" id="reminder_time" wire:model.live="reminderTime" x-model="reminderTime"
+                                <input type="number" id="reminder_time" wire:model.blur="reminderTime" x-model="reminderTime"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     placeholder="Enter time">
 
