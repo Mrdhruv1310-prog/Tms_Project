@@ -1,24 +1,24 @@
 <div>
 <div x-data="{
     show: @entangle('isOpen'),
-    title: '',
-    description: '',
-    category_id: '',
-    priority: '',
+    title: @entangle('title'),
+    description: @entangle('description'),
+    category_id: @entangle('category_id'),
+    priority: @entangle('priority'),
     labels: '',
     due_date: @entangle('due_date'),
-    recurrence_end_date: '',
-    selectedDays: [],
+    recurrence_end_date: @entangle('recurrence_end_date'),
+    selectedDays: @entangle('selectedDays'),
     showReminderModal: false,
     errorMessage: '',
-    reminderUnit: '',
-    isReminderEnabled: false,
-    enableRepeatTask: false,
-    recurrence: '',
+    reminderUnit: @entangle('reminderUnit'),
+    isReminderEnabled: @entangle('isReminderEnabled'),
+    enableRepeatTask: @entangle('enableRepeatTask'),
+    recurrence: @entangle('recurrence'),
     selectedUsers: @entangle('selectedUsers'),
     allUsers: @js($users),
     selectedUserNames: [],
-    isEditMode: @js($isEditMode),
+    isEditMode: @entangle('isEditMode'),
     label_id_alpine: @entangle('label_id'),
     groupUserMap: @js($groupUserMap),
     userManuallyChanged: false,
@@ -90,7 +90,8 @@
         this.$watch('show', value => {
             if (value) {
                 document.body.classList.add('overflow-hidden');
-                this.initDatepicker();
+                this.syncSelectedUserNames();
+                this.$nextTick(() => this.initDatepicker());
             } else {
                 document.body.classList.remove('overflow-hidden');
                 this.destroyDatepicker();
@@ -98,11 +99,14 @@
             }
         });
 
-        if (this.show) {
-            this.$watch('due_date', value => {
-                this.isReminderEnabled = value ? true : false;
-            });
-        }
+        this.$watch('due_date', value => {
+            this.isReminderEnabled = value ? true : false;
+        });
+
+        window.addEventListener('task-edit-form-filled', () => {
+            this.syncSelectedUserNames();
+            this.$nextTick(() => this.initDatepicker());
+        });
     },
 
     initDatepicker() {
