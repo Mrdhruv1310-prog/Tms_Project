@@ -36,12 +36,23 @@
         <!-- Group Cards Grid -->
         <div x-data="{ userId: null }" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @foreach ($groups as $group)
-                <div wire:key="{{ $group['id'] }}" class="relative w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg dark:bg-gray-800 dark:border-gray-700 transition duration-300">
-                    <div class="flex flex-col items-center px-6 py-8">
-                        <!-- Group Initials -->
-                        <div x-data="{ backgroundColor: generateRandomColor() }" :style="{ backgroundColor: backgroundColor }"
-                            class="w-24 h-24 mb-4 rounded-full shadow-lg flex items-center justify-center text-white text-2xl font-bold">
-                            {{ strtoupper(substr($user['first_name'] ?? '', 0, 1) . substr($user['last_name'] ?? '', 0, 1))  }}
+                @php
+                    // Extracting initials properly from the group label string
+                    $words = explode(' ', $group['label'] ?? '');
+                    $initials = '';
+                    foreach ($words as $w) {
+                        $initials .= strtoupper(substr($w, 0, 1));
+                    }
+                    $initials = substr($initials, 0, 2);
+                @endphp
+
+                <div wire:key="{{ $group['id'] }}" class="relative w-full bg-white/95 backdrop-blur-md border border-slate-200/60 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                    <div class="flex flex-col items-center px-6 py-8 text-center">
+
+                        <!-- Premium Initial Badge Placeholder with Consistent Seed-Based Colors -->
+                        <div x-data="{ backgroundColor: generateRandomColor('{{ $group['label'] }}') }" :style="{ backgroundColor: backgroundColor }"
+                            class="w-20 h-20 mb-4 rounded-full shadow-inner border-4 border-white flex items-center justify-center text-white text-xl font-black tracking-wider uppercase transition-transform duration-300 hover:scale-105">
+                            {{ $initials ?: 'GP' }}
                         </div>
 
                     <!-- Group Label or Input -->

@@ -12,13 +12,13 @@
         <div class="flex items-center space-x-2 sm:space-x-4">
 
             {{-- Install App Button --}}
-            <button id="install" type="button"
+            {{-- <button id="install" type="button"
                 class="inline-flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-xs font-bold text-white bg-gradient-to-r from-[#0067f4] to-blue-600 rounded-xl shadow-sm shadow-blue-100/80 hover:shadow-md hover:from-blue-600 hover:to-blue-700 transition-all duration-200 active:scale-95 focus:outline-none">
                 <svg class="w-3.5 h-3.5 mr-1.5 hidden xs:inline-block opacity-90" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
                 </svg>
                 <span class="whitespace-nowrap">Install App</span>
-            </button>
+            </button> --}}
 
             <div class="relative flex items-center">
                 {{-- User Avatar Button --}}
