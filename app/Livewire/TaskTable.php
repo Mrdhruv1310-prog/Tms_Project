@@ -18,6 +18,9 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\Layout\Panel;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\ActionsPosition;
@@ -52,6 +55,7 @@ class TaskTable extends Component implements HasForms, HasTable
         return $table
             ->query(fn() => $this->getTaskQuery())
             ->columns([
+                // Desktop View Columns (Visible on Medium screens and above)
                 TextColumn::make('title')
                     ->label('Task Title')
                     ->searchable()
@@ -63,21 +67,24 @@ class TaskTable extends Component implements HasForms, HasTable
                     })
                     ->extraAttributes([
                         'class' => 'cursor-pointer text-primary-600 hover:underline dark:text-primary-400',
-                    ]),
+                    ])
+                    ->visibleFrom('md'),
 
                 TextColumn::make('creator.first_name')
                     ->label('Assigned By')
                     ->searchable()
                     ->sortable()
                     ->icon('heroicon-o-user-circle')
-                    ->formatStateUsing(fn($record) => $record->creator ? $record->creator->first_name . ' ' . $record->creator->last_name : 'N/A'),
+                    ->formatStateUsing(fn($record) => $record->creator ? $record->creator->first_name . ' ' . $record->creator->last_name : 'N/A')
+                    ->visibleFrom('md'),
 
                 TextColumn::make('assignedUsers')
                     ->label('Assigned To')
                     ->icon('heroicon-o-users')
                     ->formatStateUsing(fn($state, $record) => $record->assignedUsers->map(function ($user) {
                         return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
-                    })->join(', ')),
+                    })->join(', '))
+                    ->visibleFrom('md'),
 
                 TextColumn::make('due_date')
                     ->label('Due Date')
@@ -88,13 +95,15 @@ class TaskTable extends Component implements HasForms, HasTable
                             return 'Non';
                         }
                         return Carbon::parse($state)->format('d-m-Y H:i');
-                    }),
+                    })
+                    ->visibleFrom('md'),
 
                 TextColumn::make('category.name')
                     ->label('Category')
                     ->icon('heroicon-o-tag')
                     ->sortable()
-                    ->placeholder('No Category'),
+                    ->placeholder('No Category')
+                    ->visibleFrom('md'),
 
                 TextColumn::make('recurrence')
                     ->label('Repeat')
@@ -105,7 +114,8 @@ class TaskTable extends Component implements HasForms, HasTable
                         'monthly' => 'Monthly',
                         'none' => 'No Repeat',
                         default => ucfirst(strtolower($state)),
-                    }),
+                    })
+                    ->visibleFrom('md'),
 
                 TextColumn::make('priority')
                     ->label('Priority')
@@ -117,7 +127,8 @@ class TaskTable extends Component implements HasForms, HasTable
                         'high' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn($state) => Str::ucfirst($state) . ' Priority'),
+                    ->formatStateUsing(fn($state) => Str::ucfirst($state) . ' Priority')
+                    ->visibleFrom('md'),
 
                 TextColumn::make('group.label')
                     ->label('Group')
@@ -126,7 +137,8 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->color('info')
                     ->sortable()
                     ->searchable()
-                    ->formatStateUsing(fn($state) => $state ? 'Group: ' . $state : 'No Group'),
+                    ->formatStateUsing(fn($state) => $state ? 'Group: ' . $state : 'No Group')
+                    ->visibleFrom('md'),
 
                 TextColumn::make('status')
                     ->label('Status')
@@ -161,7 +173,65 @@ class TaskTable extends Component implements HasForms, HasTable
                         }
 
                         return $state === 'complete_intimation' ? 'Request Complete' : Str::headline($state);
-                    }),
+                    })
+                    ->visibleFrom('md'),
+
+                // ==========================================
+                // MOBILE / TABLET RESPONSIVE COLLAPSIBLE LAYOUT (< md)
+                // ==========================================
+                Split::make([
+                    TextColumn::make('title')
+                        ->label('Task Title')
+                        ->weight(FontWeight::Bold)
+                        ->searchable()
+                        ->sortable(),
+                ])->hiddenFrom('md'),
+
+                Panel::make([
+                    Stack::make([
+                        TextColumn::make('creator.first_name')
+                            ->label('Assigned By')
+                            ->formatStateUsing(fn($record) => 'Assigned By: ' . ($record->creator ? $record->creator->first_name . ' ' . $record->creator->last_name : 'N/A')),
+
+                        TextColumn::make('assignedUsers')
+                            ->label('Assigned To')
+                            ->formatStateUsing(fn($state, $record) => 'Assigned To: ' . $record->assignedUsers->map(function ($user) {
+                                return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
+                            })->join(', ')),
+
+                        TextColumn::make('due_date')
+                            ->label('Due Date')
+                            ->formatStateUsing(fn($state) => 'Due Date: ' . (blank($state) ? 'Non' : Carbon::parse($state)->format('d-m-Y H:i'))),
+
+                        TextColumn::make('category.name')
+                            ->label('Category')
+                            ->formatStateUsing(fn($state) => 'Category: ' . ($state ?: 'No Category')),
+
+                        TextColumn::make('recurrence')
+                            ->label('Repeat')
+                            ->formatStateUsing(fn($state) => 'Repeat: ' . match ($state) {
+                                'daily' => 'Daily',
+                                'weekly' => 'Weekly',
+                                'monthly' => 'Monthly',
+                                'none' => 'No Repeat',
+                                default => ucfirst(strtolower($state)),
+                            }),
+
+                        TextColumn::make('priority')
+                            ->label('Priority')
+                            ->formatStateUsing(fn($state) => 'Priority: ' . Str::ucfirst($state)),
+
+                        TextColumn::make('group.label')
+                            ->label('Group')
+                            ->formatStateUsing(fn($state) => 'Group: ' . ($state ?: 'No Group')),
+
+                        TextColumn::make('status')
+                            ->label('Status')
+                            ->formatStateUsing(fn($state) => 'Status: ' . Str::headline($state)),
+                    ])->space(2),
+                ])
+                ->collapsible()
+                ->hiddenFrom('md'),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -374,7 +444,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->modalSubmitActionLabel('Yes, delete it')
                     ->modalAlignment(Alignment::Center)
                     ->visible(fn(Task $task) => Auth::user()->role === 'admin' ||
-                        Auth::user()->role === 'user' || Auth::user()->id === $task->user_id),
+                        Auth::user()->role === 'user' || Auth::id() === $task->user_id),
             ], position: ActionsPosition::AfterColumns)
             ->bulkActions([
                 BulkAction::make('delete_all_tasks')
@@ -428,7 +498,6 @@ class TaskTable extends Component implements HasForms, HasTable
             $userId = Auth::id();
             $comment = trim((string) $comment);
 
-            // Directly updates status to selected value ('in_progress' or 'completed') for all users/admins
             DB::transaction(function () use ($task, $status, $comment, $userId) {
                 if ($status === 'in_progress') {
                     TaskCompletionRequest::where('task_id', $task->id)
@@ -440,12 +509,10 @@ class TaskTable extends Component implements HasForms, HasTable
                         ]);
                 }
 
-                // Update Task direct status
                 $task->update([
                     'status' => $status,
                 ]);
 
-                // Record status update & comment history
                 DB::table('task_updates')->insert([
                     'task_id' => $task->id,
                     'user_id' => $userId,
