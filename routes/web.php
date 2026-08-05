@@ -13,12 +13,14 @@ use App\Livewire\PasswordResetForm;
 use App\Livewire\TaskTable;
 use App\Livewire\UserGroupCard;
 use App\Livewire\Users;
+use App\Livewire\Whatsapp;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
 Route::get('/password/reset/{token}', PasswordResetForm::class)->name('password.reset');
 Route::get('/forget-password', ForgetPasswordForm::class)->name('forget.password');
+Route::get('/whatsapp', Whatsapp::class)->name('index');
 Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
     Route::redirect('/', '/dashboard');
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
