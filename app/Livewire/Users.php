@@ -17,13 +17,17 @@ class Users extends Component
     #[On('userupdated')]
     public function mount()
     {
+        // Yahan 'admin' aur 'super-admin' dono ko access diya gaya hai taaki 403 error na aaye
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $this->users = User::where('status', 1)->orderBy('created_at', 'desc')->get();
     }
 
     public function delete(User $user)
     {
-
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             $this->dispatch('notify', message: 'You are not authorized to delete users.', type: 'error');
             return;
         }
@@ -37,7 +41,6 @@ class Users extends Component
             DB::transaction(function () use ($user) {
                 $user->notifications()->delete();
                 $user->reminders()->delete();
-                // $user->tasks()->delete();
                 DB::table('task_assignments')->where('user_id', $user->id)->delete();
                 $user->groups()->detach();
                 $user->delete();
@@ -54,6 +57,6 @@ class Users extends Component
 
     public function render()
     {
-        return view('livewire.users', ['users' => $this->users,])->layout('components.layouts.app', ['title' => 'Manage Users']);
+        return view('livewire.users', ['users' => $this->users])->layout('components.layouts.app', ['title' => 'Manage Users']);
     }
 }

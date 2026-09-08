@@ -10,13 +10,14 @@ use App\Livewire\Forms\LoginForm;
 use App\Livewire\Forms\RegisterForm;
 use App\Livewire\GroupPerformance;
 use App\Livewire\PasswordResetForm;
+use App\Livewire\TaskDetailsModal;
 use App\Livewire\TaskTable;
 use App\Livewire\UserGroupCard;
 use App\Livewire\Users;
-use App\Livewire\Whatsapp;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Services\WhatsAppService;
 
 Route::get('/password/reset/{token}', PasswordResetForm::class)->name('password.reset');
 Route::get('/forget-password', ForgetPasswordForm::class)->name('forget.password');
@@ -28,8 +29,15 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
     Route::get('/categoryReport', CategoryReport::class)->name('categoryReport');
     Route::get('/teamPerformance', TeamPerformance::class)->name('teamPerformance');
     Route::get('/export', ExportTaskModal::class)->name('export');
+    Route::get('/tasks/{task}', TaskDetailsModal::class)->name('tasks.show');
 
-    Route::group(['middleware' => 'role:admin'], function () {
+    // Sirf Admin aur Super-Admin ke liye custom check (Bina kisi middleware conflict ke)
+    Route::group(['middleware' => function ($request, $next) {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            abort(403, 'Unauthorized action.');
+        }
+        return $next($request);
+    }], function () {
         Route::get('/categories', CategoryManager::class)->name('categories');
         Route::get('/users', Users::class)->name('users');
         Route::get('/manageusergroup', UserGroupCard::class)->name('manageusergroup');

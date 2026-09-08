@@ -19,7 +19,9 @@ class AdminMiddleware
             return redirect()->route('admin.login');
         }
 
-        if (auth()->user()->role !== 'admin') {
+        // Yahan humne check update kar diya hai taaki 'admin' aur 'super-admin' dono allow ho jayein
+        $role = auth()->user()->role;
+        if (!in_array($role, ['admin', 'super-admin'])) {
             return redirect()->route('login');
         }
 

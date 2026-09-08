@@ -31,53 +31,68 @@ class Dashboard extends Component
         $authUser = Auth::user();
         $authUserId = (int) $authUser->id;
 
-        $isAdmin = $authUser->role === 'admin';
-        $isUser = $authUser->role === 'user';
+        $role = $authUser->role ?? 'user';
 
-        $this->setLabels($isAdmin, $authUserId);
-        $this->setCategories($isAdmin, $isUser, $authUserId);
-        $this->setTeam($isAdmin, $isUser, $authUserId);
-        $this->setGroups($isAdmin, $isUser, $authUserId);
-        $this->setTasksAssignedByUser($isAdmin, $authUserId);
+        // Check flags based on new requirement
+        $isSuperAdmin = ($role === 'super-admin');
+        // Admin ke liye ab restricted data hoga (jo usne create kiya ho ya assign hua ho)
+        $isAdmin = ($role === 'admin');
+        $isUser = ($role === 'user');
+
+        $this->setLabels($isSuperAdmin, $authUserId);
+        $this->setCategories($isSuperAdmin, $isAdmin, $isUser, $authUserId);
+        $this->setTeam($isSuperAdmin, $isAdmin, $isUser, $authUserId);
+        $this->setGroups($isSuperAdmin, $isAdmin, $isUser, $authUserId);
+        $this->setTasksAssignedByUser($isSuperAdmin, $authUserId);
     }
 
-    private function assignedTaskQuery(bool $isAdmin, int $authUserId)
+    /**
+     * Query to fetch tasks based on role:
+     * - super-admin: gets all tasks.
+     * - admin / user: gets tasks assigned to them OR created by them (if admin).
+     */
+    private function assignedTaskQuery(bool $isSuperAdmin, int $authUserId)
     {
         return Task::query()
-            ->when(! $isAdmin, function ($query) use ($authUserId) {
-                $query->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
-                    $assignmentQuery->where('user_id', $authUserId);
+            ->when(! $isSuperAdmin, function ($query) use ($authUserId) {
+                $query->where(function ($subQuery) use ($authUserId) {
+                    // Task assigned to user
+                    $subQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
+                        $assignmentQuery->where('user_id', $authUserId);
+                    })
+                    // OR Task created/added by this admin (assuming 'created_by' or 'user_id' stores creator ID, adjust if column name differs e.g., 'created_by')
+                    ->orWhere('user_id', $authUserId);
                 });
             });
     }
 
-    private function setLabels(bool $isAdmin, int $authUserId): void
+    private function setLabels(bool $isSuperAdmin, int $authUserId): void
     {
         $this->labels = [
             [
                 'title' => 'Pending',
-                'count' => (clone $this->assignedTaskQuery($isAdmin, $authUserId))->where('status', 'pending')->count(),
+                'count' => (clone $this->assignedTaskQuery($isSuperAdmin, $authUserId))->where('status', 'pending')->count(),
                 'status' => 'pending',
                 'bg' => '#fce2c7',
                 'border' => '#f9d6b3',
             ],
             [
                 'title' => 'In Progress',
-                'count' => (clone $this->assignedTaskQuery($isAdmin, $authUserId))->where('status', 'in_progress')->count(),
+                'count' => (clone $this->assignedTaskQuery($isSuperAdmin, $authUserId))->where('status', 'in_progress')->count(),
                 'status' => 'in-progress',
                 'bg' => '#cbe6fc',
                 'border' => '#afd7f9',
             ],
             [
                 'title' => 'Completed',
-                'count' => (clone $this->assignedTaskQuery($isAdmin, $authUserId))->where('status', 'completed')->count(),
+                'count' => (clone $this->assignedTaskQuery($isSuperAdmin, $authUserId))->where('status', 'completed')->count(),
                 'status' => 'completed',
                 'bg' => '#caf5de',
                 'border' => '#9ffac9',
             ],
             [
                 'title' => 'Total',
-                'count' => (clone $this->assignedTaskQuery($isAdmin, $authUserId))->count(),
+                'count' => (clone $this->assignedTaskQuery($isSuperAdmin, $authUserId))->count(),
                 'status' => 'total',
                 'bg' => '#f5f3fa',
                 'border' => '#d6d0e4',
@@ -85,33 +100,33 @@ class Dashboard extends Component
         ];
     }
 
-    private function setCategories(bool $isAdmin, bool $isUser, int $authUserId): void
+    private function setCategories(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
     {
-        if (! $isAdmin && ! $isUser) {
-            $this->categories = [];
-            return;
-        }
-
+        // Allow Super Admin, Admin, and User
         $this->categories = Category::withCount([
-            'tasks as completed_tasks_count' => function ($query) use ($isAdmin, $authUserId) {
+            'tasks as completed_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {
                 $query->where('status', 'completed')
-                    ->when(! $isAdmin, function ($taskQuery) use ($authUserId) {
-                        $taskQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
-                            $assignmentQuery->where('user_id', $authUserId);
+                    ->when(! $isSuperAdmin, function ($taskQuery) use ($authUserId) {
+                        $taskQuery->where(function ($sub) use ($authUserId) {
+                            $sub->whereHas('taskAssignments', function ($aq) use ($authUserId) {
+                                $aq->where('user_id', $authUserId);
+                            })->orWhere('user_id', $authUserId);
                         });
                     });
             },
-            'tasks as total_tasks_count' => function ($query) use ($isAdmin, $authUserId) {
-                $query->when(! $isAdmin, function ($taskQuery) use ($authUserId) {
-                    $taskQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
-                        $assignmentQuery->where('user_id', $authUserId);
+            'tasks as total_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {
+                $query->when(! $isSuperAdmin, function ($taskQuery) use ($authUserId) {
+                    $taskQuery->where(function ($sub) use ($authUserId) {
+                        $sub->whereHas('taskAssignments', function ($aq) use ($authUserId) {
+                            $aq->where('user_id', $authUserId);
+                        })->orWhere('user_id', $authUserId);
                     });
                 });
             },
         ])
             ->get()
-            ->filter(function ($category) use ($isAdmin) {
-                return $isAdmin || $category->total_tasks_count > 0;
+            ->filter(function ($category) use ($isSuperAdmin) {
+                return $isSuperAdmin || $category->total_tasks_count > 0;
             })
             ->map(function ($category) {
                 return [
@@ -128,16 +143,18 @@ class Dashboard extends Component
             ->toArray();
     }
 
-    private function setTeam(bool $isAdmin, bool $isUser, int $authUserId): void
+    private function setTeam(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
     {
-        if (! $isAdmin && ! $isUser) {
-            $this->team = [];
-            return;
-        }
-
         $this->team = User::query()
-            ->when($isUser, function ($query) use ($authUserId) {
-                $query->where('id', $authUserId);
+            ->when(! $isSuperAdmin, function ($query) use ($authUserId, $isAdmin) {
+                if ($isAdmin) {
+                    // Admin can see team members who have tasks related to them, or just themselves + assigned users
+                    // Keeping it safe to show users who share tasks or just the admin themselves depending on scope.
+                    // Here we restrict to self or tasks managed, but let's filter based on visibility rule:
+                    $query->where('id', $authUserId);
+                } else {
+                    $query->where('id', $authUserId);
+                }
             })
             ->withCount([
                 'taskAssignments as completed_tasks_count' => function ($query) {
@@ -148,8 +165,8 @@ class Dashboard extends Component
                 'taskAssignments as total_tasks_count',
             ])
             ->get()
-            ->filter(function ($user) use ($isAdmin) {
-                return $isAdmin || $user->total_tasks_count > 0;
+            ->filter(function ($user) use ($isSuperAdmin) {
+                return $isSuperAdmin || $user->total_tasks_count > 0;
             })
             ->map(function ($user) {
                 return [
@@ -167,49 +184,52 @@ class Dashboard extends Component
             ->toArray();
     }
 
-    private function setGroups(bool $isAdmin, bool $isUser, int $authUserId): void
+    private function setGroups(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
     {
-        if (! $isAdmin && ! $isUser) {
-            $this->groups = [];
-            return;
-        }
-
         $this->groups = Group::withCount([
-            'tasks as pending_tasks_count' => function ($query) use ($isAdmin, $authUserId) {
+            'tasks as pending_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {
                 $query->where('status', 'pending')
-                    ->when(! $isAdmin, function ($taskQuery) use ($authUserId) {
-                        $taskQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
-                            $assignmentQuery->where('user_id', $authUserId);
+                    ->when(! $isSuperAdmin, function ($taskQuery) use ($authUserId) {
+                        $taskQuery->where(function ($sub) use ($authUserId) {
+                            $sub->whereHas('taskAssignments', function ($aq) use ($authUserId) {
+                                $aq->where('user_id', $authUserId);
+                            })->orWhere('user_id', $authUserId);
                         });
                     });
             },
-            'tasks as inprogress_tasks_count' => function ($query) use ($isAdmin, $authUserId) {
+            'tasks as inprogress_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {
                 $query->where('status', 'in_progress')
-                    ->when(! $isAdmin, function ($taskQuery) use ($authUserId) {
-                        $taskQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
-                            $assignmentQuery->where('user_id', $authUserId);
+                    ->when(! $isSuperAdmin, function ($taskQuery) use ($authUserId) {
+                        $taskQuery->where(function ($sub) use ($authUserId) {
+                            $sub->whereHas('taskAssignments', function ($aq) use ($authUserId) {
+                                $aq->where('user_id', $authUserId);
+                            })->orWhere('user_id', $authUserId);
                         });
                     });
             },
-            'tasks as completed_tasks_count' => function ($query) use ($isAdmin, $authUserId) {
+            'tasks as completed_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {
                 $query->where('status', 'completed')
-                    ->when(! $isAdmin, function ($taskQuery) use ($authUserId) {
-                        $taskQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
-                            $assignmentQuery->where('user_id', $authUserId);
+                    ->when(! $isSuperAdmin, function ($taskQuery) use ($authUserId) {
+                        $taskQuery->where(function ($sub) use ($authUserId) {
+                            $sub->whereHas('taskAssignments', function ($aq) use ($authUserId) {
+                                $aq->where('user_id', $authUserId);
+                            })->orWhere('user_id', $authUserId);
                         });
                     });
             },
-            'tasks as total_tasks_count' => function ($query) use ($isAdmin, $authUserId) {
-                $query->when(! $isAdmin, function ($taskQuery) use ($authUserId) {
-                    $taskQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
-                        $assignmentQuery->where('user_id', $authUserId);
+            'tasks as total_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {
+                $query->when(! $isSuperAdmin, function ($taskQuery) use ($authUserId) {
+                    $taskQuery->where(function ($sub) use ($authUserId) {
+                        $sub->whereHas('taskAssignments', function ($aq) use ($authUserId) {
+                            $aq->where('user_id', $authUserId);
+                        })->orWhere('user_id', $authUserId);
                     });
                 });
             },
         ])
             ->get()
-            ->filter(function ($group) use ($isAdmin) {
-                return $isAdmin || $group->total_tasks_count > 0;
+            ->filter(function ($group) use ($isSuperAdmin) {
+                return $isSuperAdmin || $group->total_tasks_count > 0;
             })
             ->map(function ($group) {
                 return [
@@ -228,9 +248,9 @@ class Dashboard extends Component
             ->toArray();
     }
 
-    private function setTasksAssignedByUser(bool $isAdmin, int $authUserId): void
+    private function setTasksAssignedByUser(bool $isSuperAdmin, int $authUserId): void
     {
-        $this->tasksAssignedByUser = $this->assignedTaskQuery($isAdmin, $authUserId)
+        $this->tasksAssignedByUser = $this->assignedTaskQuery($isSuperAdmin, $authUserId)
             ->with(['assignedBy', 'category', 'group'])
             ->latest('id')
             ->get();
@@ -246,7 +266,10 @@ class Dashboard extends Component
 
         $this->openStatusTaskId = $task->id;
 
-        $this->statusForm[$task->id] = ['status' => in_array($task->status, ['pending', 'in_progress']) ? 'in_progress' : 'completed', 'comment' => '',];
+        $this->statusForm[$task->id] = [
+            'status' => in_array($task->status, ['pending', 'in_progress']) ? 'in_progress' : 'completed',
+            'comment' => ''
+        ];
     }
 
     public function cancelStatusDropdown(): void
@@ -313,9 +336,9 @@ class Dashboard extends Component
     {
         $authUser = Auth::user();
         $authUserId = (int) $authUser->id;
-        $isAdmin = $authUser->role === 'admin';
+        $isSuperAdmin = ($authUser->role === 'super-admin');
 
-        return $this->assignedTaskQuery($isAdmin, $authUserId)->where('id', $taskId)->first();
+        return $this->assignedTaskQuery($isSuperAdmin, $authUserId)->where('id', $taskId)->first();
     }
 
     public function statusLabel(string $status): string

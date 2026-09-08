@@ -12,15 +12,25 @@ class CategoryManager extends Component
     public $editCategory;
     public function mount()
     {
+        // Restrict access to admin and super-admin only
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            abort(403, 'Unauthorized action.');
+        }
+        // Load all categories for both admin and super-admin
         $this->categories = Category::all();
-
     }
 
-    // Add category page
+    // Add category function
     public function addCategory()
     {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            $this->notify('Unauthorized action.', 'error');
+            return;
+        }
+
         // Trim whitespace from the input
         $this->newCategory = trim($this->newCategory);
+
         // Validate input
         $this->validate([
             'newCategory' => [
@@ -42,18 +52,23 @@ class CategoryManager extends Component
         // Clear input
         $this->newCategory = '';
 
-        // Refresh category list
+        // Refresh category list to show all data instantly
         $this->categories = Category::all();
 
-        // Optionally dispatch a notification or event
         $this->notify('Category added successfully.', 'success');
     }
 
-    // Update category page
+    // Update category function
     public function updateCategory($id, $name)
     {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            $this->notify('Unauthorized action.', 'error');
+            return;
+        }
+
         // Trim whitespace from the input
         $name = trim($name);
+
         // Validate input
         $this->validate([
             'editCategory' => [
@@ -67,24 +82,30 @@ class CategoryManager extends Component
                     }
                 },
             ],
-        ]); // Specify the property name for error messages);
+        ]);
+
         $category = Category::find($id);
         $category->name = $name;
         $category->save();
 
-        $this->categories = Category::all(); // Refresh the list
+        // Refresh the list
+        $this->categories = Category::all();
         $this->notify('Category updated successfully.', 'success');
     }
 
     // Delete Category with check for assigned tasks
     public function deleteCategory($categoryId)
     {
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+            $this->notify('Unauthorized action.', 'error');
+            return;
+        }
+
         // Find the category
         $category = Category::findOrFail($categoryId);
 
         // Check if the category has any tasks assigned
         if ($category->tasks()->exists()) {
-            // If there are tasks, notify the user and do not delete the category
             $this->notify('Cannot delete category. There are tasks assigned to it.', 'error');
             return;
         }
@@ -99,9 +120,9 @@ class CategoryManager extends Component
         $this->notify('Category deleted successfully.', 'success');
     }
 
-    // Open for category page
+    // Render category page
     public function render()
     {
-        return view('livewire.category-manager')->layout('components.layouts.app', ['title' => 'Categories | TMS',]);
+        return view('livewire.category-manager')->layout('components.layouts.app', ['title' => 'Categories | TMS']);
     }
 }
