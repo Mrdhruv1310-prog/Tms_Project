@@ -21,7 +21,28 @@ use App\Services\WhatsAppService;
 
 Route::get('/password/reset/{token}', PasswordResetForm::class)->name('password.reset');
 Route::get('/forget-password', ForgetPasswordForm::class)->name('forget.password');
-Route::get('/whatsapp', Whatsapp::class)->name('index');
+Route::get('/whatsapp', ForgetPasswordForm::class)->name('index');
+Route::get('/test-task-whatsapp', function (WhatsAppService $whatsAppService) {
+
+    return $whatsAppService->sendTaskAssigned(
+        '8866962774',
+        'Dhruv',
+        'Website Bug Fix',
+        'high',
+        '28/08/2026 05:00 PM'
+    );
+});
+Route::get('/test-whatsapp', function (
+    WhatsAppService $whatsAppService
+) {
+    return $whatsAppService->sendTaskAssigned(
+        '8866962774',
+        'Dhruv',
+        'Website Bug Fix',
+        'high',
+        '28/08/2026 05:00 PM'
+    );
+});
 Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
     Route::redirect('/', '/dashboard');
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
