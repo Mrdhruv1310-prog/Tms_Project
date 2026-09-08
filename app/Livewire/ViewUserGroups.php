@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Group;
+use Illuminate\Support\Facades\Auth;
 
 class ViewUserGroups extends Component
 {
@@ -53,13 +54,35 @@ class ViewUserGroups extends Component
     {
         $existingUserIds = array_column($this->groupUsers ?? [], 'id');
 
-        $this->availableUsers = User::select('id', 'first_name', 'last_name')
-            ->whereNotIn('id', $existingUserIds)
+        $currentUser = Auth::user();
+
+        $query = User::select('id', 'first_name', 'last_name', 'role')
+            ->whereNotIn('id', $existingUserIds);
+
+        // Logged-in user ko dropdown mein kabhi show nahi karna
+        if ($currentUser) {
+            $query->where('id', '!=', $currentUser->id);
+
+            // Admin sirf normal users ko group mein add kar sakta hai
+            if ($currentUser->role === 'admin') {
+                $query->where('role', 'user');
+            }
+
+            // Super-admin admin + user dono ko add kar sakta hai
+            elseif ($currentUser->role === 'super-admin') {
+                $query->whereIn('role', ['admin', 'user']);
+            }
+        }
+
+        $this->availableUsers = $query
             ->get()
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
-                    'name' => trim((string)($user->first_name ?? '') . ' ' . (string)($user->last_name ?? '')),
+                    'name' => trim(
+                        (string)($user->first_name ?? '') . ' ' .
+                            (string)($user->last_name ?? '')
+                    ),
                 ];
             })
             ->toArray();
@@ -70,18 +93,58 @@ class ViewUserGroups extends Component
     {
         $group = Group::find($this->labelId);
         $user = User::find($userId);
+        $currentUser = Auth::user();
 
-        if ($group && $user) {
-            $group->users()->syncWithoutDetaching([$userId]);
-            $this->loadUsers($this->labelId);
-
-            $this->notify(
-                "Added " . ucfirst($user->first_name ?? '') . " " .
-                    ucfirst($user->last_name ?? '') . " to the " .
-                    ucwords($this->labelName ?? 'Group') . " group.",
-                'success'
-            );
+        if (!$group || !$user || !$currentUser) {
+            return;
         }
+
+        // Logged-in user khud ko add nahi kar sakta
+        if ($user->id === $currentUser->id) {
+            $this->notify(
+                'You cannot add yourself to the group.',
+                'error'
+            );
+
+            return;
+        }
+
+        // Admin sirf normal users ko add kar sakta hai
+        if (
+            $currentUser->role === 'admin' &&
+            $user->role !== 'user'
+        ) {
+            $this->notify(
+                'Admin can only add users to the group.',
+                'error'
+            );
+
+            return;
+        }
+
+        // Super-admin admin aur user dono ko add kar sakta hai
+        if (
+            $currentUser->role === 'super-admin' &&
+            !in_array($user->role, ['admin', 'user'])
+        ) {
+            $this->notify(
+                'Super-admin can add only admin and user accounts.',
+                'error'
+            );
+
+            return;
+        }
+
+        $group->users()->syncWithoutDetaching([$userId]);
+
+        $this->loadUsers($this->labelId);
+
+        $this->notify(
+            "Added " . ucfirst($user->first_name ?? '') . " " .
+                ucfirst($user->last_name ?? '') . " to the " .
+                ucwords($this->labelName ?? 'Group') . " group.",
+            'success'
+        );
     }
 
     // Remove a user from the group

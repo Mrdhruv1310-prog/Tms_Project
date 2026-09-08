@@ -1,7 +1,17 @@
 <div>
     @php
+        // $authUser = Auth::user();
+        // $isAdmin = $authUser ? $authUser->role === 'admin' : false;
+        // $isUser = $authUser ? $authUser->role === 'user' : false;
+        // $userName = $authUser ? $authUser->name ?? ($authUser->first_name ?? 'Commander') : 'Commander';
+
+        // $visibleCategories = collect($categories ?? []);
+        // $visibleTeam = collect($team ?? []);
+        // $visibleGroups = collect($groups ?? []);
+        // $visibleTasks = collect($tasksAssignedByUser ?? []);
         $authUser = Auth::user();
-        $isAdmin = $authUser ? $authUser->role === 'admin' : false;
+        // Updated to support both admin and super-admin roles in UI checks
+        $isAdmin = $authUser ? in_array($authUser->role, ['admin', 'super-admin'], true) : false;
         $isUser = $authUser ? $authUser->role === 'user' : false;
         $userName = $authUser ? $authUser->name ?? ($authUser->first_name ?? 'Commander') : 'Commander';
 
@@ -30,13 +40,6 @@
                     <div class="space-y-2">
                         <div
                             class="flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-slate-500 overflow-x-auto py-1">
-                            <span class="hover:text-blue-600 transition cursor-pointer flex items-center gap-1 shrink-0">
-                                <svg class="h-6 w-6 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                            </span>
                             <span
                                 class="text-slate-700 font-bold bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs shrink-0">Dashboard</span>
                         </div>
@@ -58,7 +61,6 @@
                                 class="truncate">{{ $isAdmin ? 'Corporate Team Overview & Operational Analytics Hub' : 'Personal Assigned Task Analytics & Progress Tracker' }}</span>
                         </p>
                     </div>
-
                 </div>
             </div>
 

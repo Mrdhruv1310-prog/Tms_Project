@@ -62,7 +62,7 @@ class UserDetailsModal extends Component
             'last_name' => 'required|string|max:50',
             'email' => 'required|email' . ($this->user_id ? '|unique:users,email,' . $this->user_id : '|unique:users,email'),
             'phone_number' => 'required|string|max:15',
-            'role' => 'required|in:admin,user',
+            'role' => 'required|in:admin,user,super-admin',
             'status' => 'required|in:1,0',
             'password' => $this->user_id ? 'nullable|min:8|max:255' : 'required|min:8|max:255',
         ];

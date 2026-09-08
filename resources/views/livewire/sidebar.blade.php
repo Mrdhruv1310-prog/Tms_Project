@@ -750,70 +750,77 @@
         /* Mobile hamburger: TMS logo ke just right side, logo par overlap nahi hoga */
         /* Mobile hamburger placement fix */
         @media (max-width: 767px) {
-    /* 1. Pure Header Container ko responsive aur clean banane ke liye */
-    /* Agar aapke header class ka naam alag hai, toh toggle ke wrapper ko handles karein */
-    .header-container,
-    header,
-    .tms-navbar {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        padding: 10px 16px !important;
-        position: relative !important;
-    }
 
-    /* Logo wrapper layout fix */
-    .logo-class, [data-tms-logo] {
-        display: flex !important;
-        align-items: center !important;
-        gap: 12px !important; /* Logo aur button ke beech space */
-    }
+            /* 1. Pure Header Container ko responsive aur clean banane ke liye */
+            /* Agar aapke header class ka naam alag hai, toh toggle ke wrapper ko handles karein */
+            .header-container,
+            header,
+            .tms-navbar {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                padding: 10px 16px !important;
+                position: relative !important;
+            }
 
-    /* 2. Toggle Button ko proper positioning dena bina crash kiye */
-    [data-tms-mobile-toggle] {
-        position: static !important; /* Fixed/Absolute ko delete karega taaki overlapping na ho */
-        order: -1 !important;        /* Yeh line toggle button ko LOGO SE PEHLE (Left side) shift kar degi */
+            /* Logo wrapper layout fix */
+            .logo-class,
+            [data-tms-logo] {
+                display: flex !important;
+                align-items: center !important;
+                gap: 12px !important;
+                /* Logo aur button ke beech space */
+            }
 
-        /* Button Styles */
-        width: 42px !important;
-        height: 42px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        border-radius: 12px !important;
-        background: #eff6ff !important;
-        color: #2563eb !important;
-        border: 1px solid #dbeafe !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
-        transition: all 0.2s ease !important;
-        cursor: pointer !important;
-        margin-right: 12px !important; /* Logo se specific distance */
-    }
+            /* 2. Toggle Button ko proper positioning dena bina crash kiye */
+            [data-tms-mobile-toggle] {
+                position: static !important;
+                /* Fixed/Absolute ko delete karega taaki overlapping na ho */
+                order: -1 !important;
+                /* Yeh line toggle button ko LOGO SE PEHLE (Left side) shift kar degi */
 
-    /* Hover & Active States */
-    [data-tms-mobile-toggle]:hover,
-    [data-tms-mobile-toggle]:focus {
-        background: #2563eb !important;
-        color: #ffffff !important;
-        border-color: #2563eb !important;
-        outline: none !important;
-    }
-}
+                /* Button Styles */
+                width: 42px !important;
+                height: 42px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 12px !important;
+                background: #eff6ff !important;
+                color: #2563eb !important;
+                border: 1px solid #dbeafe !important;
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
+                transition: all 0.2s ease !important;
+                cursor: pointer !important;
+                margin-right: 12px !important;
+                /* Logo se specific distance */
+            }
 
-/* Chhote mobile screens (iPhone SE, etc.) ke liye minor adjustments */
-@media (max-width: 380px) {
-    [data-tms-mobile-toggle] {
-        width: 38px !important;
-        height: 38px !important;
-        margin-right: 8px !important;
-    }
+            /* Hover & Active States */
+            [data-tms-mobile-toggle]:hover,
+            [data-tms-mobile-toggle]:focus {
+                background: #2563eb !important;
+                color: #ffffff !important;
+                border-color: #2563eb !important;
+                outline: none !important;
+            }
+        }
 
-    /* Install app button text ko thoda chhota karne ke liye agar screen bohot chhoti ho */
-    .install-btn-class, button:contains("Install") {
-        padding: 6px 12px !important;
-        font-size: 13px !important;
-    }
-}
+        /* Chhote mobile screens (iPhone SE, etc.) ke liye minor adjustments */
+        @media (max-width: 380px) {
+            [data-tms-mobile-toggle] {
+                width: 38px !important;
+                height: 38px !important;
+                margin-right: 8px !important;
+            }
+
+            /* Install app button text ko thoda chhota karne ke liye agar screen bohot chhoti ho */
+            .install-btn-class,
+            button:contains("Install") {
+                padding: 6px 12px !important;
+                font-size: 13px !important;
+            }
+        }
 
         @media (max-width: 480px) {
             [data-tms-mobile-toggle] {
@@ -921,7 +928,7 @@
             </a>
 
             @auth
-                @if (auth()->user()->role === 'admin')
+                @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
                     <a href="{{ route('categories') }}" wire:navigate @click="mobileSidebarOpen = false"
                         :class="{ 'tms-mobile-active': $wire.activeMenu === 'categories' }">
                         <span data-tms-mobile-icon>
@@ -1038,7 +1045,7 @@
 
                 {{-- BUTTON FOR categories --}}
                 @auth
-                    @if (auth()->user()->role === 'admin')
+                    @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
                         <button
                             @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'categoriesTab'; contentVisible = true"
                             @mouseleave="hoverTimeout = setTimeout(() => { if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 250)"
@@ -1072,7 +1079,7 @@
                 @endauth
 
                 @auth
-                    @if (auth()->user()->role === 'admin')
+                    @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
                         {{-- button for users --}}
                         <button @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'usersTab'; contentVisible = true"
                             @mouseleave="hoverTimeout = setTimeout(() => { if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 250)"
@@ -1392,36 +1399,39 @@
             <!-- Categories Link -->
             <div x-show="hoveredTab === 'categoriesTab'"
                 class="tms-menu-block group flex-1 px-4 space-y-2 overflow-hidden hover:overflow-auto mt-24">
-                <a href="{{ route('categories') }}" wire:navigate
-                    @click.prevent="activeTab = 'categoriesTab'; contentVisible = false"
-                    class="flex items-center w-full space-x-2 text-white rounded-lg p-2 text-base font-medium"
-                    :class="{
-                        'bg-blue-600': $wire
-                            .activeMenu === 'categories',
-                        'bg-gray-400 text-black group-hover:bg-blue-600 group-hover:text-white': $wire
-                            .activeMenu !== 'categories'
-                    }">
-                    <span aria-hidden="true" class="p-2 rounded-lg shadow-lg"
-                        :class="{
-                            'bg-white text-blue-600': $wire
-                                .activeMenu === 'categories',
-                            'bg-gray-500 group-hover:bg-white group-hover:text-blue-600': $wire
-                                .activeMenu !== 'categories'
-                        }">
-                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                            viewBox="0 0 1025 1024" stroke="none">
-                            <path
-                                d="M513.009189 73.143171a73.142805 73.142805 0 0 1 30.171407 6.582852l404.479711 192.548434A18.285701 18.285701 0 0 1 951.866018 274.285884a18.285701 18.285701 0 0 1-3.474283 2.011427L543.180596 468.845745a73.142805 73.142805 0 0 1-60.342814 0L78.35807 276.297311A18.285701 18.285701 0 0 1 74.152359 274.285884a18.285701 18.285701 0 0 1 3.474283-2.011427L482.837782 79.726023A73.142805 73.142805 0 0 1 513.009189 73.143171m0-73.142805a143.725612 143.725612 0 0 0-61.622814 13.714276L46.906664 206.080219a73.142805 73.142805 0 0 0 0 136.411331l404.479711 192.365577a145.371325 145.371325 0 0 0 123.245627 0l404.479711-192.365577a73.142805 73.142805 0 0 0 0-136.411331L574.632002 13.714642A143.725612 143.725612 0 0 0 513.009189 0.000366z" />
-                            <path
-                                d="M513.009189 773.485528a176.639874 176.639874 0 0 1-79.177087-18.285702L21.306683 550.217116a36.571402 36.571402 0 1 1 32.548548-65.462811l412.525419 204.799854a105.691353 105.691353 0 0 0 93.257077 0l412.525419-204.799854a36.571402 36.571402 0 0 1 32.548548 65.462811l-412.525419 204.799853A176.639874 176.639874 0 0 1 513.009189 773.485528z" />
-                            <path
-                                d="M513.009189 1023.999634a179.017015 179.017015 0 0 1-79.177087-18.285701L21.306683 800.731222a36.571402 36.571402 0 1 1 32.548548-65.46281l412.525419 204.799854a105.691353 105.691353 0 0 0 93.257077 0l412.525419-204.799854a36.571402 36.571402 0 0 1 32.548548 65.46281L592.186275 1005.713933A179.017015 179.017015 0 0 1 513.009189 1023.999634z" />
-                        </svg>
-                    </span>
-                    <span>Categories</span>
-                </a>
+                @auth
+                    @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
+                        <a href="{{ route('categories') }}" wire:navigate
+                            @click.prevent="activeTab = 'categoriesTab'; contentVisible = false"
+                            class="flex items-center w-full space-x-2 text-white rounded-lg p-2 text-base font-medium"
+                            :class="{
+                                'bg-blue-600': $wire
+                                    .activeMenu === 'categories',
+                                'bg-gray-400 text-black group-hover:bg-blue-600 group-hover:text-white': $wire
+                                    .activeMenu !== 'categories'
+                            }">
+                            <span aria-hidden="true" class="p-2 rounded-lg shadow-lg"
+                                :class="{
+                                    'bg-white text-blue-600': $wire
+                                        .activeMenu === 'categories',
+                                    'bg-gray-500 group-hover:bg-white group-hover:text-blue-600': $wire
+                                        .activeMenu !== 'categories'
+                                }">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 1025 1024" stroke="none">
+                                    <path
+                                        d="M513.009189 73.143171a73.142805 73.142805 0 0 1 30.171407 6.582852l404.479711 192.548434A18.285701 18.285701 0 0 1 951.866018 274.285884a18.285701 18.285701 0 0 1-3.474283 2.011427L543.180596 468.845745a73.142805 73.142805 0 0 1-60.342814 0L78.35807 276.297311A18.285701 18.285701 0 0 1 74.152359 274.285884a18.285701 18.285701 0 0 1 3.474283-2.011427L482.837782 79.726023A73.142805 73.142805 0 0 1 513.009189 73.143171m0-73.142805a143.725612 143.725612 0 0 0-61.622814 13.714276L46.906664 206.080219a73.142805 73.142805 0 0 0 0 136.411331l404.479711 192.365577a145.371325 145.371325 0 0 0 123.245627 0l404.479711-192.365577a73.142805 73.142805 0 0 0 0-136.411331L574.632002 13.714642A143.725612 143.725612 0 0 0 513.009189 0.000366z" />
+                                    <path
+                                        d="M513.009189 773.485528a176.639874 176.639874 0 0 1-79.177087-18.285702L21.306683 550.217116a36.571402 36.571402 0 1 1 32.548548-65.462811l412.525419 204.799854a105.691353 105.691353 0 0 0 93.257077 0l412.525419-204.799854a36.571402 36.571402 0 0 1 32.548548 65.462811l-412.525419 204.799853A176.639874 176.639874 0 0 1 513.009189 773.485528z" />
+                                    <path
+                                        d="M513.009189 1023.999634a179.017015 179.017015 0 0 1-79.177087-18.285701L21.306683 800.731222a36.571402 36.571402 0 1 1 32.548548-65.46281l412.525419 204.799854a105.691353 105.691353 0 0 0 93.257077 0l412.525419-204.799854a36.571402 36.571402 0 0 1 32.548548 65.46281L592.186275 1005.713933A179.017015 179.017015 0 0 1 513.009189 1023.999634z" />
+                                </svg>
+                            </span>
+                            <span>Categories</span>
+                        </a>
+                    @endif
+                @endauth
             </div>
-
             <!-- Users Link -->
 
             <div x-show="hoveredTab === 'usersTab'"
@@ -1976,32 +1986,32 @@
                                                 <g>
                                                     <path
                                                         d="M330.691,85.346h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                            c-29.419,0-53.333,23.936-53.333,53.333v138.667h-53.333c-5.888,0-10.667,4.779-10.667,10.667s4.779,10.667,10.667,10.667h53.333
-                                                                                                            v138.667c0,29.397,23.915,53.333,53.333,53.333h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                            c-17.643,0-32-14.357-32-32V277.346h74.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-74.667V117.346
-                                                                                                            C298.691,99.703,313.049,85.346,330.691,85.346z"
+                                                                                                                c-29.419,0-53.333,23.936-53.333,53.333v138.667h-53.333c-5.888,0-10.667,4.779-10.667,10.667s4.779,10.667,10.667,10.667h53.333
+                                                                                                                v138.667c0,29.397,23.915,53.333,53.333,53.333h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
+                                                                                                                c-17.643,0-32-14.357-32-32V277.346h74.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-74.667V117.346
+                                                                                                                C298.691,99.703,313.049,85.346,330.691,85.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M177.646,179.831c-3.349-29.525-26.752-51.819-54.4-51.819H68.782c-27.648,0-51.051,22.272-54.4,51.819L0.238,303.735
-                                                                                                            c-1.173,10.368,2.027,20.651,8.768,28.224c5.803,6.528,13.547,10.304,21.909,10.773l11.776,159.403
-                                                                                                            c0.427,5.568,5.056,9.877,10.645,9.877h85.333c5.589,0,10.219-4.309,10.645-9.877l11.776-159.403
-                                                                                                            c8.384-0.469,16.107-4.267,21.909-10.773c6.741-7.552,9.941-17.856,8.768-28.224L177.646,179.831z"
+                                                                                                                c-1.173,10.368,2.027,20.651,8.768,28.224c5.803,6.528,13.547,10.304,21.909,10.773l11.776,159.403
+                                                                                                                c0.427,5.568,5.056,9.877,10.645,9.877h85.333c5.589,0,10.219-4.309,10.645-9.877l11.776-159.403
+                                                                                                                c8.384-0.469,16.107-4.267,21.909-10.773c6.741-7.552,9.941-17.856,8.768-28.224L177.646,179.831z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M96.025,106.679c29.461,0,53.333-23.872,53.333-53.333c0-29.461-23.872-53.333-53.333-53.333
-                                                                                                            c-29.461,0-53.333,23.872-53.333,53.333C42.691,82.807,66.563,106.679,96.025,106.679z"
+                                                                                                                c-29.461,0-53.333,23.872-53.333,53.333C42.691,82.807,66.563,106.679,96.025,106.679z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,405.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                            v-42.667C512.025,419.703,497.667,405.346,480.025,405.346z"
+                                                                                                                v-42.667C512.025,419.703,497.667,405.346,480.025,405.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,213.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                            v-42.667C512.025,227.703,497.667,213.346,480.025,213.346z"
+                                                                                                                v-42.667C512.025,227.703,497.667,213.346,480.025,213.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,21.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                            V53.346C512.025,35.703,497.667,21.346,480.025,21.346z"
+                                                                                                                V53.346C512.025,35.703,497.667,21.346,480.025,21.346z"
                                                         fill="currentColor" />
                                                 </g>
                                             </g>

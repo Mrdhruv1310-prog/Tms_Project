@@ -27,11 +27,10 @@ class AppServiceProvider extends ServiceProvider
         Component::macro('notify', function ($message, $type = 'success') {
             $this->dispatch('notify', ['message' => $message, 'type' => $type]);
         });
-        
+
 
         Gate::define('view-admin-options', function (User $user) {
-            return $user->role === 'admin';
+            return in_array($user->role, ['admin', 'super-admin']);
         });
-
     }
 }

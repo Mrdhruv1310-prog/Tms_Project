@@ -23,7 +23,8 @@ use App\Models\Group;
 use App\Models\GroupUser;
 use Illuminate\Support\Facades\Mail;
 use App\Jobs\SendTaskUpdateJob;
-use App\Services\WhatsAppService;
+use App\Jobs\SendTaskAssignedWhatsAppJob;
+use App\Jobs\SendTaskDueWhatsAppJob;
 
 class TaskDetailsModal extends Component
 {
@@ -362,31 +363,17 @@ class TaskDetailsModal extends Component
     // Manage weekly task recurrence days
     private function handleTaskRecurrence(Task $task)
     {
-        if ($this->recurrence === 'daily' && !empty($this->selectedDays)) {
-            DB::table('task_recurrence_days')
-                ->where('task_id', $task->id)
-                ->delete();
+        DB::table('task_recurrence_days')
+            ->where('task_id', $task->id)
+            ->delete();
+
+        if (in_array($this->recurrence, ['daily', 'weekly', 'monthly']) && !empty($this->selectedDays)) {
             foreach ($this->selectedDays as $day) {
-                DB::table('task_recurrence_days')->insert(['task_id' => $task->id, 'day' => $day]);
+                DB::table('task_recurrence_days')->insert([
+                    'task_id' => $task->id,
+                    'day' => $day,
+                ]);
             }
-        } elseif ($this->recurrence === 'weekly' && !empty($this->selectedDays)) {
-            DB::table('task_recurrence_days')
-                ->where('task_id', $task->id)
-                ->delete();
-            foreach ($this->selectedDays as $day) {
-                DB::table('task_recurrence_days')->insert(['task_id' => $task->id, 'day' => $day]);
-            }
-        } elseif ($this->recurrence === 'monthly' && !empty($this->selectedDays)) {
-            DB::table('task_recurrence_days')
-                ->where('task_id', $task->id)
-                ->delete();
-            foreach ($this->selectedDays as $day) {
-                DB::table('task_recurrence_days')->insert(['task_id' => $task->id, 'day' => $day]);
-            }
-        } else {
-            DB::table('task_recurrence_days')
-                ->where('task_id', $task->id)
-                ->delete();
         }
     }
 
@@ -455,37 +442,117 @@ class TaskDetailsModal extends Component
     // Assign tasks and send emails to assigned users
     private function handleTaskAssignments(Task $task)
     {
-        $selectedUsers = array_values(array_unique($this->selectedUsers));
+        $selectedUsers = array_values(
+            array_unique(
+                $this->selectedUsers
+            )
+        );
 
-        DB::table('task_assignments')
-            ->where('task_id', $task->id)
+        DB::table(
+            'task_assignments'
+        )
+            ->where(
+                'task_id',
+                $task->id
+            )
             ->delete();
 
-        foreach ($selectedUsers as $userId) {
-            DB::table('task_assignments')->updateOrInsert(
+        foreach (
+            $selectedUsers as $userId
+        ) {
+
+            DB::table(
+                'task_assignments'
+            )->updateOrInsert(
                 [
-                    'task_id' => $task->id,
-                    'user_id' => $userId,
+                    'task_id' =>
+                    $task->id,
+
+                    'user_id' =>
+                    $userId,
                 ],
                 [
-                    'assigned_at' => now(),
+                    'assigned_at' =>
+                    now(),
                 ]
             );
         }
 
-        DB::afterCommit(function () use ($task, $selectedUsers) {
-            $users = User::whereIn('id', $selectedUsers)->get();
+        DB::afterCommit(
+            function () use (
+                $task,
+                $selectedUsers
+            ) {
 
-            foreach ($users as $user) {
-                $cacheKey = 'task_assigned_mail_sent_' . $task->id . '_' . $user->id;
+                $users =
+                    User::whereIn(
+                        'id',
+                        $selectedUsers
+                    )->get();
 
-                if (! Cache::add($cacheKey, true, now()->addDays(7))) {
-                    continue;
+                foreach (
+                    $users as $user
+                ) {
+
+
+                    if (
+                        ! empty($user->email)
+                    ) {
+
+                        $mailCacheKey =
+                            'task_assigned_mail_sent_'
+                            . $task->id
+                            . '_'
+                            . $user->id;
+
+                        if (
+                            Cache::add(
+                                $mailCacheKey,
+                                true,
+                                now()->addDays(7)
+                            )
+                        ) {
+
+                            Mail::to(
+                                $user->email
+                            )->queue(
+                                new TaskAssignedMail(
+                                    $task,
+                                    $user
+                                )
+                            );
+                        }
+                    }
+                    $phoneNumber =
+                        $user->phone_number
+                        ?? $user->mobile_number
+                        ?? null;
+
+                    if (! empty($phoneNumber)) {
+
+                        $whatsappCacheKey =
+                            'task_assigned_whatsapp_dispatch_'
+                            . $task->id
+                            . '_'
+                            . $user->id;
+
+                        if (
+                            Cache::add(
+                                $whatsappCacheKey,
+                                true,
+                                now()->addDays(7)
+                            )
+                        ) {
+
+                            SendTaskAssignedWhatsAppJob::dispatch(
+                                $task->id,
+                                $user->id
+                            );
+                        }
+                    }
                 }
-
-                Mail::to($user->email)->queue(new TaskAssignedMail($task, $user));
             }
-        });
+        );
     }
 
     private function updatehandleTaskAssignments(Task $task)
@@ -951,23 +1018,50 @@ class TaskDetailsModal extends Component
         int $userId,
         Carbon $sendAt
     ): void {
-        if ($sendAt->isPast() || $task->status === 'completed') {
+
+        if (
+            $sendAt->isPast()
+            ||
+            $task->status === 'completed'
+        ) {
             return;
         }
 
-        $reminder = Reminder::create([
-            'task_id' => $task->id,
-            'user_id' => $userId,
-            'reminder_time' => $sendAt,
-            'reminder_unit' => 'minutes',
-            'reminder_value' => 0,
-        ]);
+        $reminder =
+            Reminder::create([
+                'task_id' =>
+                $task->id,
+
+                'user_id' =>
+                $userId,
+
+                'reminder_time' =>
+                $sendAt,
+
+                'reminder_unit' =>
+                'minutes',
+
+                'reminder_value' =>
+                0,
+            ]);
 
         SendReminderJob::dispatch(
             $reminder->id,
             $this->dueDateChannel,
             "Task '{$task->title}' is due now."
-        )->delay($sendAt);
+        )
+            ->delay($sendAt)
+            ->afterCommit();
+            
+        Log::info('Dispatching WhatsApp job for task: ' . $task->id);
+        // SendTaskDueWhatsAppJob called with all 3 required arguments
+        SendTaskDueWhatsAppJob::dispatch(
+            $task->id,
+            $userId,
+            $sendAt->toDateTimeString()
+        )
+            ->delay($sendAt)
+            ->afterCommit();
     }
 
     private function createAndDispatchReminder(
