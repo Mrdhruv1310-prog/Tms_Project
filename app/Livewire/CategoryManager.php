@@ -3,121 +3,140 @@
 namespace App\Livewire;
 
 use App\Models\Category;
+use Illuminate\Database\QueryException;
 use Livewire\Component;
 
 class CategoryManager extends Component
 {
-    public $newCategory;
+    public $newCategory = '';
     public $categories;
-    public $editCategory;
+    public $editCategoryId = null;
+    public $editCategory = '';
+
     public function mount()
     {
-        // Restrict access to admin and super-admin only
+        $this->authorizeAdmin();
+        $this->loadCategories();
+    }
+
+    /**
+     * Centralized authorization check to avoid code repetition.
+     */
+    private function authorizeAdmin()
+    {
         if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
             abort(403, 'Unauthorized action.');
         }
-        // Load all categories for both admin and super-admin
+    }
+
+    /**
+     * Load all categories.
+     */
+    public function loadCategories()
+    {
         $this->categories = Category::all();
+    }
+
+    /**
+     * Helper to dispatch toast notifications safely.
+     */
+    private function notifyUser($message, $type = 'success')
+    {
+        $this->dispatch('notify', ['message' => $message, 'type' => $type]);
     }
 
     // Add category function
     public function addCategory()
     {
-        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
-            $this->notify('Unauthorized action.', 'error');
-            return;
-        }
+        $this->authorizeAdmin();
 
-        // Trim whitespace from the input
+        // Trim whitespace
         $this->newCategory = trim($this->newCategory);
 
-        // Validate input
+        // Validate input with built-in unique rule for concurrency safety
         $this->validate([
-            'newCategory' => [
-                'required',
-                'string',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    if (Category::where('name', $value)->exists()) {
-                        $this->notify('The category already exists.', 'error');
-                        $fail('');
-                    }
-                },
-            ],
+            'newCategory' => 'required|string|max:255|unique:categories,name',
+        ], [
+            'newCategory.unique' => 'The category already exists.',
         ]);
 
-        // Create new category
-        Category::create(['name' => $this->newCategory]);
+        try {
+            Category::create(['name' => $this->newCategory]);
 
-        // Clear input
-        $this->newCategory = '';
+            // Clear input and refresh list
+            $this->newCategory = '';
+            $this->loadCategories();
 
-        // Refresh category list to show all data instantly
-        $this->categories = Category::all();
+            $this->notifyUser('Category added successfully.', 'success');
+        } catch (QueryException $e) {
+            $this->notifyUser('A database error occurred or the category already exists.', 'error');
+        }
+    }
 
-        $this->notify('Category added successfully.', 'success');
+    /**
+     * Set up category for editing.
+     */
+    public function editCategorySetup($id)
+    {
+        $this->authorizeAdmin();
+        $category = Category::findOrFail($id);
+        $this->editCategoryId = $category->id;
+        $this->editCategory = $category->name;
     }
 
     // Update category function
-    public function updateCategory($id, $name)
+    public function updateCategory()
     {
-        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
-            $this->notify('Unauthorized action.', 'error');
+        $this->authorizeAdmin();
+
+        if (!$this->editCategoryId) {
+            $this->notifyUser('No category selected for update.', 'error');
             return;
         }
 
-        // Trim whitespace from the input
-        $name = trim($name);
+        // Trim whitespace
+        $this->editCategory = trim($this->editCategory);
 
-        // Validate input
+        // Validate input ignoring current ID
         $this->validate([
-            'editCategory' => [
-                'required',
-                'string',
-                'max:255',
-                function ($attribute, $value, $fail) use ($id) {
-                    if (Category::where('name', $value)->where('id', '!=', $id)->exists()) {
-                        $this->notify('The category already exists.', 'error');
-                        $fail('');
-                    }
-                },
-            ],
+            'editCategory' => 'required|string|max:255|unique:categories,name,' . $this->editCategoryId,
+        ], [
+            'editCategory.unique' => 'The category already exists.',
         ]);
 
-        $category = Category::find($id);
-        $category->name = $name;
-        $category->save();
+        try {
+            $category = Category::findOrFail($this->editCategoryId);
+            $category->name = $this->editCategory;
+            $category->save();
 
-        // Refresh the list
-        $this->categories = Category::all();
-        $this->notify('Category updated successfully.', 'success');
+            // Reset edit state and refresh
+            $this->editCategoryId = null;
+            $this->editCategory = '';
+            $this->loadCategories();
+
+            $this->notifyUser('Category updated successfully.', 'success');
+        } catch (QueryException $e) {
+            $this->notifyUser('Failed to update category. It may already exist.', 'error');
+        }
     }
 
     // Delete Category with check for assigned tasks
     public function deleteCategory($categoryId)
     {
-        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
-            $this->notify('Unauthorized action.', 'error');
-            return;
-        }
+        $this->authorizeAdmin();
 
-        // Find the category
         $category = Category::findOrFail($categoryId);
 
         // Check if the category has any tasks assigned
         if ($category->tasks()->exists()) {
-            $this->notify('Cannot delete category. There are tasks assigned to it.', 'error');
+            $this->notifyUser('Cannot delete category. There are tasks assigned to it.', 'error');
             return;
         }
 
-        // If no tasks are assigned, proceed with deletion
         $category->delete();
+        $this->loadCategories();
 
-        // Refresh the category list
-        $this->categories = Category::all();
-
-        // Notify success
-        $this->notify('Category deleted successfully.', 'success');
+        $this->notifyUser('Category deleted successfully.', 'success');
     }
 
     // Render category page

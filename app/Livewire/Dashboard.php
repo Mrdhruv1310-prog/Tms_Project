@@ -12,17 +12,22 @@ use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Component
 {
-    public $labels = [];
-    public $categories = [];
-    public $team = [];
-    public $groups = [];
-    public $tasksAssignedByUser = [];
+    public array $labels = [];
+    public array $categories = [];
+    public array $team = [];
+    public array $groups = [];
+    public $tasksAssignedByUser;
 
     public ?int $openStatusTaskId = null;
     public array $statusForm = [];
 
     public function mount()
     {
+        $authUser = Auth::user();
+        if (! $authUser) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $this->refreshDashboardData();
     }
 
@@ -30,38 +35,32 @@ class Dashboard extends Component
     {
         $authUser = Auth::user();
         $authUserId = (int) $authUser->id;
-
         $role = $authUser->role ?? 'user';
 
-        // Check flags based on new requirement
         $isSuperAdmin = ($role === 'super-admin');
-        // Admin ke liye ab restricted data hoga (jo usne create kiya ho ya assign hua ho)
         $isAdmin = ($role === 'admin');
         $isUser = ($role === 'user');
 
         $this->setLabels($isSuperAdmin, $authUserId);
         $this->setCategories($isSuperAdmin, $isAdmin, $isUser, $authUserId);
-        $this->setTeam($isSuperAdmin, $isAdmin, $isUser, $authUserId);
-        $this->setGroups($isSuperAdmin, $isAdmin, $isUser, $authUserId);
+        $this->setTeam($isSuperAdmin, $authUserId);
+        $this->setGroups($isSuperAdmin, $authUserId);
         $this->setTasksAssignedByUser($isSuperAdmin, $authUserId);
     }
 
     /**
      * Query to fetch tasks based on role:
      * - super-admin: gets all tasks.
-     * - admin / user: gets tasks assigned to them OR created by them (if admin).
+     * - admin / user: gets tasks assigned to them OR created by them.
      */
     private function assignedTaskQuery(bool $isSuperAdmin, int $authUserId)
     {
         return Task::query()
             ->when(! $isSuperAdmin, function ($query) use ($authUserId) {
                 $query->where(function ($subQuery) use ($authUserId) {
-                    // Task assigned to user
                     $subQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
                         $assignmentQuery->where('user_id', $authUserId);
-                    })
-                    // OR Task created/added by this admin (assuming 'created_by' or 'user_id' stores creator ID, adjust if column name differs e.g., 'created_by')
-                    ->orWhere('user_id', $authUserId);
+                    })->orWhere('user_id', $authUserId);
                 });
             });
     }
@@ -102,7 +101,6 @@ class Dashboard extends Component
 
     private function setCategories(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
     {
-        // Allow Super Admin, Admin, and User
         $this->categories = Category::withCount([
             'tasks as completed_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {
                 $query->where('status', 'completed')
@@ -143,18 +141,11 @@ class Dashboard extends Component
             ->toArray();
     }
 
-    private function setTeam(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
+    private function setTeam(bool $isSuperAdmin, int $authUserId): void
     {
         $this->team = User::query()
-            ->when(! $isSuperAdmin, function ($query) use ($authUserId, $isAdmin) {
-                if ($isAdmin) {
-                    // Admin can see team members who have tasks related to them, or just themselves + assigned users
-                    // Keeping it safe to show users who share tasks or just the admin themselves depending on scope.
-                    // Here we restrict to self or tasks managed, but let's filter based on visibility rule:
-                    $query->where('id', $authUserId);
-                } else {
-                    $query->where('id', $authUserId);
-                }
+            ->when(! $isSuperAdmin, function ($query) use ($authUserId) {
+                $query->where('id', $authUserId);
             })
             ->withCount([
                 'taskAssignments as completed_tasks_count' => function ($query) {
@@ -184,7 +175,7 @@ class Dashboard extends Component
             ->toArray();
     }
 
-    private function setGroups(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
+    private function setGroups(bool $isSuperAdmin, int $authUserId): void
     {
         $this->groups = Group::withCount([
             'tasks as pending_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {

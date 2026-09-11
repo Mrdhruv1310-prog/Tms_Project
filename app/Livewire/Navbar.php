@@ -4,34 +4,34 @@ namespace App\Livewire;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class Navbar extends Component
 {
-    public function generateRandomColor()
+    /**
+     * Generate or retrieve a persistent random avatar color for the user session.
+     */
+    public function generateRandomColor(): string
     {
-        // Generate a color if not already set in the session
-        if (!session()->has('user_color')) {
+        if (! session()->has('user_color')) {
             $color = sprintf('#%06X', mt_rand(0, 0xFFFFFF));
             session()->put('user_color', $color);
         }
 
         return session('user_color');
     }
-    // public function logout(Request $request){
-    //     $user  = Auth::user();
-    //     Auth::logout();
-    //     $request->session()->invalidate();
-    //     $request->session()->regenerateToken();
-    //     return $this->redirect('/login');
-    // }
+
+    /**
+     * Handle user logout securely, clear session data, and redirect to login.
+     */
     public function logout(Request $request)
     {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return $this->redirect('/login');
+
+        return $this->redirect('/login', navigate: true);
     }
 
     public function render()

@@ -444,13 +444,13 @@ class TaskDetailsModal extends Component
     {
         $selectedUsers = array_values(
             array_unique(
-                $this->selectedUsers
+                array_filter(
+                    $this->selectedUsers
+                )
             )
         );
 
-        DB::table(
-            'task_assignments'
-        )
+        DB::table('task_assignments')
             ->where(
                 'task_id',
                 $task->id
@@ -494,9 +494,16 @@ class TaskDetailsModal extends Component
                     $users as $user
                 ) {
 
+                    /*
+                |--------------------------------------------------------------------------
+                | TASK ASSIGNED EMAIL
+                |--------------------------------------------------------------------------
+                */
 
                     if (
-                        ! empty($user->email)
+                        filled(
+                            $user->email
+                        )
                     ) {
 
                         $mailCacheKey =
@@ -523,12 +530,23 @@ class TaskDetailsModal extends Component
                             );
                         }
                     }
+
+                    /*
+                |--------------------------------------------------------------------------
+                | TASK ASSIGNED WHATSAPP
+                |--------------------------------------------------------------------------
+                */
+
                     $phoneNumber =
                         $user->phone_number
                         ?? $user->mobile_number
                         ?? null;
 
-                    if (! empty($phoneNumber)) {
+                    if (
+                        filled(
+                            $phoneNumber
+                        )
+                    ) {
 
                         $whatsappCacheKey =
                             'task_assigned_whatsapp_dispatch_'
@@ -549,6 +567,18 @@ class TaskDetailsModal extends Component
                                 $user->id
                             );
                         }
+                    } else {
+
+                        Log::warning(
+                            'Task WhatsApp not dispatched: phone number missing.',
+                            [
+                                'task_id' =>
+                                $task->id,
+
+                                'user_id' =>
+                                $user->id,
+                            ]
+                        );
                     }
                 }
             }
@@ -1052,7 +1082,7 @@ class TaskDetailsModal extends Component
         )
             ->delay($sendAt)
             ->afterCommit();
-            
+
         Log::info('Dispatching WhatsApp job for task: ' . $task->id);
         // SendTaskDueWhatsAppJob called with all 3 required arguments
         SendTaskDueWhatsAppJob::dispatch(

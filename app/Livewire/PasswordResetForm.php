@@ -10,24 +10,24 @@ use Livewire\Component;
 
 class PasswordResetForm extends Component
 {
-    public $email;
-    public $token;
-    public $password;
-    public $passwordconfirmation;
-    public function mount($token)
+    public string $email = '';
+    public string $token = '';
+    public string $password = '';
+    public string $passwordconfirmation = '';
+
+    public function mount(string $token): void
     {
         $this->token = $token;
-        $this->email = request()->query('email'); // Get the email from the query string
+        $this->email = (string) request()->query('email', '');
 
-        // Validate the token
+        // Validate the token and expiration
         $passwordReset = PasswordResetToken::where('email', $this->email)
             ->where('token', $this->token)
             ->first();
 
-        if (!$passwordReset || $this->tokenExpired($passwordReset)) {
-            // Redirect to the forgot password form if token is invalid or expired
+        if (! $passwordReset || $this->tokenExpired($passwordReset)) {
             session()->flash('errormessage', 'The reset link is invalid or has expired. Please request a new one.');
-            return redirect()->route('forget.password');
+            $this->redirect(route('forget.password'), navigate: true);
         }
     }
 
@@ -51,38 +51,37 @@ class PasswordResetForm extends Component
             'passwordconfirmation.same' => 'The password confirmation does not match the password.',
         ]);
 
-
-        // Verify the token and email
+        // Verify the token and email again
         $passwordReset = PasswordResetToken::where('email', $this->email)
             ->where('token', $this->token)
             ->first();
 
-        if (!$passwordReset) {
-            $this->notify('Invalid or expired token.', 'error');
+        if (! $passwordReset) {
+            $this->dispatch('notify', ['message' => 'Invalid or expired token.', 'type' => 'error']);
             return;
         }
 
         // Update the user's password
         $user = User::where('email', $this->email)->first();
-        $user->update([
-            'password' => Hash::make($this->password),
-        ]);
+        if ($user) {
+            $user->update([
+                'password' => Hash::make($this->password),
+            ]);
+        }
 
-        // Delete the password reset token
+        // Delete the used password reset token
         PasswordResetToken::where('email', $this->email)->delete();
 
         // Redirect to login page with success message
         session()->flash('successmessage', 'Your password has been reset successfully.');
-        return redirect()->route('login');
+        return $this->redirect(route('login'), navigate: true);
     }
 
-    protected function tokenExpired($passwordReset)
+    protected function tokenExpired(PasswordResetToken $passwordReset): bool
     {
         $expirationTime = 60; // Token is valid for 60 minutes
 
-        // Manually create a Carbon instance from the created_at string
         $createdAt = Carbon::parse($passwordReset->created_at);
-        // Check if the token is older than the expiration time
         return $createdAt->addMinutes($expirationTime)->isPast();
     }
 

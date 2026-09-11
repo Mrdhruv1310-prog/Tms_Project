@@ -8,16 +8,20 @@ use Illuminate\Support\Facades\Auth;
 
 class TeamPerformance extends Component
 {
-    public $team = [];
+    public array $team = [];
 
-    public function mount()
+    public function mount(): void
     {
-        // Get the authenticated user
-        $loggedInUser = Auth::user();
+        $authUserId = Auth::id();
+        $authUser = Auth::user();
 
-        // Fetch team performance data
-        if ($loggedInUser->role === 'admin') {
-            // Fetch team performance data with all statuses
+        if (! $authUser) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $role = $authUser->role ?? 'user';
+
+        if ($role === 'admin') {
             $this->team = User::withCount([
                 'taskAssignments as completed_tasks_count' => function ($query) {
                     $query->whereHas('task', function ($taskQuery) {
@@ -40,8 +44,13 @@ class TeamPerformance extends Component
             ])
                 ->get()
                 ->map(function ($user) {
+                    $fullName = trim($user->first_name . ' ' . $user->last_name);
+                    if (empty($fullName)) {
+                        $fullName = $user->name ?? 'Team Member';
+                    }
+
                     return [
-                        'name' => $user->first_name . ' ' . $user->last_name,
+                        'name' => $fullName,
                         'completed' => $user->completed_tasks_count,
                         'in_progress' => $user->in_progress_tasks_count,
                         'pending' => $user->pending_tasks_count,
@@ -50,60 +59,55 @@ class TeamPerformance extends Component
                     ];
                 })
                 ->toArray();
-        }
-        else {
-            $loggedInUserId = Auth::user()->id;
-
-            $this->team = User::whereHas('taskAssignments', function ($query) use ($loggedInUserId) {
-                // Get task assignments where the task is created by the authenticated user
-                $query->whereHas('task', function ($taskQuery) use ($loggedInUserId) {
-                    $taskQuery->where('user_id', $loggedInUserId);
+        } else {
+            $this->team = User::whereHas('taskAssignments', function ($query) use ($authUserId) {
+                $query->whereHas('task', function ($taskQuery) use ($authUserId) {
+                    $taskQuery->where('user_id', $authUserId);
                 });
             })
-            ->where('id', '!=', $loggedInUserId) // Exclude the authenticated user
-            ->withCount([
-                'taskAssignments as completed_tasks_count' => function ($query) use ($loggedInUserId) {
-                    // Count only completed tasks assigned by the authenticated user
-                    $query->whereHas('task', function ($taskQuery) use ($loggedInUserId) {
-                        $taskQuery->where('status', 'completed')
-                                  ->where('user_id', $loggedInUserId);
-                    });
-                },
-                'taskAssignments as in_progress_tasks_count' => function ($query) use ($loggedInUserId) {
-                    // Count only in-progress tasks assigned by the authenticated user
-                    $query->whereHas('task', function ($taskQuery) use ($loggedInUserId) {
-                        $taskQuery->where('status', 'in_progress')
-                                  ->where('user_id', $loggedInUserId);
-                    });
-                },
-                'taskAssignments as pending_tasks_count' => function ($query) use ($loggedInUserId) {
-                    // Count only pending tasks assigned by the authenticated user
-                    $query->whereHas('task', function ($taskQuery) use ($loggedInUserId) {
-                        $taskQuery->where('status', 'pending')
-                                  ->where('user_id', $loggedInUserId);
-                    });
-                },
-                'taskAssignments as total_tasks_count' => function ($query) use ($loggedInUserId) {
-                    // Count only tasks assigned by the authenticated user
-                    $query->whereHas('task', function ($taskQuery) use ($loggedInUserId) {
-                        $taskQuery->where('user_id', $loggedInUserId);
-                    });
-                },
-            ])
-            ->get()
-            ->map(function ($user) {
-                // Calculate the percentage of completed tasks
-                return [
-                    'name' => $user->first_name . " " . $user->last_name,
-                    'completed' => $user->completed_tasks_count,
-                    'in_progress' => $user->in_progress_tasks_count,
-                    'pending' => $user->pending_tasks_count,
-                    'total' => $user->total_tasks_count,
-                    'percentage' => ($user->total_tasks_count > 0) ? round(($user->completed_tasks_count / $user->total_tasks_count) * 100) : 0
-                ];
-            })
-            ->toArray();
+                ->where('id', '!=', $authUserId)
+                ->withCount([
+                    'taskAssignments as completed_tasks_count' => function ($query) use ($authUserId) {
+                        $query->whereHas('task', function ($taskQuery) use ($authUserId) {
+                            $taskQuery->where('status', 'completed')
+                                ->where('user_id', $authUserId);
+                        });
+                    },
+                    'taskAssignments as in_progress_tasks_count' => function ($query) use ($authUserId) {
+                        $query->whereHas('task', function ($taskQuery) use ($authUserId) {
+                            $taskQuery->where('status', 'in_progress')
+                                ->where('user_id', $authUserId);
+                        });
+                    },
+                    'taskAssignments as pending_tasks_count' => function ($query) use ($authUserId) {
+                        $query->whereHas('task', function ($taskQuery) use ($authUserId) {
+                            $taskQuery->where('status', 'pending')
+                                ->where('user_id', $authUserId);
+                        });
+                    },
+                    'taskAssignments as total_tasks_count' => function ($query) use ($authUserId) {
+                        $query->whereHas('task', function ($taskQuery) use ($authUserId) {
+                            $taskQuery->where('user_id', $authUserId);
+                        });
+                    },
+                ])
+                ->get()
+                ->map(function ($user) {
+                    $fullName = trim($user->first_name . ' ' . $user->last_name);
+                    if (empty($fullName)) {
+                        $fullName = $user->name ?? 'Team Member';
+                    }
 
+                    return [
+                        'name' => $fullName,
+                        'completed' => $user->completed_tasks_count,
+                        'in_progress' => $user->in_progress_tasks_count,
+                        'pending' => $user->pending_tasks_count,
+                        'total' => $user->total_tasks_count,
+                        'percentage' => ($user->total_tasks_count > 0) ? round(($user->completed_tasks_count / $user->total_tasks_count) * 100) : 0,
+                    ];
+                })
+                ->toArray();
         }
     }
 

@@ -3,15 +3,22 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Illuminate\View\View;
 
 class FullscreenLoader extends Component
 {
-    public function load()
+    /**
+     * Optional initialization logic for the loader.
+     */
+    public function load(): void
     {
-        // Optional: You can perform any initialization logic here if needed
+        // Add any background initialization logic here if required
     }
 
-    public function render()
+    /**
+     * Render the fullscreen loader view.
+     */
+    public function render(): View
     {
         return view('livewire.fullscreen-loader');
     }

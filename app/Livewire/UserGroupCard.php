@@ -4,52 +4,33 @@ namespace App\Livewire;
 
 use App\Models\Group;
 use Livewire\Component;
-use App\Models\Task;
-use App\Models\User;
 
 class UserGroupCard extends Component
 {
-    public $groups = [];
-    public $newGroup;
-    public $editingGroupId = null; // Track which group is being edited
-    public $editingGroupName = ''; // Store the new group name during editing
+    public $groups;
+    public ?string $newGroup = null;
+    public ?int $editingGroupId = null;
+    public string $editingGroupName = '';
 
-    public function mount()
+    public function mount(): void
     {
-        // Show Manager users Groups:
-        // $this->groups = Group::all();
-        // FIX:
-        $this->groups = Group::select('id', 'label')
-            ->get()
-            ->map(function ($group) {
+        $this->loadGroups();
+    }
 
-                return [
-                    'id' => $group->id ?? 0,
-                    'name' => !empty($group->label) ? (string) $group->label : 'No Group',
-                    'percentage' => 0,
-                    'pending' => 0,
-                    'in_progress' => 0,
-                    'completed' => 0,
-                    'total' => 0,
-                ];
-            })
-            ->toArray();
-
-        // Fetch all groups from the database
+    public function loadGroups(): void
+    {
         $this->groups = Group::select('id', 'label')->get();
     }
 
-    public function showGroup($groupId)
+    public function showGroup($groupId): void
     {
-        // Emit an event with the selected group ID
         $this->dispatch('groupSelected', $groupId);
     }
 
-    public function addGroup()
+    public function addGroup(): void
     {
-        // Trim whitespace from the input
-        $this->newGroup = trim($this->newGroup);
-        // Validate input
+        $this->newGroup = is_string($this->newGroup) ? trim($this->newGroup) : '';
+
         $this->validate([
             'newGroup' => [
                 'required',
@@ -57,39 +38,34 @@ class UserGroupCard extends Component
                 'max:255',
                 function ($attribute, $value, $fail) {
                     if (Group::where('label', $value)->exists()) {
-                        $this->notify('The gruop name already exists.', 'error');
-                        $fail('');
+                        $this->dispatch('notify', ['message' => 'The group name already exists.', 'type' => 'error']);
+                        $fail('The group name already exists.');
                     }
                 },
             ],
         ]);
 
-        // Create new category
         Group::create(['label' => $this->newGroup]);
 
-        // Clear input
         $this->newGroup = '';
+        $this->loadGroups();
 
-        // Refresh category list
-        $this->groups = Group::all();
-
-        // Optionally dispatch a notification or event
-        $this->notify('Group added successfully.', 'success');
+        $this->dispatch('notify', ['message' => 'Group added successfully.', 'type' => 'success']);
     }
 
-    public function startEditing($groupId, $groupName)
+    public function startEditing($groupId, $groupName): void
     {
-        $this->editingGroupId = $groupId;
-        $this->editingGroupName = $groupName;
+        $this->editingGroupId = (int) $groupId;
+        $this->editingGroupName = (string) $groupName;
     }
 
-    public function cancelEditing()
+    public function cancelEditing(): void
     {
         $this->editingGroupId = null;
         $this->editingGroupName = '';
     }
 
-    public function saveGroupName()
+    public function saveGroupName(): void
     {
         $this->validate([
             'editingGroupName' => [
@@ -97,27 +73,28 @@ class UserGroupCard extends Component
                 'string',
                 'max:255',
                 function ($attribute, $value, $fail) {
-                    // Check for duplicate names excluding the current group being edited
                     if (Group::where('label', $value)->where('id', '!=', $this->editingGroupId)->exists()) {
-                        $this->notify('The gruop name already exists.', 'error');
-                        $fail('');
+                        $this->dispatch('notify', ['message' => 'The group name already exists.', 'type' => 'error']);
+                        $fail('The group name already exists.');
                     }
                 },
             ],
         ]);
 
-        $group = Group::find($this->editingGroupId);
+        $group = Group::findOrFail($this->editingGroupId);
         $group->update(['label' => $this->editingGroupName]);
 
         $this->editingGroupId = null;
         $this->editingGroupName = '';
-        $this->groups = Group::all();
+        $this->loadGroups();
 
-        $this->notify('Group name updated successfully.', 'success');
+        $this->dispatch('notify', ['message' => 'Group name updated successfully.', 'type' => 'success']);
     }
 
     public function render()
     {
-        return view('livewire.user-group-card')->layout('components.layouts.app', ['title' => 'Manage User Groups']);
+        return view('livewire.user-group-card')->layout('components.layouts.app', [
+            'title' => 'Manage User Groups',
+        ]);
     }
 }

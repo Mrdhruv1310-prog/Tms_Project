@@ -4,7 +4,6 @@ namespace App\Livewire;
 
 use App\Models\Task;
 use App\Models\TaskCompletionRequest;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,37 +13,36 @@ use Livewire\Attributes\On;
 class TaskUpdateModal extends Component
 {
     public $task;
-    public $status;
-    public $remark; // Property for storing the remark
-    public $taskUpdateModalOpen = false;
+    public string $status = '';
+    public string $remark = '';
+    public bool $taskUpdateModalOpen = false;
 
     #[On('status-updated')]
-    public function open($payload)
+    public function open(array $payload): void
     {
-        // Unpack the task and status from the payload
-        $this->task = (object) $payload['task']; // Store the task details
-        $this->status = $payload['status']; // Store the status
-
-        $this->remark = ''; // Initialize the remark
-
-        // Set the modal visibility to true
-        $this->taskUpdateModalOpen = true; // Make sure the modal is set to open
+        $this->task = (object) ($payload['task'] ?? []);
+        $this->status = (string) ($payload['status'] ?? '');
+        $this->remark = '';
+        $this->taskUpdateModalOpen = true;
     }
 
-
-    public function updateTaskRemark(User $user)
+    public function updateTaskRemark()
     {
         $this->validate([
             'remark' => 'required|string|max:255',
         ]);
 
-        // Start a database transaction
+        $authUserId = Auth::id();
+        if (! $authUserId || ! isset($this->task->id)) {
+            $this->dispatch('notify', ['message' => 'Unauthorized or invalid task context.', 'type' => 'error']);
+            return;
+        }
+
         DB::beginTransaction();
 
         try {
-            // Update the task status in the task_updates table for the current user
             DB::table('task_updates')->insert([
-                'user_id' => Auth::user()->id,
+                'user_id' => $authUserId,
                 'task_id' => $this->task->id,
                 'status' => $this->status,
                 'comment' => $this->remark,
@@ -52,22 +50,19 @@ class TaskUpdateModal extends Component
                 'updated_at' => now(),
             ]);
 
-            // If the status is 'complete_intimation', add a record in task_completion_requests table
             if ($this->status === 'complete_intimation') {
                 DB::table('task_completion_requests')->insert([
                     'task_id' => $this->task->id,
-                    'user_id' => Auth::user()->id,
-                    'request_status' => 'pending', // Assuming initial status is 'pending'
+                    'user_id' => $authUserId,
+                    'request_status' => 'pending',
                     'requested_at' => now(),
                 ]);
             }
 
-            // Fetch the users assigned to the task
             $assignedUsers = DB::table('task_assignments')
                 ->where('task_id', $this->task->id)
                 ->pluck('user_id');
 
-            // Initialize an array to store the statuses of all users
             $statuses = [];
             foreach ($assignedUsers as $userId) {
                 $latestStatus = DB::table('task_updates')
@@ -78,16 +73,15 @@ class TaskUpdateModal extends Component
 
                 $statuses[$userId] = $latestStatus ?? 'pending';
             }
-            // Determine the task status
-            if (in_array('in_progress', $statuses) || in_array('complete_intimation', $statuses)) {
+
+            if (in_array('in_progress', $statuses, true) || in_array('complete_intimation', $statuses, true)) {
                 $taskStatus = 'in_progress';
-            } elseif (count(array_unique($statuses)) === 1 && in_array('completed', $statuses)) {
+            } elseif (count(array_unique($statuses)) === 1 && in_array('completed', $statuses, true)) {
                 $taskStatus = 'completed';
             } else {
                 $taskStatus = 'in_progress';
             }
 
-            // Update the task status in the tasks table
             Task::where('id', $this->task->id)->update([
                 'status' => $taskStatus,
                 'updated_at' => now(),
@@ -97,21 +91,31 @@ class TaskUpdateModal extends Component
 
             $this->remark = '';
             $this->taskUpdateModalOpen = false;
-            $this->notify('Task Status Updated Successfully.', 'success');
+
+            $this->dispatch('notify', ['message' => 'Task Status Updated Successfully.', 'type' => 'success']);
             $this->dispatch('taskStatusUpdated');
         } catch (\Throwable $e) {
             DB::rollBack();
-            logException($e);
+            Log::error('Task Update Remark Error: ' . $e->getMessage());
             $this->taskUpdateModalOpen = false;
-            $this->notify('Failed to update task status. Please try again.', 'error');
+            $this->dispatch('notify', ['message' => 'Failed to update task status. Please try again.', 'type' => 'error']);
         }
     }
 
-    public function statusUpdated($data)
+    public function statusUpdated(array $data)
     {
-        $task = Task::findOrFail($data['task']['id']);
-        $status = $data['status'];
+        $taskId = $data['task']['id'] ?? null;
+        if (! $taskId) {
+            return;
+        }
+
+        $task = Task::findOrFail($taskId);
+        $status = $data['status'] ?? '';
         $userId = Auth::id();
+
+        if (! $userId) {
+            return;
+        }
 
         DB::table('task_updates')->updateOrInsert(
             [
@@ -125,27 +129,14 @@ class TaskUpdateModal extends Component
             ]
         );
 
-        if ($status === 'in_progress') {
+        if (in_array($status, ['in_progress', 'complete_intimation'], true)) {
             TaskCompletionRequest::updateOrCreate(
                 [
                     'task_id' => $task->id,
                     'user_id' => $userId,
                 ],
                 [
-                    'request_status' => 'in_progress',
-                    'updated_at' => now(),
-                ]
-            );
-        }
-
-        if ($status === 'complete_intimation') {
-            TaskCompletionRequest::updateOrCreate(
-                [
-                    'task_id' => $task->id,
-                    'user_id' => $userId,
-                ],
-                [
-                    'request_status' => 'complete_intimation',
+                    'request_status' => $status,
                     'updated_at' => now(),
                 ]
             );
