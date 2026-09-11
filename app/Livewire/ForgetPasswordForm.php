@@ -12,22 +12,30 @@ use Livewire\Component;
 
 class ForgetPasswordForm extends Component
 {
-    public $email = '';
-    public $submitted = false;
+    public string $email = '';
+    public bool $submitted = false;
 
-    protected function rules()
+    protected function rules(): array
     {
         return [
             'email' => 'required|email',
         ];
     }
 
-    protected function messages()
+    protected function messages(): array
     {
         return [
             'email.required' => 'Please enter the email address.',
             'email.email' => 'Please provide a valid email address.',
         ];
+    }
+
+    /**
+     * Helper to dispatch toast notifications safely.
+     */
+    private function notifyUser(string $message, string $type = 'success'): void
+    {
+        $this->dispatch('notify', ['message' => $message, 'type' => $type]);
     }
 
     public function forgotPassword()
@@ -40,11 +48,12 @@ class ForgetPasswordForm extends Component
             ->where('status', 1)
             ->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->addError('email', 'No account associated with this email address was found in our system.');
             return;
         }
 
+        // Clean up old tokens for this email
         PasswordResetToken::where('email', $user->email)->delete();
 
         $token = Str::random(60);
@@ -58,11 +67,11 @@ class ForgetPasswordForm extends Component
         try {
             Mail::to($user->email)->send(new SendResetPasswordEmail($user, $token));
 
-            $this->notify('Password reset link sent successfully.', 'success');
+            $this->notifyUser('Password reset link sent successfully.', 'success');
         } catch (\Exception $e) {
             Log::error('Forgot Password Mail Error: ' . $e->getMessage());
 
-            $this->notify('Error in sending password reset email.', 'error');
+            $this->notifyUser('Error in sending password reset email.', 'error');
         }
     }
 

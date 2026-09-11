@@ -12,44 +12,44 @@ class CategoryReport extends Component
 
     public function mount()
     {
-        // Fetch categories and their associated tasks grouped by status
+        // Ensure user is authenticated
+        $loggedInUser = Auth::user();
+        if (!$loggedInUser) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Fetch categories with tasks AND eager-load taskAssignments to prevent N+1 query issues
         $this->categories = Category::with([
             'tasks' => function ($query) {
                 $query->select('id', 'category_id', 'status');
             },
+            'tasks.taskAssignments' => function ($query) {
+                $query->select('id', 'task_id', 'user_id');
+            }
         ])
             ->get()
-            ->map(function ($category) {
-                // Total tasks per status
-                $totalTasks = $category->tasks->count();
-
-                // Get the currently authenticated user
-                $loggedInUser = Auth::user();
-
-                // Check if the user is an admin
-                if ($loggedInUser->role === 'admin') {
-                    // Admin: Count all tasks
-                    $pendingTasks = $category->tasks->where('status', 'pending')->count();
-                    $inProgressTasks = $category->tasks->where('status', 'in_progress')->count();
-                    $completedTasks = $category->tasks->where('status', 'completed')->count();
+            ->map(function ($category) use ($loggedInUser) {
+                // Filter tasks based on user role
+                if ($loggedInUser->role === 'admin' || $loggedInUser->role === 'super-admin') {
+                    $userTasks = $category->tasks;
                 } else {
                     // Non-admin: Only count tasks assigned to the logged-in user
                     $userTasks = $category->tasks->filter(function ($task) use ($loggedInUser) {
                         return $task->taskAssignments->contains('user_id', $loggedInUser->id);
                     });
-
-                    $totalTasks = $userTasks->count();
-                    $pendingTasks = $userTasks->where('status', 'pending')->count();
-                    $inProgressTasks = $userTasks->where('status', 'in_progress')->count();
-                    $completedTasks = $userTasks->where('status', 'completed')->count();
                 }
 
-                // Calculate percentages
-                $pendingPercentage = $totalTasks ? ($pendingTasks / $totalTasks) * 100 : 0;
-                $inProgressPercentage = $totalTasks ? ($inProgressTasks / $totalTasks) * 100 : 0;
-                $completedPercentage = $totalTasks ? ($completedTasks / $totalTasks) * 100 : 0;
+                $totalTasks = $userTasks->count();
+                $pendingTasks = $userTasks->where('status', 'pending')->count();
+                $inProgressTasks = $userTasks->where('status', 'in_progress')->count();
+                $completedTasks = $userTasks->where('status', 'completed')->count();
 
-                // Return category data along with task breakdown
+                // Calculate percentages safely (avoiding division by zero)
+                $pendingPercentage = $totalTasks > 0 ? ($pendingTasks / $totalTasks) * 100 : 0;
+                $inProgressPercentage = $totalTasks > 0 ? ($inProgressTasks / $totalTasks) * 100 : 0;
+                $completedPercentage = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
+
+                // Return structured category report data
                 return [
                     'title' => $category->name,
                     'pending' => [

@@ -10,8 +10,8 @@ class TaskViewModal extends Component
 {
     public $taskId = null;
     public bool $isOpen = false;
-    public $taskList = null;
-    public $taskUpdates = [];
+    public ?Task $taskList = null;
+    public $taskUpdates;
 
     protected $listeners = [
         'openTaskViewModal' => 'open',
@@ -19,6 +19,11 @@ class TaskViewModal extends Component
         'taskUpdated' => 'refreshTaskData',
         'refreshTaskViewModal' => 'refreshTaskData',
     ];
+
+    public function mount(): void
+    {
+        $this->taskUpdates = collect();
+    }
 
     public function open($taskId): void
     {
@@ -65,13 +70,15 @@ class TaskViewModal extends Component
 
             $this->taskList = null;
             $this->taskUpdates = collect();
+            $this->dispatch('notify', ['message' => 'Unable to load task details.', 'type' => 'error']);
         }
     }
 
     public function close(): void
     {
         $this->isOpen = false;
-        $this->reset(['taskId', 'taskList', 'taskUpdates']);
+        $this->reset(['taskId', 'taskList']);
+        $this->taskUpdates = collect();
     }
 
     public function render()

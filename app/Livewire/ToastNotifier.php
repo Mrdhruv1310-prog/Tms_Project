@@ -3,22 +3,35 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 
 class ToastNotifier extends Component
 {
-    public function notifySuccess($message)
+    protected $listeners = [
+        'notify' => 'handleNotify',
+    ];
+
+    public function handleNotify($data): void
     {
-        $this->dispatchBrowserEvent('show-toast', ['type' => 'success', 'message' => $message]);
+        $message = is_array($data) ? ($data['message'] ?? '') : $data;
+        $type = is_array($data) ? ($data['type'] ?? 'success') : 'success';
+
+        $this->dispatch('show-toast', type: $type, message: $message);
     }
 
-    public function notifyError($message)
+    public function notifySuccess(string $message): void
     {
-        $this->dispatchBrowserEvent('show-toast', ['type' => 'danger', 'message' => $message]);
+        $this->dispatch('show-toast', type: 'success', message: $message);
     }
 
-    public function notifyWarning($message)
+    public function notifyError(string $message): void
     {
-        $this->dispatchBrowserEvent('show-toast', ['type' => 'warning', 'message' => $message]);
+        $this->dispatch('show-toast', type: 'danger', message: $message);
+    }
+
+    public function notifyWarning(string $message): void
+    {
+        $this->dispatch('show-toast', type: 'warning', message: $message);
     }
 
     public function render()
