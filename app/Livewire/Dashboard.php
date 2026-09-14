@@ -12,22 +12,17 @@ use Illuminate\Support\Facades\DB;
 
 class Dashboard extends Component
 {
-    public array $labels = [];
-    public array $categories = [];
-    public array $team = [];
-    public array $groups = [];
-    public $tasksAssignedByUser;
+    public $labels = [];
+    public $categories = [];
+    public $team = [];
+    public $groups = [];
+    public $tasksAssignedByUser = [];
 
     public ?int $openStatusTaskId = null;
     public array $statusForm = [];
 
     public function mount()
     {
-        $authUser = Auth::user();
-        if (! $authUser) {
-            abort(403, 'Unauthorized action.');
-        }
-
         $this->refreshDashboardData();
     }
 
@@ -35,23 +30,25 @@ class Dashboard extends Component
     {
         $authUser = Auth::user();
         $authUserId = (int) $authUser->id;
+
         $role = $authUser->role ?? 'user';
 
+        // Check flags based on new requirement
         $isSuperAdmin = ($role === 'super-admin');
         $isAdmin = ($role === 'admin');
-        $isUser = ($role === 'user');
+        $isUser = ($role === 'user' || $role === 'employee');
 
         $this->setLabels($isSuperAdmin, $authUserId);
         $this->setCategories($isSuperAdmin, $isAdmin, $isUser, $authUserId);
-        $this->setTeam($isSuperAdmin, $authUserId);
-        $this->setGroups($isSuperAdmin, $authUserId);
+        $this->setTeam($isSuperAdmin, $isAdmin, $isUser, $authUserId);
+        $this->setGroups($isSuperAdmin, $isAdmin, $isUser, $authUserId);
         $this->setTasksAssignedByUser($isSuperAdmin, $authUserId);
     }
 
     /**
      * Query to fetch tasks based on role:
      * - super-admin: gets all tasks.
-     * - admin / user: gets tasks assigned to them OR created by them.
+     * - admin / user: gets tasks assigned to them OR created by them (if admin).
      */
     private function assignedTaskQuery(bool $isSuperAdmin, int $authUserId)
     {
@@ -60,7 +57,8 @@ class Dashboard extends Component
                 $query->where(function ($subQuery) use ($authUserId) {
                     $subQuery->whereHas('taskAssignments', function ($assignmentQuery) use ($authUserId) {
                         $assignmentQuery->where('user_id', $authUserId);
-                    })->orWhere('user_id', $authUserId);
+                    })
+                        ->orWhere('user_id', $authUserId);
                 });
             });
     }
@@ -123,8 +121,12 @@ class Dashboard extends Component
             },
         ])
             ->get()
-            ->filter(function ($category) use ($isSuperAdmin) {
-                return $isSuperAdmin || $category->total_tasks_count > 0;
+            ->filter(function ($category) use ($isSuperAdmin, $isAdmin, $authUserId) {
+                if ($isSuperAdmin) {
+                    return true;
+                }
+                // Admin or User/Employee can only see categories relevant to their own tasks/assignments
+                return $category->total_tasks_count > 0;
             })
             ->map(function ($category) {
                 return [
@@ -141,10 +143,20 @@ class Dashboard extends Component
             ->toArray();
     }
 
-    private function setTeam(bool $isSuperAdmin, int $authUserId): void
+    private function setTeam(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
     {
         $this->team = User::query()
-            ->when(! $isSuperAdmin, function ($query) use ($authUserId) {
+            ->when($isSuperAdmin, function ($query) {
+                // 1. Super-admin can see admin, user, and employee
+                $query->whereIn('role', ['admin', 'user', 'employee']);
+            })
+            ->when($isAdmin, function ($query) use ($authUserId) {
+                // 2. Admin cannot see super-admin. Can see users/employees not in any category/group or assigned to them.
+                $query->where('role', '!=', 'super-admin')
+                    ->where('id', '!=', $authUserId);
+            })
+            ->when($isUser, function ($query) use ($authUserId) {
+                // 3. User/employee can only see themselves or members of their assigned category/team context
                 $query->where('id', $authUserId);
             })
             ->withCount([
@@ -156,8 +168,11 @@ class Dashboard extends Component
                 'taskAssignments as total_tasks_count',
             ])
             ->get()
-            ->filter(function ($user) use ($isSuperAdmin) {
-                return $isSuperAdmin || $user->total_tasks_count > 0;
+            ->filter(function ($user) use ($isSuperAdmin, $isAdmin) {
+                if ($isSuperAdmin) {
+                    return true;
+                }
+                return $user->total_tasks_count > 0;
             })
             ->map(function ($user) {
                 return [
@@ -175,7 +190,7 @@ class Dashboard extends Component
             ->toArray();
     }
 
-    private function setGroups(bool $isSuperAdmin, int $authUserId): void
+    private function setGroups(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
     {
         $this->groups = Group::withCount([
             'tasks as pending_tasks_count' => function ($query) use ($isSuperAdmin, $authUserId) {

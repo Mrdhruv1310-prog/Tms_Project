@@ -71,10 +71,11 @@ return [
     'whatsapp' => [
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+        'business_number_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
         'api_version' => env('WHATSAPP_API_VERSION', 'v25.0'),
         'template_language' => env('WHATSAPP_TEMPLATE_LANGUAGE', 'en_US'),
-        'task_assigned_template' => env('WHATSAPP_TASK_ASSIGNED_TEMPLATE', 'task_assigned'),
-        'task_due_template' => env('WHATSAPP_TASK_DUE_TEMPLATE', 'task_due_reminder'),
+        'task_assigned_template' => env('WHATSAPP_TASK_ASSIGNED_TEMPLATE', 'assigned_task'),
+        'task_due_template' => env('WHATSAPP_TASK_DUE_TEMPLATE', 'due_task_reminder'),
     ],
 
 ];

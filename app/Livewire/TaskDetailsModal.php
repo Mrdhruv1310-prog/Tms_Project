@@ -163,8 +163,9 @@ class TaskDetailsModal extends Component
         $this->categories = Category::all();
         $this->labels = Group::all();
         $this->label = Group::select('id', 'label')->get();
-
+        // Auth user ko user list se exclude karne ke liye ->where('id', '!=', Auth::id()) add kiya hai
         $this->users = User::where('status', 1)
+            ->where('id', '!=', Auth::id())
             ->get()
             ->map(function ($user) {
                 $user->randomcolor = $this->getRandomColor();

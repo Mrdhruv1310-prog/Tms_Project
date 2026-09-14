@@ -4,145 +4,127 @@ namespace App\Livewire;
 
 use App\Models\Task;
 use App\Models\TaskCompletionRequest;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Filament\Notifications\Notification;
 
 class TaskUpdateModal extends Component
 {
     public $task;
-    public string $status = '';
-    public string $remark = '';
-    public bool $taskUpdateModalOpen = false;
+    public $status;
+    public $remark;
+    public $repeat = false;
+    public $recurrence = 'none';
+    public $recurrence_end_date;
+    public $due_date;
+    public $taskUpdateModalOpen = false;
 
     #[On('status-updated')]
-    public function open(array $payload): void
+    public function open($payload)
     {
-        $this->task = (object) ($payload['task'] ?? []);
-        $this->status = (string) ($payload['status'] ?? '');
+        $taskData = $payload['task'] ?? [];
+        $this->task = (object) $taskData;
+        $this->status = $payload['status'] ?? ($taskData['status'] ?? 'in_progress');
+
+        // Format dates properly for HTML inputs
+        $this->due_date = isset($taskData['due_date']) ? Carbon::parse($taskData['due_date'])->format('Y-m-d\TH:i') : '';
+        $this->repeat = isset($taskData['recurrence']) && $taskData['recurrence'] !== 'none';
+        $this->recurrence = $taskData['recurrence'] ?? 'none';
+        $this->recurrence_end_date = $taskData['recurrence_end_date'] ?? '';
         $this->remark = '';
+
         $this->taskUpdateModalOpen = true;
     }
 
     public function updateTaskRemark()
     {
         $this->validate([
-            'remark' => 'required|string|max:255',
+            'status' => 'required|string',
+            'due_date' => 'required|date',
+            'remark' => 'nullable|string|max:1000',
+            'recurrence' => 'required|string',
         ]);
 
-        $authUserId = Auth::id();
-        if (! $authUserId || ! isset($this->task->id)) {
-            $this->dispatch('notify', ['message' => 'Unauthorized or invalid task context.', 'type' => 'error']);
+        if (!$this->task || !isset($this->task->id)) {
+            Notification::make()->title('Task not found.')->danger()->send();
             return;
         }
 
         DB::beginTransaction();
 
         try {
-            DB::table('task_updates')->insert([
-                'user_id' => $authUserId,
-                'task_id' => $this->task->id,
+            $userId = Auth::id();
+            $taskModel = Task::findOrFail($this->task->id);
+
+            $recurrenceVal = $this->repeat ? $this->recurrence : 'none';
+            $recurrenceEndDateVal = ($this->repeat && $recurrenceVal !== 'none') ? $this->recurrence_end_date : null;
+
+            // Update Task main fields
+            $taskModel->update([
                 'status' => $this->status,
-                'comment' => $this->remark,
+                'due_date' => $this->due_date,
+                'recurrence' => $recurrenceVal,
+                'recurrence_end_date' => $recurrenceEndDateVal,
+                'updated_at' => now(),
+            ]);
+
+            // Insert into task_updates log
+            DB::table('task_updates')->insert([
+                'user_id' => $userId,
+                'task_id' => $taskModel->id,
+                'status' => $this->status,
+                'comment' => $this->remark ? trim($this->remark) : null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            if ($this->status === 'complete_intimation') {
-                DB::table('task_completion_requests')->insert([
-                    'task_id' => $this->task->id,
-                    'user_id' => $authUserId,
-                    'request_status' => 'pending',
-                    'requested_at' => now(),
+            // Save conversation message if remark is added
+            if (!empty($this->remark)) {
+                DB::table('task_conversations')->insert([
+                    'task_id' => $taskModel->id,
+                    'user_id' => $userId,
+                    'message' => trim($this->remark),
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
             }
 
-            $assignedUsers = DB::table('task_assignments')
-                ->where('task_id', $this->task->id)
-                ->pluck('user_id');
-
-            $statuses = [];
-            foreach ($assignedUsers as $userId) {
-                $latestStatus = DB::table('task_updates')
-                    ->where('task_id', $this->task->id)
-                    ->where('user_id', $userId)
-                    ->orderBy('updated_at', 'desc')
-                    ->value('status');
-
-                $statuses[$userId] = $latestStatus ?? 'pending';
+            // Handle completion request if status is complete intimation
+            if ($this->status === 'complete_intimation') {
+                DB::table('task_completion_requests')->insert([
+                    'task_id' => $taskModel->id,
+                    'user_id' => $userId,
+                    'request_status' => 'pending',
+                    'requested_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
-
-            if (in_array('in_progress', $statuses, true) || in_array('complete_intimation', $statuses, true)) {
-                $taskStatus = 'in_progress';
-            } elseif (count(array_unique($statuses)) === 1 && in_array('completed', $statuses, true)) {
-                $taskStatus = 'completed';
-            } else {
-                $taskStatus = 'in_progress';
-            }
-
-            Task::where('id', $this->task->id)->update([
-                'status' => $taskStatus,
-                'updated_at' => now(),
-            ]);
 
             DB::commit();
 
-            $this->remark = '';
             $this->taskUpdateModalOpen = false;
 
-            $this->dispatch('notify', ['message' => 'Task Status Updated Successfully.', 'type' => 'success']);
+            Notification::make()
+                ->title('Task Updated Successfully.')
+                ->success()
+                ->send();
+
             $this->dispatch('taskStatusUpdated');
+            $this->dispatch('refreshTable');
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Task Update Remark Error: ' . $e->getMessage());
-            $this->taskUpdateModalOpen = false;
-            $this->dispatch('notify', ['message' => 'Failed to update task status. Please try again.', 'type' => 'error']);
+            Log::error('Task update modal error: ' . $e->getMessage());
+
+            Notification::make()
+                ->title('Failed to update task. Please try again.')
+                ->danger()
+                ->send();
         }
-    }
-
-    public function statusUpdated(array $data)
-    {
-        $taskId = $data['task']['id'] ?? null;
-        if (! $taskId) {
-            return;
-        }
-
-        $task = Task::findOrFail($taskId);
-        $status = $data['status'] ?? '';
-        $userId = Auth::id();
-
-        if (! $userId) {
-            return;
-        }
-
-        DB::table('task_updates')->updateOrInsert(
-            [
-                'task_id' => $task->id,
-                'user_id' => $userId,
-            ],
-            [
-                'status' => $status,
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]
-        );
-
-        if (in_array($status, ['in_progress', 'complete_intimation'], true)) {
-            TaskCompletionRequest::updateOrCreate(
-                [
-                    'task_id' => $task->id,
-                    'user_id' => $userId,
-                ],
-                [
-                    'request_status' => $status,
-                    'updated_at' => now(),
-                ]
-            );
-        }
-
-        $this->dispatch('refreshTable');
     }
 
     public function render()
