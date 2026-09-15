@@ -27,7 +27,7 @@ class RegisterForm extends Component
             'first_name'   => 'required|string|max:255',
             'last_name'    => 'required|string|max:255',
             'phone_number' => 'required|digits:10',
-            'email'        => 'required|email|unique:users,email|max:255',
+            'email'        => 'required|email:rfc,dns|unique:users,email|max:255',
             'password'     => 'required|min:8|max:255',
         ], [
             'first_name.required'   => 'Please enter your first name.',

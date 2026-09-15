@@ -14,15 +14,15 @@ class RegisterUserMail extends Mailable
     use Queueable, SerializesModels;
 
     public User $user;
-    public string $plainPassword;
+    public string $token;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($user, $plainPassword)
+    public function __construct(User $user, string $token)
     {
         $this->user = $user;
-        $this->plainPassword = $plainPassword;
+        $this->token = $token;
     }
 
     /**
@@ -31,7 +31,7 @@ class RegisterUserMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Register User Mail',
+            subject: 'Welcome to TMS - Account Setup',
         );
     }
 
@@ -40,11 +40,17 @@ class RegisterUserMail extends Mailable
      */
     public function content(): Content
     {
+        // Generate password reset or login setup link (Change route name as per your app)
+        $resetUrl = url(route('password.reset', [
+            'token' => $this->token,
+            'email' => $this->user->email
+        ], false));
+
         return new Content(
             view: 'emails.register_user',
             with: [
                 'user' => $this->user,
-                'plainPassword' => $this->plainPassword,
+                'resetUrl' => $resetUrl,
             ],
         );
     }
