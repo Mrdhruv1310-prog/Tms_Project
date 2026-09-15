@@ -23,11 +23,11 @@
                                 style="max-width:110px; height:auto; margin-bottom:16px;">
 
                             <h1 style="margin:0; color:#ffffff; font-size:24px; font-weight:700;">
-                                Account Registered Successfully
+                                Account Created Successfully
                             </h1>
 
                             <p style="margin:8px 0 0; color:#cbd5e1; font-size:14px;">
-                                Your TMS account has been created successfully.
+                                Your TMS portal account is ready.
                             </p>
                         </td>
                     </tr>
@@ -44,25 +44,26 @@
                             </p>
 
                             <p style="margin:0 0 22px;">
-                                Your account has been registered in the TMS portal. Please click the button below to
-                                login to your account.
+                                An account has been created for you by the administration team in the TMS portal. You
+                                can now access the system using your registered email and the credentials provided to
+                                you.
                             </p>
 
-                            <!-- CTA / Redirect Link Button -->
+                            <!-- CTA Button Direct to Login -->
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="{{ $resetUrl }}"
+                                        <a href="{{ $loginUrl }}"
                                             style="display:inline-block; background:#2563eb; color:#ffffff; text-decoration:none; padding:13px 30px; border-radius:10px; font-size:15px; font-weight:700;">
-                                            Login
+                                            Login to TMS Now
                                         </a>
                                     </td>
                                 </tr>
                             </table>
 
-                            <p style="margin:22px 0 0; color:#64748b; font-size:13px; word-break: break-all;">
+                            <p style="margin:0 0 10px; color:#64748b; font-size:13px; word-break: break-all;">
                                 If the button doesn't work, copy and paste this link in your browser: <br>
-                                <a href="{{ $resetUrl }}" style="color:#2563eb;">{{ $resetUrl }}</a>
+                                <a href="{{ $loginUrl }}" style="color:#2563eb;">{{ $loginUrl }}</a>
                             </p>
 
                             <p style="margin:28px 0 0; color:#475569;">
@@ -87,6 +88,5 @@
             </td>
         </tr>
     </table>
-
 </body>
 </html>

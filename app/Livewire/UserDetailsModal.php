@@ -2,15 +2,13 @@
 
 namespace App\Livewire;
 
-use App\Mail\RegisterUserMail;
-use App\Models\PasswordResetToken;
 use App\Models\User;
 use Livewire\Component;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
+use App\Mail\RegisterUserMail;
 
 class UserDetailsModal extends Component
 {
@@ -21,27 +19,26 @@ class UserDetailsModal extends Component
     public $last_name;
     public $email;
     public $phone_number;
-    public $role = ''; // Default role to 'user'
-    public $status = ''; // Default status to active (true)
+    public $role = '';
+    public $status = '';
 
-    public $password = ''; // Default password is empty
-
-    public $user_id; // To store the user ID for editing
-
+    public $password = '';
+    public $user_id;
     public $submitted = true;
+    public $plainPassword = '';
 
     protected $listeners = ['openModal' => 'open', 'closeModal' => 'close', 'edituser' => 'loadUser'];
 
     public function open()
     {
-        $this->resetForm(); // Reset form when closing modal
+        $this->resetForm();
         $this->isOpen = true;
         $this->dispatch('addusermodalopened');
     }
 
     public function close()
     {
-        $this->resetForm(); // Reset form when closing modal
+        $this->resetForm();
         $this->isOpen = false;
     }
 
@@ -57,7 +54,12 @@ class UserDetailsModal extends Component
         $rules = [
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
-            'email' => 'required|email' . ($this->user_id ? '|unique:users,email,' . $this->user_id : '|unique:users,email'),
+            'email' => [
+                'required',
+                'email:rfc,dns',
+                'max:255',
+                $this->user_id ? 'unique:users,email,' . $this->user_id : 'unique:users,email',
+            ],
             'phone_number' => 'required|string|max:15',
             'role' => 'required|in:admin,user,super-admin',
             'status' => 'required|in:1,0',
@@ -92,27 +94,22 @@ class UserDetailsModal extends Component
             ];
 
             if (!empty($this->password)) {
-                $updateData['password'] = Hash::make($this->password);
+                $plainPassword = $this->password;
+                $updateData['password'] = Hash::make($plainPassword);
             }
 
             $user->update($updateData);
 
-            // Optional: Agar edit par bhi mail bhejna ho toh token generate karke bhej sakte hain
+            // Agar admin ne password update kiya hai toh naye credentials ke sath mail bhej sakte hain
             if (!empty($this->password)) {
-                PasswordResetToken::where('email', $user->email)->delete();
-                $token = Str::random(60);
-                PasswordResetToken::create([
-                    'email' => $user->email,
-                    'token' => $token,
-                    'created_at' => now(),
-                ]);
-
-                Mail::to($user->email)->send(new RegisterUserMail($user, $token));
+                $user->refresh();
+                Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
             }
 
             $message = 'User updated successfully.';
         } else {
-            // New user creation
+            $plainPassword = $this->password;
+
             $user = User::create([
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
@@ -120,18 +117,10 @@ class UserDetailsModal extends Component
                 'phone_number' => $this->phone_number,
                 'role' => $this->role,
                 'status' => $this->status,
-                'password' => Hash::make($this->password), // Temporary or admin-set password
+                'password' => Hash::make($plainPassword),
             ]);
 
-            PasswordResetToken::where('email', $user->email)->delete();
-            $token = Str::random(60);
-            PasswordResetToken::create([
-                'email' => $user->email,
-                'token' => $token,
-                'created_at' => now(),
-            ]);
-
-            Mail::to($user->email)->send(new RegisterUserMail($user, $token));
+            Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
 
             $message = 'User added successfully.';
         }
