@@ -26,7 +26,7 @@ class LoginForm extends Component
         $this->error = false;
 
         $credentials = $this->validate([
-            'email' => 'required|email|max:255',
+            'email' => 'required|email:rfc,dns|max:255',
             'password' => 'required|min:6|max:255',
         ], [
             'email.required' => 'Please enter the email address.',

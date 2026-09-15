@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Mail\RegisterUserMail;
 use App\Models\PasswordResetToken;
 use App\Models\User;
 use Livewire\Component;
@@ -10,45 +11,43 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
-use App\Mail\RegisterUserMail;
 
 class UserDetailsModal extends Component
 {
     #[Locked]
-    public string $route = '';
+    public string $route;
     public bool $isOpen = false;
-    public ?string $first_name = null;
-    public ?string $last_name = null;
-    public ?string $email = null;
-    public ?string $phone_number = null;
-    public string $role = '';
-    public string $status = '';
-    public string $password = '';
-    public ?int $user_id = null;
-    public bool $submitted = true;
+    public $first_name;
+    public $last_name;
+    public $email;
+    public $phone_number;
+    public $role = ''; // Default role to 'user'
+    public $status = ''; // Default status to active (true)
 
-    protected $listeners = [
-        'openModal' => 'open',
-        'closeModal' => 'close',
-        'edituser' => 'loadUser'
-    ];
+    public $password = ''; // Default password is empty
 
-    public function open(): void
+    public $user_id; // To store the user ID for editing
+
+    public $submitted = true;
+
+    protected $listeners = ['openModal' => 'open', 'closeModal' => 'close', 'edituser' => 'loadUser'];
+
+    public function open()
     {
-        $this->resetForm();
+        $this->resetForm(); // Reset form when closing modal
         $this->isOpen = true;
         $this->dispatch('addusermodalopened');
     }
 
-    public function close(): void
+    public function close()
     {
-        $this->resetForm();
+        $this->resetForm(); // Reset form when closing modal
         $this->isOpen = false;
     }
 
     public function mount(): void
     {
-        $this->route = Route::currentRouteName() ?? '';
+        $this->route = Route::currentRouteName();
     }
 
     public function saveUser()
@@ -58,7 +57,7 @@ class UserDetailsModal extends Component
         $rules = [
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
-            'email' => 'required|email|' . ($this->user_id ? 'unique:users,email,' . $this->user_id : 'unique:users,email'),
+            'email' => 'required|email' . ($this->user_id ? '|unique:users,email,' . $this->user_id : '|unique:users,email'),
             'phone_number' => 'required|string|max:15',
             'role' => 'required|in:admin,user,super-admin',
             'status' => 'required|in:1,0',
@@ -92,23 +91,28 @@ class UserDetailsModal extends Component
                 'status' => $this->status,
             ];
 
-            $plainPassword = null;
             if (!empty($this->password)) {
-                $plainPassword = $this->password;
-                $updateData['password'] = Hash::make($plainPassword);
+                $updateData['password'] = Hash::make($this->password);
             }
 
             $user->update($updateData);
 
-            if (!empty($this->password) && $plainPassword) {
-                $user->refresh();
-                Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
+            // Optional: Agar edit par bhi mail bhejna ho toh token generate karke bhej sakte hain
+            if (!empty($this->password)) {
+                PasswordResetToken::where('email', $user->email)->delete();
+                $token = Str::random(60);
+                PasswordResetToken::create([
+                    'email' => $user->email,
+                    'token' => $token,
+                    'created_at' => now(),
+                ]);
+
+                Mail::to($user->email)->send(new RegisterUserMail($user, $token));
             }
 
             $message = 'User updated successfully.';
         } else {
-            $plainPassword = $this->password;
-
+            // New user creation
             $user = User::create([
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
@@ -116,7 +120,7 @@ class UserDetailsModal extends Component
                 'phone_number' => $this->phone_number,
                 'role' => $this->role,
                 'status' => $this->status,
-                'password' => Hash::make($plainPassword),
+                'password' => Hash::make($this->password), // Temporary or admin-set password
             ]);
 
             PasswordResetToken::where('email', $user->email)->delete();
@@ -127,7 +131,7 @@ class UserDetailsModal extends Component
                 'created_at' => now(),
             ]);
 
-            Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
+            Mail::to($user->email)->send(new RegisterUserMail($user, $token));
 
             $message = 'User added successfully.';
         }
@@ -137,14 +141,14 @@ class UserDetailsModal extends Component
         $this->dispatch('usercreated');
 
         if ($this->route === 'users') {
-            $this->dispatch('notify', ['message' => $message, 'type' => 'success']);
+            $this->notify($message, 'success');
         } else {
             session()->flash('message', $message);
             return $this->redirect('users', navigate: true);
         }
     }
 
-    public function loadUser($id): void
+    public function loadUser($id)
     {
         $user = User::findOrFail($id);
         $this->user_id = $user->id;
@@ -152,14 +156,13 @@ class UserDetailsModal extends Component
         $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->phone_number = $user->phone_number;
-        $this->role = (string) $user->role;
-        $this->status = (string) $user->status;
-        $this->password = '';
+        $this->role = $user->role;
+        $this->status = $user->status;
 
         $this->isOpen = true;
     }
 
-    public function resetForm(): void
+    public function resetForm()
     {
         $this->reset(['first_name', 'last_name', 'email', 'phone_number', 'role', 'status', 'user_id', 'password']);
     }
