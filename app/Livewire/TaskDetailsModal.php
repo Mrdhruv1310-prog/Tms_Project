@@ -166,6 +166,7 @@ class TaskDetailsModal extends Component
         // Auth user ko user list se exclude karne ke liye ->where('id', '!=', Auth::id()) add kiya hai
         $this->users = User::where('status', 1)
             ->where('id', '!=', Auth::id())
+            ->whereIn('role', ['admin', 'user', 'employee'])
             ->get()
             ->map(function ($user) {
                 $user->randomcolor = $this->getRandomColor();
