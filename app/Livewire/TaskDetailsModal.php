@@ -165,7 +165,9 @@ class TaskDetailsModal extends Component
         $this->label = Group::select('id', 'label')->get();
         // Auth user ko user list se exclude karne ke liye ->where('id', '!=', Auth::id()) add kiya hai
         $this->users = User::where('status', 1)
-            ->where('id', '!=', Auth::id())
+            // User can't assign task after apply this line
+            // ->where('id', '!=', Auth::id())
+            // Tasks cannot be assigned to the Super Admin.
             ->whereIn('role', ['admin', 'user', 'employee'])
             ->get()
             ->map(function ($user) {
