@@ -60,13 +60,26 @@ class TaskTable extends Component implements HasForms, HasTable
         $this->taskView = request()->get('task_view', 'all_tasks');
     }
 
+    protected function getDbFieldLabel(string $fieldName, string $defaultLabel): string
+    {
+        try {
+            $dbLabel = DB::table('field_labels')
+                ->where('field_name', $fieldName)
+                ->value('label');
+
+            return $dbLabel ?: $defaultLabel;
+        } catch (\Throwable $e) {
+            return $defaultLabel;
+        }
+    }
+
     public function table(Table $table): Table
     {
         return $table
             ->query(fn() => $this->getTaskQuery())
             ->columns([
                 TextColumn::make('title')
-                    ->label('Task Title')
+                    ->label($this->getDbFieldLabel('title', 'Task Title'))
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Bold)
@@ -80,7 +93,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
 
                 TextColumn::make('creator.first_name')
-                    ->label('Assigned By')
+                    ->label($this->getDbFieldLabel('creator_first_name', 'Assigned By'))
                     ->searchable()
                     ->sortable()
                     ->icon('heroicon-o-user-circle')
@@ -88,7 +101,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
 
                 TextColumn::make('assignedUsers')
-                    ->label('Assigned To')
+                    ->label($this->getDbFieldLabel('assigned_users', 'Assigned To'))
                     ->icon('heroicon-o-users')
                     ->formatStateUsing(fn($state, $record) => $record->assignedUsers->map(function ($user) {
                         return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
@@ -96,7 +109,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
 
                 TextColumn::make('due_date')
-                    ->label('Due Date')
+                    ->label($this->getDbFieldLabel('due_date', 'Due Date'))
                     ->sortable()
                     ->icon('heroicon-o-calendar-days')
                     ->formatStateUsing(function ($state) {
@@ -108,14 +121,14 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
 
                 TextColumn::make('category.name')
-                    ->label('Category')
+                    ->label($this->getDbFieldLabel('category_name', 'Category'))
                     ->icon('heroicon-o-tag')
                     ->sortable()
                     ->placeholder('No Category')
                     ->visibleFrom('md'),
 
                 TextColumn::make('recurrence')
-                    ->label('Repeat')
+                    ->label($this->getDbFieldLabel('recurrence', 'Repeat'))
                     ->icon('heroicon-o-arrow-path')
                     ->formatStateUsing(fn($state) => match ($state) {
                         'daily' => 'Daily',
@@ -127,7 +140,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
 
                 TextColumn::make('priority')
-                    ->label('Priority')
+                    ->label($this->getDbFieldLabel('priority', 'Priority'))
                     ->badge()
                     ->icon('heroicon-o-exclamation-circle')
                     ->color(fn(string $state): string => match ($state) {
@@ -140,7 +153,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
 
                 TextColumn::make('group.label')
-                    ->label('Group')
+                    ->label($this->getDbFieldLabel('group_label', 'Group'))
                     ->badge()
                     ->icon('heroicon-o-folder')
                     ->color('info')
@@ -150,7 +163,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visibleFrom('md'),
 
                 TextColumn::make('status')
-                    ->label('Status')
+                    ->label($this->getDbFieldLabel('status', 'Status'))
                     ->badge()
                     ->icon('heroicon-o-check-badge')
                     ->color(fn(string $state): string => match ($state) {
@@ -188,7 +201,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 Split::make([
                     TextColumn::make('title')
-                        ->label('Task Title')
+                        ->label($this->getDbFieldLabel('title', 'Task Title'))
                         ->weight(FontWeight::Bold)
                         ->searchable()
                         ->sortable(),
@@ -197,25 +210,25 @@ class TaskTable extends Component implements HasForms, HasTable
                 Panel::make([
                     Stack::make([
                         TextColumn::make('creator.first_name')
-                            ->label('Assigned By')
+                            ->label($this->getDbFieldLabel('creator_first_name', 'Assigned By'))
                             ->formatStateUsing(fn($record) => 'Assigned By: ' . ($record->creator ? $record->creator->first_name . ' ' . $record->creator->last_name : 'N/A')),
 
                         TextColumn::make('assignedUsers')
-                            ->label('Assigned To')
+                            ->label($this->getDbFieldLabel('assigned_users', 'Assigned To'))
                             ->formatStateUsing(fn($state, $record) => 'Assigned To: ' . $record->assignedUsers->map(function ($user) {
                                 return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
                             })->join(', ')),
 
                         TextColumn::make('due_date')
-                            ->label('Due Date')
+                            ->label($this->getDbFieldLabel('due_date', 'Due Date'))
                             ->formatStateUsing(fn($state) => 'Due Date: ' . (blank($state) ? 'Non' : Carbon::parse($state)->format('d-m-Y H:i'))),
 
                         TextColumn::make('category.name')
-                            ->label('Category')
+                            ->label($this->getDbFieldLabel('category_name', 'Category'))
                             ->formatStateUsing(fn($state) => 'Category: ' . ($state ?: 'No Category')),
 
                         TextColumn::make('recurrence')
-                            ->label('Repeat')
+                            ->label($this->getDbFieldLabel('recurrence', 'Repeat'))
                             ->formatStateUsing(fn($state) => 'Repeat: ' . match ($state) {
                                 'daily' => 'Daily',
                                 'weekly' => 'Weekly',
@@ -225,15 +238,15 @@ class TaskTable extends Component implements HasForms, HasTable
                             }),
 
                         TextColumn::make('priority')
-                            ->label('Priority')
+                            ->label($this->getDbFieldLabel('priority', 'Priority'))
                             ->formatStateUsing(fn($state) => 'Priority: ' . Str::ucfirst($state)),
 
                         TextColumn::make('group.label')
-                            ->label('Group')
+                            ->label($this->getDbFieldLabel('group_label', 'Group'))
                             ->formatStateUsing(fn($state) => 'Group: ' . ($state ?: 'No Group')),
 
                         TextColumn::make('status')
-                            ->label('Status')
+                            ->label($this->getDbFieldLabel('status', 'Status'))
                             ->formatStateUsing(fn($state) => 'Status: ' . Str::headline($state)),
                     ])->space(2),
                 ])
@@ -253,17 +266,17 @@ class TaskTable extends Component implements HasForms, HasTable
                 SelectFilter::make('assigned_by')
                     ->relationship('creator', 'first_name')
                     ->searchable()
-                    ->label('Assigned By')
+                    ->label($this->getDbFieldLabel('assigned_by', 'Assigned By'))
                     ->visible($this->taskView === 'my_tasks'),
 
                 SelectFilter::make('category')
                     ->relationship('category', 'name')
-                    ->label('Category'),
+                    ->label($this->getDbFieldLabel('category', 'Category')),
 
                 SelectFilter::make('assigned_to')
                     ->relationship('assignedUsers', 'first_name')
                     ->searchable()
-                    ->label('Assigned To')
+                    ->label($this->getDbFieldLabel('assigned_to', 'Assigned To'))
                     ->visible($this->taskView === 'assigned_to_others'),
 
                 SelectFilter::make('recurrence')
@@ -273,7 +286,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         'weekly' => 'Weekly',
                         'monthly' => 'Monthly',
                     ])
-                    ->label('Recurrence'),
+                    ->label($this->getDbFieldLabel('recurrence', 'Recurrence')),
 
                 SelectFilter::make('priority')->options([
                     'low' => 'Low',
@@ -283,15 +296,15 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 Filter::make('recurrence_end_date')
                     ->query(fn(Builder $query) => $query->where('recurrence_end_date', '>', now())->where('status', '!=', 'completed'))
-                    ->label('Recurrence End Date'),
+                    ->label($this->getDbFieldLabel('recurrence_end_date', 'Recurrence End Date')),
 
                 Filter::make('overdue')
                     ->query(fn(Builder $query) => $query->where('due_date', '<', now())->where('status', '!=', 'completed'))
-                    ->label('Overdue Tasks'),
+                    ->label($this->getDbFieldLabel('overdue_tasks', 'Overdue Tasks')),
             ], layout: FiltersLayout::AboveContentCollapsible)
             ->actions([
                 Action::make('task_verification')
-                    ->label('Verify')
+                    ->label($this->getDbFieldLabel('btn_verify', 'Verify'))
                     ->button()
                     ->size(ActionSize::Small)
                     ->color('warning')
@@ -364,7 +377,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 Action::make('approve')
                     ->action(fn(Task $task) => $this->approveCompletionRequest($task))
-                    ->label('Approve')
+                    ->label($this->getDbFieldLabel('btn_approve', 'Approve'))
                     ->button()
                     ->size(ActionSize::Small)
                     ->color('success')
@@ -383,7 +396,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 Action::make('approve_reassignment')
                     ->action(fn(Task $task, array $data) => $this->approveReassignmentRequest($task, $data))
-                    ->label('Approve Re-assignment')
+                    ->label($this->getDbFieldLabel('btn_approve_reassignment', 'Approve Re-assignment'))
                     ->button()
                     ->size(ActionSize::Small)
                     ->color('success')
@@ -406,7 +419,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 Action::make('reject_reassignment')
                     ->action(fn(Task $task) => $this->rejectReassignmentRequest($task))
-                    ->label('Reject Re-assignment')
+                    ->label($this->getDbFieldLabel('btn_reject_reassignment', 'Reject Re-assignment'))
                     ->button()
                     ->size(ActionSize::Small)
                     ->color('danger')
@@ -423,7 +436,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 Action::make('reject')
                     ->action(fn(Task $task) => $this->rejectCompletionRequest($task))
-                    ->label('Reject')
+                    ->label($this->getDbFieldLabel('btn_reject', 'Reject'))
                     ->button()
                     ->size(ActionSize::Small)
                     ->color('danger')
@@ -453,27 +466,29 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->closeModalByClickingAway(true)
                     ->closeModalByEscaping(true)
                     ->form(function (Task $task): array {
-                        $reminder = Reminder::where('task_id', $task->id)
-                            ->where('user_id', Auth::id())
-                            ->latest('id')
-                            ->first();
                         return [
                             Select::make('status')
                                 ->label('Select Option')
-                                ->options($this->getStatusOptions($task))
-                                ->default($this->getDefaultNextStatus($task))
+                                ->options([
+                                    'pending' => 'Pending',
+                                    'in_progress' => 'In Progress',
+                                    'completed' => 'Completed',
+                                ])
+                                ->default(fn(Task $task): string => $task->status)
                                 ->required()
-                                ->native(false),
+                                ->dehydrated(true)
+                                ->native(true),
 
                             Toggle::make('repeat')
                                 ->label('Repeat')
                                 ->default($task->recurrence !== 'none')
                                 ->live()
+                                ->dehydrated(true)
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     if (! $state) {
                                         $set('recurrence', 'none');
                                         $set('recurrence_end_date', null);
-                                    } elseif ($state && $set) {
+                                    } else {
                                         $set('recurrence', 'daily');
                                     }
                                 }),
@@ -489,6 +504,7 @@ class TaskTable extends Component implements HasForms, HasTable
                                 ->default($task->recurrence ?: 'none')
                                 ->native(false)
                                 ->live()
+                                ->dehydrated(true)
                                 ->visible(fn(Get $get) => (bool) $get('repeat')),
 
                             DatePicker::make('recurrence_end_date')
@@ -496,6 +512,7 @@ class TaskTable extends Component implements HasForms, HasTable
                                 ->default($task->recurrence_end_date ? Carbon::parse($task->recurrence_end_date) : null)
                                 ->native(false)
                                 ->displayFormat('d/m/Y')
+                                ->dehydrated(true)
                                 ->visible(function (Get $get) {
                                     return (bool) $get('repeat') && $get('recurrence') !== 'none';
                                 })
@@ -511,29 +528,22 @@ class TaskTable extends Component implements HasForms, HasTable
                                 ->format('Y-m-d H:i')
                                 ->hoursStep(1)
                                 ->minutesStep(1)
+                                ->dehydrated(true)
                                 ->required(),
 
                             Grid::make(2)
                                 ->schema([
-                                    TextInput::make('reminder_value')
-                                        ->label('Reminder Before Due Date')
+                                    TextInput::make('reminderTime')
+                                        ->label('Reminder Before')
                                         ->numeric()
                                         ->integer()
                                         ->minValue(1)
                                         ->placeholder('Enter time')
-                                        ->afterStateHydrated(function (TextInput $component, $state) use ($task) {
-                                            $value = DB::table('reminders')
-                                                ->where('task_id', $task->id)
-                                                ->latest('id')
-                                                ->value('reminder_value');
-
-                                            if ($value !== null) {
-                                                $component->state($value);
-                                            }
-                                        })
+                                        ->dehydrated(true)
+                                        ->default($task->reminderTime)
                                         ->nullable(),
 
-                                    Select::make('reminder_unit')
+                                    Select::make('reminderUnit')
                                         ->label('Reminder Unit')
                                         ->options([
                                             'minutes' => 'Minutes',
@@ -542,18 +552,10 @@ class TaskTable extends Component implements HasForms, HasTable
                                         ])
                                         ->native(false)
                                         ->placeholder('Select Option')
-                                        ->afterStateHydrated(function (Select $component, $state) use ($task) {
-                                            $unit = DB::table('reminders')
-                                                ->where('task_id', $task->id)
-                                                ->latest('id')
-                                                ->value('reminder_unit');
-
-                                            if ($unit !== null) {
-                                                $component->state($unit);
-                                            }
-                                        })
+                                        ->dehydrated(true)
+                                        ->default($task->reminderUnit)
                                         ->nullable(),
-                                ])
+                                ]),
                         ];
                     })
                     ->action(function (Task $task, array $data): void {
@@ -562,7 +564,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visible(fn(Task $task) => $this->canUpdateTaskStatusFromTable($task)),
 
                 Action::make('task_chat')
-                    ->label('Comment')
+                    ->label($this->getDbFieldLabel('btn_comment', 'Comment'))
                     ->button()
                     ->size(ActionSize::Small)
                     ->color('gray')
@@ -602,32 +604,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->label('')
                     ->icon('heroicon-o-pencil-square')
                     ->action(function (Task $task): void {
-                        DB::transaction(function () use ($task) {
-                            $task->update([
-                                'status' => 'pending',
-                            ]);
-
-                            DB::table('task_updates')
-                                ->where('task_id', $task->id)
-                                ->delete();
-
-                            TaskCompletionRequest::where('task_id', $task->id)
-                                ->where('request_status', 'pending')
-                                ->update([
-                                    'request_status' => 'rejected',
-                                ]);
-
-                            foreach ($task->taskAssignments as $assignment) {
-                                DB::table('task_updates')->insert([
-                                    'task_id' => $task->id,
-                                    'user_id' => $assignment->user_id,
-                                    'status' => 'pending',
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
-                            }
-                        });
-
+                        // FIXED: Status ko forced pending karna hata diya gaya hai taaki database ka original status maintain rahe
                         $this->dispatch('openTaskDetailsModal', taskId: $task->id);
                     })
                     ->visible(
@@ -658,7 +635,7 @@ class TaskTable extends Component implements HasForms, HasTable
             ], position: ActionsPosition::AfterColumns)
             ->bulkActions([
                 BulkAction::make('delete_all_tasks')
-                    ->label('Delete All Tasks')
+                    ->label($this->getDbFieldLabel('btn_delete_all', 'Delete All Tasks'))
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
@@ -700,9 +677,10 @@ class TaskTable extends Component implements HasForms, HasTable
                 return;
             }
 
-            $allowedStatuses = ['in_progress', 'completed'];
+            $newStatus = $data['status'] ?? $status;
+            $allowedStatuses = ['pending', 'in_progress', 'completed'];
 
-            if (! in_array($status, $allowedStatuses, true)) {
+            if (! in_array($newStatus, $allowedStatuses, true)) {
                 Notification::make()
                     ->title('Invalid status')
                     ->danger()
@@ -711,129 +689,67 @@ class TaskTable extends Component implements HasForms, HasTable
                 return;
             }
 
-            $dueDate = null;
-            if (! empty($data['due_date'])) {
-                $dueDate = Carbon::parse($data['due_date']);
-
-                if ($dueDate->lte(now())) {
-                    Notification::make()
-                        ->title('Invalid Due Date')
-                        ->body('Due date must be a future date and time.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
-            }
-
-            $repeatEnabled = (bool) ($data['repeat'] ?? false);
-            $recurrence = $repeatEnabled ? ($data['recurrence'] ?? 'none') : 'none';
-
-            if ($repeatEnabled && ! in_array($recurrence, ['daily', 'weekly', 'monthly'], true)) {
-                Notification::make()
-                    ->title('Invalid Repeat Frequency')
-                    ->body('Please select Daily, Weekly or Monthly.')
-                    ->danger()
-                    ->send();
-
-                return;
-            }
+            $recurrence = $data['recurrence'] ?? ($task->recurrence ?: 'none');
 
             $recurrenceEndDate = null;
-            if ($repeatEnabled && ! empty($data['recurrence_end_date'])) {
+            if (!empty($data['recurrence_end_date'])) {
                 $recurrenceEndDate = Carbon::parse($data['recurrence_end_date'])->startOfDay();
-
-                if ($dueDate && $recurrenceEndDate->lt($dueDate->copy()->startOfDay())) {
-                    Notification::make()
-                        ->title('Invalid Recurrence End Date')
-                        ->body('Recurrence end date cannot be before the due date.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
+            } else {
+                $recurrenceEndDate = $task->recurrence_end_date ? Carbon::parse($task->recurrence_end_date)->startOfDay() : null;
             }
 
-            $reminderValue = ! empty($data['reminder_value']) ? (int) $data['reminder_value'] : null;
-            $reminderUnit = $data['reminder_unit'] ?? null;
-            $reminderTime = null;
+            $dueDate = null;
+            if (!empty($data['due_date'])) {
+                $dueDate = Carbon::parse($data['due_date']);
+            } else {
+                $dueDate = $task->due_date ? Carbon::parse($task->due_date) : null;
+            }
 
-            if ($reminderValue !== null || $reminderUnit !== null) {
-                if (! $dueDate) {
-                    Notification::make()
-                        ->title('Due Date Required')
-                        ->body('Please select Due Date & Time before setting a reminder.')
-                        ->warning()
-                        ->send();
+            $reminderTimeVal = isset($data['reminderTime']) && ! empty($data['reminderTime']) ? (int) $data['reminderTime'] : null;
+            $reminderUnitVal = $data['reminderUnit'] ?? null;
 
-                    return;
-                }
-
-                if (! $reminderValue || ! in_array($reminderUnit, ['minutes', 'hours', 'days'], true)) {
-                    Notification::make()
-                        ->title('Invalid Reminder')
-                        ->body('Please enter reminder time and select Minutes, Hours or Days.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
-
-                $reminderTime = match ($reminderUnit) {
-                    'minutes' => $dueDate->copy()->subMinutes($reminderValue),
-                    'hours' => $dueDate->copy()->subHours($reminderValue),
-                    'days' => $dueDate->copy()->subDays($reminderValue),
+            $reminderTriggerTime = null;
+            if ($reminderTimeVal !== null && $reminderUnitVal !== null && $dueDate) {
+                $reminderTriggerTime = match ($reminderUnitVal) {
+                    'minutes' => $dueDate->copy()->subMinutes($reminderTimeVal),
+                    'hours' => $dueDate->copy()->subHours($reminderTimeVal),
+                    'days' => $dueDate->copy()->subDays($reminderTimeVal),
+                    default => null,
                 };
-
-                if ($reminderTime->lte(now()) || $reminderTime->gte($dueDate)) {
-                    Notification::make()
-                        ->title('Invalid Reminder Time')
-                        ->body('Reminder must be before the Due Date & Time and must be in the future.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
             }
 
             DB::transaction(function () use (
                 $task,
-                $status,
+                $newStatus,
                 $comment,
                 $recurrence,
                 $recurrenceEndDate,
                 $dueDate,
-                $reminderValue,
-                $reminderUnit,
-                $reminderTime
+                $reminderTimeVal,
+                $reminderUnitVal,
+                $reminderTriggerTime
             ) {
                 $task->update([
-                    'status' => $status,
+                    'status' => $newStatus,
                     'recurrence' => $recurrence,
                     'recurrence_end_date' => $recurrenceEndDate ? $recurrenceEndDate->format('Y-m-d') : null,
                     'due_date' => $dueDate,
+                    'reminderTime' => $reminderTimeVal,
+                    'reminderUnit' => $reminderUnitVal,
                 ]);
 
                 DB::table('task_updates')->insert([
                     'task_id' => $task->id,
                     'user_id' => Auth::id(),
-                    'status' => $status,
+                    'status' => $newStatus,
                     'comment' => $comment ? trim((string) $comment) : null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                if (!empty($comment) && !empty(trim((string) $comment))) {
-                    TaskConversation::create([
-                        'task_id' => $task->id,
-                        'user_id' => Auth::id(),
-                        'message' => trim((string) $comment),
-                    ]);
-                }
-
                 Reminder::where('task_id', $task->id)->delete();
 
-                if ($status !== 'completed' && $reminderTime && $reminderValue && $reminderUnit) {
+                if ($newStatus !== 'completed' && $dueDate && $reminderTriggerTime) {
                     $selectedUsers = DB::table('task_assignments')
                         ->where('task_id', $task->id)
                         ->pluck('user_id')
@@ -849,27 +765,34 @@ class TaskTable extends Component implements HasForms, HasTable
                         $reminder = Reminder::create([
                             'task_id' => $task->id,
                             'user_id' => $userId,
-                            'reminder_time' => $reminderTime,
-                            'reminder_unit' => $reminderUnit,
-                            'reminder_value' => $reminderValue,
+                            'reminder_time' => $reminderTriggerTime,
+                            'reminder_unit' => $reminderUnitVal,
+                            'reminder_value' => $reminderTimeVal,
                         ]);
 
+                        // 1. Existing Email / SMS Reminder Job
                         SendReminderJob::dispatch(
                             $reminder->id,
                             ['email', 'SMS'],
                             "Reminder: Your task '{$task->title}' is due on " . $dueDate->format('d-m-Y H:i') . "."
-                        )->delay($reminderTime);
+                        )->delay($reminderTriggerTime);
+
+                        // 2. New WhatsApp Due Reminder Job dispatch kiya gaya hai
+                        \App\Jobs\SendTaskDueWhatsAppJob::dispatch(
+                            $task->id,
+                            $userId,
+                            $dueDate->format('Y-m-d H:i:s')
+                        )->delay($reminderTriggerTime);
                     }
                 }
 
-                if ($status === 'completed') {
+                if ($newStatus === 'completed') {
                     $this->stopTaskMailFlowIfCompleted($task);
                 }
             });
 
             Notification::make()
                 ->title('Task updated successfully')
-                ->body('Status, Repeat, Due Date and Reminder updated successfully.')
                 ->success()
                 ->send();
 
@@ -877,9 +800,7 @@ class TaskTable extends Component implements HasForms, HasTable
             $this->dispatch('taskStatusUpdated');
         } catch (\Throwable $e) {
             Log::error('Task status update error: ' . $e->getMessage(), [
-                'task_id' => $task->id ?? null,
-                'user_id' => Auth::id(),
-                'status' => $status,
+                'trace' => $e->getTraceAsString()
             ]);
 
             Notification::make()
@@ -927,27 +848,29 @@ class TaskTable extends Component implements HasForms, HasTable
         return $task->status;
     }
 
-    private function getStatusOptions(Task $task): array
-    {
-        return [
-            'in_progress' => 'In Progress',
-            'completed' => 'Complete',
-        ];
-    }
-
     private function getDefaultNextStatus(Task $task): string
     {
-        return 'in_progress';
+        return $task->status ?? 'pending';
     }
 
     private function getStatusActionLabel(Task $task): string
     {
-        return 'In Progress';
+        return match ($task->status) {
+            'pending'     => 'Pending',
+            'in_progress' => 'In Progress',
+            'completed'   => 'Complete',
+            default       => 'Pending',
+        };
     }
 
     private function getStatusActionColor(Task $task): string
     {
-        return 'info';
+        return match ($task->status) {
+            'pending' => 'warning',
+            'in_progress' => 'info',
+            'completed' => 'success',
+            default => 'warning',
+        };
     }
 
     public function resetTaskWorkflowAfterEdit(Task $task): void
@@ -1268,7 +1191,6 @@ class TaskTable extends Component implements HasForms, HasTable
         $authId = $user->id;
         $query = Task::query();
 
-        // Category & Group Hierarchy Restrictions
         if ($user->role === 'admin') {
             $adminCategoryId = $user->category_id ?? null;
             $adminGroupId = $user->group_id ?? null;
@@ -1298,7 +1220,6 @@ class TaskTable extends Component implements HasForms, HasTable
                 }
             });
         } elseif ($user->role !== 'super-admin') {
-            // User / Employee restrictions based on their assigned category/group
             $userCategoryId = $user->category_id ?? null;
             $userGroupId = $user->group_id ?? null;
 
@@ -1441,97 +1362,6 @@ class TaskTable extends Component implements HasForms, HasTable
             Reminder::where('task_id', $task->id)->delete();
         } catch (\Throwable $e) {
             Log::warning('Could not clear reminders for completed task: ' . $e->getMessage());
-        }
-    }
-
-    public function saveTableTaskReminder(
-        Task $task,
-        int $reminderValue,
-        string $reminderOnlyUnit,
-        string $reminderUnit
-    ): void {
-        try {
-            if (! in_array($reminderUnit, ['minutes', 'hours', 'days'], true)) {
-                Notification::make()
-                    ->title('Invalid reminder unit')
-                    ->danger()
-                    ->send();
-
-                return;
-            }
-
-            if ($reminderValue < 1) {
-                Notification::make()
-                    ->title('Invalid reminder time')
-                    ->body('Reminder time must be at least 1.')
-                    ->danger()
-                    ->send();
-
-                return;
-            }
-
-            if (! $task->due_date) {
-                Notification::make()
-                    ->title('Due date required')
-                    ->body('Please select a due date before setting a reminder.')
-                    ->warning()
-                    ->send();
-
-                return;
-            }
-
-            $dueDate = Carbon::parse($task->due_date);
-
-            $reminderTime = match ($reminderUnit) {
-                'minutes' => $dueDate->copy()->subMinutes($reminderValue),
-                'hours' => $dueDate->copy()->subHours($reminderValue),
-                'days' => $dueDate->copy()->subDays($reminderValue),
-            };
-
-            if ($reminderTime->isPast()) {
-                Notification::make()
-                    ->title('Invalid reminder time')
-                    ->body('Reminder must be scheduled before the due date and cannot be in the past.')
-                    ->danger()
-                    ->send();
-
-                return;
-            }
-
-            Reminder::where('task_id', $task->id)
-                ->where('user_id', Auth::id())
-                ->whereIn('reminder_unit', ['minutes', 'hours', 'days'])
-                ->delete();
-
-            $reminder = Reminder::create([
-                'task_id' => $task->id,
-                'user_id' => Auth::id(),
-                'reminder_time' => $reminderTime,
-                'reminder_unit' => $reminderUnit,
-                'reminder_value' => $reminderValue,
-            ]);
-
-            SendReminderJob::dispatch(
-                $reminder->id,
-                ['email', 'SMS'],
-                'Reminder: Task "' . $task->title . '" is due on ' . $dueDate->format('d/m/Y H:i') . '.'
-            )->delay($reminderTime);
-
-            Notification::make()
-                ->title('Reminder saved')
-                ->body('Reminder set for ' . $reminderTime->format('d/m/Y H:i'))
-                ->success()
-                ->send();
-        } catch (\Throwable $e) {
-            Log::error('Task table reminder error: ' . $e->getMessage(), [
-                'task_id' => $task->id ?? null,
-                'user_id' => Auth::id(),
-            ]);
-
-            Notification::make()
-                ->title('Reminder Error')
-                ->danger()
-                ->send();
         }
     }
 }

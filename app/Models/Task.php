@@ -22,6 +22,8 @@ class Task extends Model
         'label_id',
         'recurrence',
         'recurrence_end_date',
+        'reminderTime',
+        'reminderUnit',
         'due_date',
         'status',
         'user_id',
