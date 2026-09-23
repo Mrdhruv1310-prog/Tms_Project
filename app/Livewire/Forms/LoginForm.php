@@ -20,6 +20,14 @@ class LoginForm extends Component
     public $error = false;
     public $submitted = true;
 
+    public function mount()
+    {
+        // Agar user pehle se logged in hai, toh use seedhe dashboard par bhej do
+        if (Auth::check()) {
+            return redirect()->route('dashboard'); // Apne dashboard route ka naam yahan likhein
+        }
+    }
+
     public function login(Request $request)
     {
         $this->submitted = true;
@@ -31,7 +39,6 @@ class LoginForm extends Component
         ], [
             'email.required' => 'Please enter the email address.',
             'email.email' => 'Please enter a valid email address.',
-
             'password.required' => 'Please enter the password.',
             'password.min' => 'The password must be at least 6 characters long.',
         ]);
@@ -46,7 +53,7 @@ class LoginForm extends Component
 
         if (Auth::attempt($credentials, true)) {
             $request->session()->regenerate();
-            return $this->redirect('dashboard');
+            return redirect()->intended('dashboard');
         }
 
         $this->addError('credentials', 'Invalid credentials!');
