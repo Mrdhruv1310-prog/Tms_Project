@@ -44,10 +44,10 @@ class ExportTaskModal extends Component
         $this->exporting = true;
     }
 
-    public function exportMyTasksSummary()
+    public function exportMyTasksSummary($filter = 'all', $startDate = null, $endDate = null)
     {
         $this->authorizeUser();
-        return Excel::download(new MyTasksSummaryExport, 'my_tasks_summary.xlsx');
+        return Excel::download(new MyTasksSummaryExport($filter, $startDate, $endDate), 'my_tasks_summary.xlsx');
     }
 
     public function exportTaskStatusOverview()
@@ -62,12 +62,17 @@ class ExportTaskModal extends Component
         return Excel::download(new OverdueTasksExport, 'overdue_tasks.xlsx');
     }
 
-    public function exportCompletedTasks()
+    // public function exportCompletedTasks()
+    // {
+    //     $this->authorizeUser();
+    //     return Excel::download(new CompletedTaskReportExport, 'completed_tasks.xlsx');
+    // }
+
+    public function exportCompletedTasks($filter = 'all', $startDate = null, $endDate = null)
     {
         $this->authorizeUser();
-        return Excel::download(new CompletedTaskReportExport, 'completed_tasks.xlsx');
+        return Excel::download(new CompletedTaskReportExport($filter, $startDate, $endDate), 'completed_tasks.xlsx');
     }
-
     /**
      * Ensure user is authenticated.
      */

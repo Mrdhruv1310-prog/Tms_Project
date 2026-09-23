@@ -1,67 +1,30 @@
 <?php
+
 namespace App\Exports;
 
 use App\Models\Task;
 use App\Models\User;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
-class TaskStatusAndUserSummaryExport implements FromCollection, WithHeadings
+class TaskStatusAndUserSummaryExport implements WithMultipleSheets
 {
-    public function collection()
-    {
-        // Get overall task status
-        $taskCounts = $this->getTaskCounts();
-
-        // Create a collection to store both reports
-        $combinedData = collect();
-
-        // Add overall task counts
-        $combinedData->push([
-            $taskCounts['totalTasks'],
-            $taskCounts['tasksPending'],
-            $taskCounts['tasksInProgress'],
-            $taskCounts['tasksCompleted'],
-        ]);
-
-        // Add empty row for spacing
-        $combinedData->push(['', '', '', '']);
-
-        // Add user task summaries
-        $combinedData->push(['User Name', 'Total Tasks Assigned', 'Total Tasks Completed', 'Total Tasks Overdue']);
-        
-        // Populate user summaries below headings
-        foreach ($this->getUserTaskSummaries() as $summary) {
-            $combinedData->push($summary);
-        }
-
-        return $combinedData;
-    }
-
-    protected function getTaskCounts()
+    public function sheets(): array
     {
         return [
-            'totalTasks' => Task::count(),
-            'tasksPending' => Task::where('status', 'pending')->count(),
-            'tasksInProgress' => Task::where('status', 'in_progress')->count(),
-            'tasksCompleted' => Task::where('status', 'completed')->count(),
+            new TaskStatusOverviewSheet(),
+            new UserTaskSummarySheet(),
         ];
     }
+}
 
-    protected function getUserTaskSummaries()
+class TaskStatusOverviewSheet implements FromArray, WithHeadings, WithTitle
+{
+    public function title(): string
     {
-        return User::withCount(['tasks' => function ($query) {
-            $query->where('status', 'completed');
-        }, 'tasks as overdue_tasks_count' => function ($query) {
-            $query->where('due_date', '<', now())->where('status', '!=', 'completed');
-        }])->get()->map(function ($user) {
-            return [
-                $user->first_name.' '.$user->last_name,  // Assuming the User model has a name attribute
-                $user->tasks_count,
-                $user->tasks()->where('status', 'completed')->count(),
-                $user->overdue_tasks_count,
-            ];
-        });
+        return 'Task Status Overview';
     }
 
     public function headings(): array
@@ -71,7 +34,61 @@ class TaskStatusAndUserSummaryExport implements FromCollection, WithHeadings
             'Tasks Pending',
             'Tasks In Progress',
             'Tasks Completed',
-            // The headings for user task summaries will be added dynamically after the task counts
         ];
+    }
+
+    public function array(): array
+    {
+        return [
+            [
+                Task::count(),
+                Task::where('status', 'pending')->count(),
+                Task::where('status', 'in_progress')->count(),
+                Task::where('status', 'completed')->count(),
+            ]
+        ];
+    }
+}
+
+class UserTaskSummarySheet implements FromArray, WithHeadings, WithTitle
+{
+    public function title(): string
+    {
+        return 'User Task Summary';
+    }
+
+    public function headings(): array
+    {
+        return [
+            'User Name',
+            'Total Tasks Assigned',
+            'Total Tasks Completed',
+            'Total Tasks Overdue'
+        ];
+    }
+
+    public function array(): array
+    {
+        return User::withCount([
+            'tasks', // Total tasks assigned
+            'tasks as completed_tasks_count' => function ($query) {
+                $query->where('status', 'completed');
+            },
+            'tasks as overdue_tasks_count' => function ($query) {
+                $query->where('due_date', '<', now())->where('status', '!=', 'completed');
+            }
+        ])->get()->map(function ($user) {
+            $userName = trim($user->first_name . ' ' . $user->last_name);
+            if (empty($userName)) {
+                $userName = $user->email ?? 'N/A';
+            }
+
+            return [
+                $userName,
+                $user->tasks_count,
+                $user->completed_tasks_count,
+                $user->overdue_tasks_count,
+            ];
+        })->toArray();
     }
 }
