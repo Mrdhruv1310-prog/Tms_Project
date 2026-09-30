@@ -190,6 +190,8 @@ class Dashboard extends Component
             ->toArray();
     }
 
+    // This Used to show group wise function details and count of tasks
+    // group for the dashboard view. It fetches groups and counts tasks based on the user's role and assignments.
     private function setGroups(bool $isSuperAdmin, bool $isAdmin, bool $isUser, int $authUserId): void
     {
         $this->groups = Group::withCount([
