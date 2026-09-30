@@ -3,32 +3,35 @@
     <!-- Main content container with appropriate padding and spacing -->
     <main class="scrollcontainer md:ml-16 px-4 sm:px-6 lg:px-8 py-6 pt-20 pb-16 transition-all duration-300">
 
-        {{-- Executive Header / Background --}}
+        <div class="mb-5 flex items-center justify-between">
+            <a href="{{ route('dashboard') }}" wire:navigate
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/80 backdrop-blur-md border border-gray-200/80 text-sm font-semibold text-gray-700 hover:text-[rgb(7,139,221)] hover:border-[rgb(7,139,221)]/30 shadow-sm transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                <span>Back to Dashboard</span>
+            </a>
+        </div>
+
         <div
-            class="mb-8 sm:mb-10 overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/85 backdrop-blur-2xl shadow-xl shadow-slate-950/[0.03] p-6 sm:p-8 relative">
-            <div
-                class="absolute -top-20 -left-20 w-80 sm:w-96 h-80 sm:h-96 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-3xl pointer-events-none">
-            </div>
-
+            class="mb-8 sm:mb-10 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-300 bg-white/95 backdrop-blur-xl shadow-xl shadow-slate-300/50 ring-1 ring-white p-6 sm:p-8 relative">
             <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between relative z-10">
-                <div class="space-y-2">
+                <div class="flex items-center gap-4">
                     <div
-                        class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-                        <button type="button" onclick="window.history.back()"
-                            class="group hover:text-blue-700 dark:hover:text-blue-300 transition-all cursor-pointer flex items-center gap-1.5 shrink-0 bg-transparent border-none p-0 text-slate-500 dark:text-slate-400 font-bold">
-                            <svg class="h-4 w-4 transform transition-transform group-hover:-translate-x-0.5"
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                            Back to Dashboard
-                        </button>
+                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
+                            stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" />
+                        </svg>
                     </div>
-
                     <div class="space-y-1">
-                        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                        <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
                             Category Report
                         </h1>
-                        <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+                        <p class="text-xs sm:text-sm text-slate-500 font-normal">
                             Category-wise task status overview and analytics performance
                         </p>
                     </div>
