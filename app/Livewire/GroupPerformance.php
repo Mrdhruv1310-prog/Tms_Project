@@ -3,17 +3,26 @@
 namespace App\Livewire;
 
 use App\Models\Group;
+use App\Models\User;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
+#[Title('Group Performance | TMS')]
 class GroupPerformance extends Component
 {
-    public $group;
+    public ?Group $group = null;
     public string $groupName = 'Unknown Group';
+
+    /** @var array<int, array<string, mixed>> */
     public array $users = [];
 
-    public function mount($id)
+    public function mount(int|string $id): void
     {
+        /** @var User|null $authUser */
         $authUser = Auth::user();
         if (! $authUser) {
             abort(403, 'Unauthorized action.');
@@ -25,7 +34,7 @@ class GroupPerformance extends Component
 
         // If regular user, verify access to this group via assigned tasks
         if ($isUser) {
-            $hasAccess = Group::where('id', $id)
+            $hasAccess = Group::query()->where('id', $id)
                 ->whereHas('tasks.taskAssignments', function ($query) use ($authUserId) {
                     $query->where('user_id', $authUserId);
                 })
@@ -35,7 +44,8 @@ class GroupPerformance extends Component
         }
 
         // Fetch group with users and tasks in a single query execution (eliminates redundant DB hits)
-        $this->group = Group::with([
+        /** @var Group $group */
+        $group = Group::query()->with([
             'users' => function ($query) use ($isUser, $authUserId) {
                 $query->when($isUser, function ($q) use ($authUserId) {
                     $q->where('users.id', $authUserId);
@@ -43,10 +53,11 @@ class GroupPerformance extends Component
                     ->whereHas('tasks')
                     ->with([
                         'tasks' => function ($taskQuery) use ($isUser, $authUserId) {
-                            $taskQuery->select('tasks.id', 'task_assignments.user_id', 'tasks.status')
-                                ->join('task_assignments', 'tasks.id', '=', 'task_assignments.task_id')
+                            $taskQuery->select('tasks.id', 'tasks.status')
                                 ->when($isUser, function ($q) use ($authUserId) {
-                                    $q->where('task_assignments.user_id', $authUserId);
+                                    $q->whereHas('taskAssignments', function ($subQ) use ($authUserId) {
+                                        $subQ->where('user_id', $authUserId);
+                                    });
                                 });
                         }
                     ]);
@@ -55,11 +66,13 @@ class GroupPerformance extends Component
             ->where('id', $id)
             ->firstOrFail();
 
+        $this->group = $group;
         // Set group name safely from the fetched model instance
         $this->groupName = $this->group->label ?? $this->group->name ?? 'Unknown Group';
 
         // Map user performance metrics
         $this->users = $this->group->users->map(function ($user) {
+            /** @var User $user */
             $completedTasks = $user->tasks->where('status', 'completed')->count();
             $inProgressTasks = $user->tasks->where('status', 'in_progress')->count();
             $pendingTasks = $user->tasks->where('status', 'pending')->count();
@@ -82,10 +95,8 @@ class GroupPerformance extends Component
         })->toArray();
     }
 
-    public function render()
+    public function render(): View
     {
-        return view('livewire.group-performance')->layout('components.layouts.app', [
-            'title' => $this->groupName . ' Group | TMS',
-        ]);
+        return view('livewire.group-performance');
     }
 }

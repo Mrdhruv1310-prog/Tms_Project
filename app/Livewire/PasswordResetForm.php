@@ -5,9 +5,14 @@ namespace App\Livewire;
 use App\Models\PasswordResetToken;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.login')]
+#[Title('Reset Password | TMS')]
 class PasswordResetForm extends Component
 {
     public string $email = '';
@@ -18,10 +23,13 @@ class PasswordResetForm extends Component
     public function mount(string $token): void
     {
         $this->token = $token;
-        $this->email = (string) request()->query('email', '');
 
-        // Validate the token and expiration
-        $passwordReset = PasswordResetToken::where('email', $this->email)
+        $emailQuery = request()->query('email', '');
+        $this->email = is_string($emailQuery) ? $emailQuery : '';
+
+        /** @var PasswordResetToken|null $passwordReset */
+        $passwordReset = PasswordResetToken::query()
+            ->where('email', $this->email)
             ->where('token', $this->token)
             ->first();
 
@@ -31,15 +39,15 @@ class PasswordResetForm extends Component
         }
     }
 
-    public function resetPassword()
+    public function resetPassword(): mixed
     {
         $this->validate([
             'password' => [
                 'required',
                 'min:8',
-                'regex:/[A-Z]/',           // At least one uppercase letter
-                'regex:/[a-z]/',           // At least one lowercase letter
-                'regex:/[!@#$%^&*()_+\-=\[\]{}|\\:;,.<>\/?~]/',  // At least one special symbol
+                'regex:/[A-Z]/',
+                'regex:/[a-z]/',
+                'regex:/[!@#$%^&*()_+\-=\[\]{}|\\:;,.<>\/?~]/',
             ],
             'passwordconfirmation' => 'required|same:password',
         ], [
@@ -51,44 +59,41 @@ class PasswordResetForm extends Component
             'passwordconfirmation.same' => 'The password confirmation does not match the password.',
         ]);
 
-        // Verify the token and email again
-        $passwordReset = PasswordResetToken::where('email', $this->email)
+        /** @var PasswordResetToken|null $passwordReset */
+        $passwordReset = PasswordResetToken::query()
+            ->where('email', $this->email)
             ->where('token', $this->token)
             ->first();
 
         if (! $passwordReset) {
             $this->dispatch('notify', ['message' => 'Invalid or expired token.', 'type' => 'error']);
-            return;
+            return null;
         }
 
-        // Update the user's password
-        $user = User::where('email', $this->email)->first();
+        /** @var User|null $user */
+        $user = User::query()->where('email', $this->email)->first();
         if ($user) {
             $user->update([
                 'password' => Hash::make($this->password),
             ]);
         }
 
-        // Delete the used password reset token
-        PasswordResetToken::where('email', $this->email)->delete();
+        PasswordResetToken::query()->where('email', $this->email)->delete();
 
-        // Redirect to login page with success message
         session()->flash('successmessage', 'Your password has been reset successfully.');
         return $this->redirect(route('login'), navigate: true);
     }
 
     protected function tokenExpired(PasswordResetToken $passwordReset): bool
     {
-        $expirationTime = 60; // Token is valid for 60 minutes
+        $expirationTime = 60;
 
         $createdAt = Carbon::parse($passwordReset->created_at);
         return $createdAt->addMinutes($expirationTime)->isPast();
     }
 
-    public function render()
+    public function render(): View
     {
-        return view('livewire.password-reset-form')->layout('components.layouts.login', [
-            'pageTitle' => 'Reset Password | TMS',
-        ]);
+        return view('livewire.password-reset-form');
     }
 }

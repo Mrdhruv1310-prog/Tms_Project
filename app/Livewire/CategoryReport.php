@@ -3,23 +3,30 @@
 namespace App\Livewire;
 
 use App\Models\Category;
+use App\Models\User;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 
+#[Layout('components.layouts.app')]
+#[Title('Category Report | TMS')]
 class CategoryReport extends Component
 {
-    public $categories = [];
+    /** @var array<int, array<string, mixed>> */
+    public array $categories = [];
 
-    public function mount()
+    public function mount(): void
     {
         // Ensure user is authenticated
+        /** @var User|null $loggedInUser */
         $loggedInUser = Auth::user();
         if (!$loggedInUser) {
             abort(403, 'Unauthorized action.');
         }
 
         // Fetch categories with tasks AND eager-load taskAssignments to prevent N+1 query issues
-        $this->categories = Category::with([
+        $this->categories = Category::query()->with([
             'tasks' => function ($query) {
                 $query->select('id', 'category_id', 'status');
             },
@@ -29,6 +36,7 @@ class CategoryReport extends Component
         ])
             ->get()
             ->map(function ($category) use ($loggedInUser) {
+                /** @var Category $category */
                 // Filter tasks based on user role
                 if ($loggedInUser->role === 'admin' || $loggedInUser->role === 'super-admin') {
                     $userTasks = $category->tasks;
@@ -51,7 +59,7 @@ class CategoryReport extends Component
 
                 // Return structured category report data
                 return [
-                    'title' => $category->name,
+                    'title' => (string) $category->name,
                     'pending' => [
                         'completed' => $pendingTasks,
                         'total' => $totalTasks,
@@ -72,10 +80,8 @@ class CategoryReport extends Component
             ->toArray();
     }
 
-    public function render()
+    public function render(): mixed
     {
-        return view('livewire.category-report')->layout('components.layouts.app', [
-            'title' => 'Category Report | TMS',
-        ]);
+        return view('livewire.category-report');
     }
 }

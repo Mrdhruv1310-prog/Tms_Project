@@ -6,18 +6,24 @@ use Livewire\Component;
 use App\Models\User;
 use App\Models\Group;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\View\View;
 
 class ViewUserGroups extends Component
 {
     public bool $isOpen = false;
     public ?int $labelId = null;
     public string $labelName = '';
+
+    /** @var array<int, array<string, mixed>> */
     public array $groupUsers = [];
+
+    /** @var array<int, array<string, mixed>> */
     public array $availableUsers = [];
 
+    /** @var array<string, string> */
     protected $listeners = ['openUserGroupModal' => 'loadUsers'];
 
-    public function loadUsers($labelId): void
+    public function loadUsers(mixed $labelId): void
     {
         $resolvedLabelId = is_array($labelId) ? ($labelId['labelId'] ?? null) : $labelId;
 
@@ -28,7 +34,9 @@ class ViewUserGroups extends Component
         }
 
         $this->labelId = (int) $resolvedLabelId;
-        $group = Group::find($this->labelId);
+
+        /** @var Group|null $group */
+        $group = Group::query()->find($this->labelId);
 
         if (!$group) {
             $this->labelName = 'Unknown Group';
@@ -36,8 +44,9 @@ class ViewUserGroups extends Component
             return;
         }
 
-        $this->labelName = is_string($group->label) && !empty($group->label)
-            ? $group->label
+        $groupLabel = $group->getAttribute('label');
+        $this->labelName = is_string($groupLabel) && !empty($groupLabel)
+            ? $groupLabel
             : 'Unknown Group';
 
         $this->groupUsers = $group->users()
@@ -51,11 +60,12 @@ class ViewUserGroups extends Component
 
     public function fetchAvailableUsers(): void
     {
-        $existingUserIds = array_column($this->groupUsers ?? [], 'id');
+        $existingUserIds = array_column($this->groupUsers, 'id');
         $currentUser = Auth::user();
         $currentUserId = Auth::id();
 
-        $query = User::select('id', 'first_name', 'last_name', 'role')
+        /** @var \Illuminate\Database\Eloquent\Builder<User> $query */
+        $query = User::query()->select('id', 'first_name', 'last_name', 'role')
             ->whereNotIn('id', $existingUserIds);
 
         if ($currentUser && $currentUserId) {
@@ -69,11 +79,13 @@ class ViewUserGroups extends Component
             }
         }
 
-        $this->availableUsers = $query
-            ->get()
-            ->map(function ($user) {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $users */
+        $users = $query->get();
+
+        $this->availableUsers = $users
+            ->map(function (User $user): array {
                 return [
-                    'id' => $user->id,
+                    'id' => (int) $user->getKey(),
                     'name' => trim(
                         (string) ($user->first_name ?? '') . ' ' .
                             (string) ($user->last_name ?? '')
@@ -83,10 +95,14 @@ class ViewUserGroups extends Component
             ->toArray();
     }
 
-    public function addUser($userId): void
+    public function addUser(int $userId): void
     {
-        $group = Group::find($this->labelId);
-        $user = User::find($userId);
+        /** @var Group|null $group */
+        $group = Group::query()->find($this->labelId);
+
+        /** @var User|null $user */
+        $user = User::query()->find($userId);
+
         $currentUser = Auth::user();
         $currentUserId = Auth::id();
 
@@ -94,7 +110,7 @@ class ViewUserGroups extends Component
             return;
         }
 
-        if ($user->id === $currentUserId) {
+        if ((int) $user->getKey() === (int) $currentUserId) {
             $this->dispatch('notify', ['message' => 'You cannot add yourself to the group.', 'type' => 'error']);
             return;
         }
@@ -116,15 +132,18 @@ class ViewUserGroups extends Component
 
         $userName = trim(ucfirst($user->first_name ?? '') . ' ' . ucfirst($user->last_name ?? ''));
         $this->dispatch('notify', [
-            'message' => "Added {$userName} to the " . ucwords($this->labelName ?? 'Group') . " group.",
+            'message' => "Added {$userName} to the " . ucwords($this->labelName) . " group.",
             'type' => 'success'
         ]);
     }
 
-    public function deleteUser($userId): void
+    public function deleteUser(int $userId): void
     {
-        $group = Group::find($this->labelId);
-        $user = User::find($userId);
+        /** @var Group|null $group */
+        $group = Group::query()->find($this->labelId);
+
+        /** @var User|null $user */
+        $user = User::query()->find($userId);
 
         if ($group && $user) {
             $group->users()->detach($userId);
@@ -132,13 +151,13 @@ class ViewUserGroups extends Component
 
             $userName = trim(ucfirst($user->first_name ?? '') . ' ' . ucfirst($user->last_name ?? ''));
             $this->dispatch('notify', [
-                'message' => "Removed {$userName} from the " . ucwords($this->labelName ?? 'Group') . " group.",
+                'message' => "Removed {$userName} from the " . ucwords($this->labelName) . " group.",
                 'type' => 'success'
             ]);
         }
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.view-user-groups');
     }

@@ -12,8 +12,8 @@ class SendTaskWhatsAppJob implements ShouldQueue
 {
     use Queueable;
 
-    public $task;
-    public $user;
+    public Task $task;
+    public User $user;
 
     /**
      * Create a new job instance.
@@ -35,18 +35,19 @@ class SendTaskWhatsAppJob implements ShouldQueue
             return;
         }
 
-        $message =
-            "📌 New Task Assigned\n\n" .
-            "Task : {$this->task->title}\n\n" .
-            "Description : {$this->task->description}\n\n" .
-            "Priority : {$this->task->priority}\n\n" .
-            "Status : {$this->task->status}\n\n" .
-            "Due Date : " .
-            $this->task->due_date;
+        $userName = trim(($this->user->first_name ?? '') . ' ' . ($this->user->last_name ?? ''));
+        if (empty($userName)) {
+            $userName = $this->user->name ?? 'User';
+        }
 
-        $whatsAppService->sendTaskMessage(
-            $this->user->phone_number,
-            $message
+        // WhatsAppService ke official template method ko call kiya gaya hai
+        $whatsAppService->sendTaskAssigned(
+            (string) $userName,
+            (string) $this->user->phone_number,
+            (string) $this->task->title,
+            (string) $this->task->priority,
+            (string) ($this->task->due_date ?? 'N/A'),
+            (string) ($this->task->status ?? 'Pending')
         );
     }
 }

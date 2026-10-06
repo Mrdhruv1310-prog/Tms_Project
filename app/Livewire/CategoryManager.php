@@ -5,15 +5,20 @@ namespace App\Livewire;
 use App\Models\Category;
 use Illuminate\Database\QueryException;
 use Livewire\Component;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
 
 class CategoryManager extends Component
 {
-    public $newCategory = '';
-    public $categories;
-    public $editCategoryId = null;
-    public $editCategory = '';
+    public string $newCategory = '';
 
-    public function mount()
+    /** @var \Illuminate\Database\Eloquent\Collection<int, Category> */
+    public $categories;
+
+    public ?int $editCategoryId = null;
+    public string $editCategory = '';
+
+    public function mount(): void
     {
         $this->authorizeAdmin();
         $this->loadCategories();
@@ -22,9 +27,17 @@ class CategoryManager extends Component
     /**
      * Centralized authorization check to avoid code repetition.
      */
-    private function authorizeAdmin()
+    private function authorizeAdmin(): void
     {
-        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+        if (! Auth::check()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        /** @var \App\Models\User|null $authUser */
+        $authUser = Auth::user();
+        $role = $authUser->role ?? 'user';
+
+        if (! in_array($role, ['admin', 'super-admin'], true)) {
             abort(403, 'Unauthorized action.');
         }
     }
@@ -32,7 +45,7 @@ class CategoryManager extends Component
     /**
      * Load all categories.
      */
-    public function loadCategories()
+    public function loadCategories(): void
     {
         $this->categories = Category::all();
     }
@@ -40,13 +53,13 @@ class CategoryManager extends Component
     /**
      * Helper to dispatch toast notifications safely.
      */
-    private function notifyUser($message, $type = 'success')
+    private function notifyUser(string $message, string $type = 'success'): void
     {
         $this->dispatch('notify', ['message' => $message, 'type' => $type]);
     }
 
     // Add category function
-    public function addCategory()
+    public function addCategory(): void
     {
         $this->authorizeAdmin();
 
@@ -76,7 +89,7 @@ class CategoryManager extends Component
     /**
      * Set up category for editing.
      */
-    public function editCategorySetup($id)
+    public function editCategorySetup(int $id): void
     {
         $this->authorizeAdmin();
         $category = Category::findOrFail($id);
@@ -85,7 +98,7 @@ class CategoryManager extends Component
     }
 
     // Update category function
-    public function updateCategory()
+    public function updateCategory(): void
     {
         $this->authorizeAdmin();
 
@@ -121,7 +134,7 @@ class CategoryManager extends Component
     }
 
     // Delete Category with check for assigned tasks
-    public function deleteCategory($categoryId)
+    public function deleteCategory(int $categoryId): void
     {
         $this->authorizeAdmin();
 
@@ -140,7 +153,7 @@ class CategoryManager extends Component
     }
 
     // Render category page
-    public function render()
+    public function render(): View
     {
         return view('livewire.category-manager')->layout('components.layouts.app', ['title' => 'Categories | TMS']);
     }

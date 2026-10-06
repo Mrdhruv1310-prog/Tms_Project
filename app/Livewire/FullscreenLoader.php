@@ -3,7 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 
 class FullscreenLoader extends Component
 {

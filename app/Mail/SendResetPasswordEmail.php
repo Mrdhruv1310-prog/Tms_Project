@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -13,19 +14,19 @@ class SendResetPasswordEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $signature = 'emails:reset_password';
+    protected string $signature = 'emails:reset_password';
 
-    public $user;
-    public $token;
+    public User $user;
+    public string $token;
 
     /**
      * Create a new message instance.
      *
-     * @param $user
-     * @param $token
+     * @param User $user
+     * @param string $token
      * @return void
      */
-    public function __construct($user, $token)
+    public function __construct(User $user, string $token)
     {
         $this->user = $user;
         $this->token = $token;

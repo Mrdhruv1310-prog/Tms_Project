@@ -4,9 +4,14 @@ namespace App\Livewire;
 
 use App\Models\Group;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Manage User Groups')]
 class UserGroupCard extends Component
 {
+    /** @var \Illuminate\Database\Eloquent\Collection<int, Group> */
     public $groups;
     public ?string $newGroup = null;
     public ?int $editingGroupId = null;
@@ -19,10 +24,13 @@ class UserGroupCard extends Component
 
     public function loadGroups(): void
     {
-        $this->groups = Group::select('id', 'label')->get();
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Group> $groups */
+        $groups = Group::query()->select('id', 'label')->get();
+
+        $this->groups = $groups;
     }
 
-    public function showGroup($groupId): void
+    public function showGroup(int|string $groupId): void
     {
         $this->dispatch('groupSelected', $groupId);
     }
@@ -37,7 +45,7 @@ class UserGroupCard extends Component
                 'string',
                 'max:255',
                 function ($attribute, $value, $fail) {
-                    if (Group::where('label', $value)->exists()) {
+                    if (Group::query()->where('label', $value)->exists()) {
                         $this->dispatch('notify', ['message' => 'The group name already exists.', 'type' => 'error']);
                         $fail('The group name already exists.');
                     }
@@ -45,7 +53,7 @@ class UserGroupCard extends Component
             ],
         ]);
 
-        Group::create(['label' => $this->newGroup]);
+        Group::query()->create(['label' => $this->newGroup]);
 
         $this->newGroup = '';
         $this->loadGroups();
@@ -53,10 +61,10 @@ class UserGroupCard extends Component
         $this->dispatch('notify', ['message' => 'Group added successfully.', 'type' => 'success']);
     }
 
-    public function startEditing($groupId, $groupName): void
+    public function startEditing(int|string $groupId, string $groupName): void
     {
         $this->editingGroupId = (int) $groupId;
-        $this->editingGroupName = (string) $groupName;
+        $this->editingGroupName = $groupName;
     }
 
     public function cancelEditing(): void
@@ -73,15 +81,18 @@ class UserGroupCard extends Component
                 'string',
                 'max:255',
                 function ($attribute, $value, $fail) {
-                    if (Group::where('label', $value)->where('id', '!=', $this->editingGroupId)->exists()) {
+                    if (Group::query()->where('label', $value)->where('id', '!=', $this->editingGroupId)->exists()) {
                         $this->dispatch('notify', ['message' => 'The group name already exists.', 'type' => 'error']);
                         $fail('The group name already exists.');
                     }
                 },
             ],
+        ], [
+            'editingGroupName.required' => 'Enter Group Name',
         ]);
 
-        $group = Group::findOrFail($this->editingGroupId);
+        /** @var Group $group */
+        $group = Group::query()->findOrFail($this->editingGroupId);
         $group->update(['label' => $this->editingGroupName]);
 
         $this->editingGroupId = null;
@@ -91,10 +102,8 @@ class UserGroupCard extends Component
         $this->dispatch('notify', ['message' => 'Group name updated successfully.', 'type' => 'success']);
     }
 
-    public function render()
+    public function render(): mixed
     {
-        return view('livewire.user-group-card')->layout('components.layouts.app', [
-            'title' => 'Manage User Groups',
-        ]);
+        return view('livewire.user-group-card');
     }
 }

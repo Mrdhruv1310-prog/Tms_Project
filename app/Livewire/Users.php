@@ -3,13 +3,19 @@
 namespace App\Livewire;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Manage Users')]
 class Users extends Component
 {
+    /** @var \Illuminate\Database\Eloquent\Collection<int, User> */
     public $users;
 
     public function mount(): void
@@ -27,54 +33,47 @@ class Users extends Component
 
     private function authorizeAccess(): void
     {
-        if (!auth()->check() || !in_array(auth()->user()->role ?? '', ['admin', 'super-admin'], true)) {
+        /** @var User|null $currentUser */
+        $currentUser = Auth::user();
+        if (!Auth::check() || !$currentUser || !in_array($currentUser->role, ['admin', 'super-admin'], true)) {
             abort(403, 'Unauthorized action.');
         }
     }
 
     private function loadUsers(): void
     {
-        $this->users = User::where('status', 1)->orderBy('created_at', 'desc')->get();
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $users */
+        $users = User::query()->where('status', 1)->orderBy('created_at', 'desc')->get();
+        $this->users = $users;
     }
 
-    public function delete(User $user)
+    public function delete(int $userId): void
     {
-        if (!auth()->check() || !in_array(auth()->user()->role ?? '', ['admin', 'super-admin'], true)) {
-            $this->dispatch('notify', ['message' => 'You are not authorized to delete users.', 'type' => 'error']);
+        /** @var \App\Models\User|null $authUser */
+        $authUser = Auth::user();
+
+        if (! $authUser || ! in_array($authUser->role, ['admin', 'super-admin'], true)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($authUser->id === $userId) {
+            $this->dispatch('notify', ['message' => 'Aap khud ko delete nahi kar sakte.', 'type' => 'error']);
             return;
         }
 
-        if ($user->tasks()->count() > 0) {
-            $this->dispatch('notify', ['message' => 'User has assigned tasks. Cannot delete.', 'type' => 'warning']);
-            return;
-        }
+        \App\Models\Reminder::query()->where('user_id', $userId)->delete();
 
-        try {
-            DB::transaction(function () use ($user) {
-                $user->notifications()->delete();
-                $user->reminders()->delete();
-                DB::table('task_assignments')->where('user_id', $user->id)->delete();
-                if (method_exists($user, 'groups')) {
-                    $user->groups()->detach();
-                }
-                $user->delete();
-            });
+        $user = User::query()->findOrFail($userId);
+        $user->delete();
 
-            $this->loadUsers();
-            $this->dispatch('userdeleted');
-            $this->dispatch('notify', ['message' => 'User deleted successfully.', 'type' => 'success']);
-        } catch (\Throwable $e) {
-            Log::error('User delete failed: ' . $e->getMessage());
-            $this->dispatch('notify', ['message' => 'Unable to delete user.', 'type' => 'error']);
-        }
+        $this->dispatch('userdeleted');
+        $this->dispatch('notify', ['message' => 'User successfully deleted.', 'type' => 'success']);
     }
 
-    public function render()
+    public function render(): mixed
     {
         return view('livewire.users', [
             'users' => $this->users,
-        ])->layout('components.layouts.app', [
-            'title' => 'Manage Users',
         ]);
     }
 }

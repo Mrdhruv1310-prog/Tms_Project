@@ -161,8 +161,14 @@
                             {{-- Inline Editing Box or Title --}}
                             @if ($editingGroupId === $group['id'])
                                 <div class="w-full space-y-2">
-                                    <input wire:model.defer="editingGroupName" type="text" placeholder="Group Name"
-                                        class="block w-full px-3 py-2 text-xs text-center text-gray-900 bg-white dark:bg-gray-800 rounded-xl border border-gray-300 dark:border-gray-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600" />
+                                    <input wire:model="editingGroupName" type="text"
+                                        placeholder="@error('editingGroupName'){{ $message }}@else Group Name @enderror"
+                                        class="w-full rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-800 outline-none shadow-sm
+                                        @error('editingGroupName')
+                                            border border-rose-500 placeholder:text-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-100
+                                        @else
+                                            border border-slate-300 placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100
+                                        @enderror">
                                     <div class="flex gap-2 w-full">
                                         <button wire:click="saveGroupName"
                                             class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1 flex-1 transition-colors cursor-pointer shadow-sm">
