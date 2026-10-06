@@ -3,30 +3,42 @@
 namespace App\Exports;
 
 use App\Models\Task;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
+/**
+ * @implements WithMapping<Task>
+ */
 class MyTasksSummaryExport implements FromQuery, WithHeadings, WithMapping
 {
-    protected $filter;
-    protected $startDate;
-    protected $endDate;
+    protected string $filter;
+    protected ?string $startDate;
+    protected ?string $endDate;
 
-    public function __construct($filter = 'all', $startDate = null, $endDate = null)
+    public function __construct(string $filter = 'all', ?string $startDate = null, ?string $endDate = null)
     {
         $this->filter = $filter;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
     }
 
-    public function query()
+    /**
+     * @return Builder<Task>
+     */
+    public function query(): Builder
     {
+        /** @var User|null $authUser */
+        $authUser = Auth::user();
+        $authUserId = $authUser ? (int) $authUser->id : 0;
+
         $query = Task::query()
             ->with(['user', 'category'])
-            ->where('user_id', Auth::user()->id);
+            ->where('user_id', $authUserId);
 
         // Filter apply karva mate logic
         if ($this->filter === 'custom' && $this->startDate && $this->endDate) {
@@ -46,6 +58,9 @@ class MyTasksSummaryExport implements FromQuery, WithHeadings, WithMapping
         return $query;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function headings(): array
     {
         return [
@@ -62,8 +77,15 @@ class MyTasksSummaryExport implements FromQuery, WithHeadings, WithMapping
         ];
     }
 
-    public function map($task): array
+    /**
+     * @param mixed $row
+     * @return array<int, mixed>
+     */
+    public function map($row): array
     {
+        /** @var Task $task */
+        $task = $row;
+
         $userName = 'N/A';
         if ($task->user) {
             $userName = trim($task->user->first_name . ' ' . $task->user->last_name);

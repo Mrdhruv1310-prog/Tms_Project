@@ -68,6 +68,9 @@ class WhatsAppService
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @return array<string, mixed>
+     */
     public function sendTaskAssigned(
         string $phoneNumber,
         string $userName,
@@ -103,6 +106,9 @@ class WhatsAppService
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @return array<string, mixed>
+     */
     public function sendTaskDueDate(
         string $phoneNumber,
         string $userName,
@@ -138,6 +144,10 @@ class WhatsAppService
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * @param array<int, mixed> $bodyParameters
+     * @return array<string, mixed>
+     */
     public function sendTemplate(
         string $phoneNumber,
         string $templateName,
@@ -450,8 +460,9 @@ class WhatsAppService
                         return $preferredLanguage;
                     }
 
+                    /** @var \Illuminate\Support\Collection<int, array<string, mixed>> $templates */
                     $templates = collect(
-                        $response->json('data', [])
+                        (array) $response->json('data', [])
                     );
 
                     /*

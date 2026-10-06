@@ -20,8 +20,10 @@ class RepeatTaskCron extends Command
     protected $signature = 'repeattask:cron';
     protected $description = 'Command description';
 
-    public $reminderChannel = ['email', 'SMS'];
-    public $dueDateChannel = ['email', 'SMS'];
+    /** @var array<int, string> */
+    public array $reminderChannel = ['email', 'SMS'];
+    /** @var array<int, string> */
+    public array $dueDateChannel = ['email', 'SMS'];
 
     public function handle(): void
     {
@@ -38,12 +40,14 @@ class RepeatTaskCron extends Command
             $currentDate = Carbon::now()->toDateString();
             info('Current day: ' . $currentDate);
 
-            $tasks = Task::whereIn('recurrence', ['daily', 'weekly', 'monthly'])
+            /** @var \Illuminate\Database\Eloquent\Collection<int, Task> $tasks */
+            $tasks = Task::query()->whereIn('recurrence', ['daily', 'weekly', 'monthly'])
                 ->where('recurrence_end_date', '>=', $currentDate)
                 ->whereNotNull('recurrence_end_date')
                 ->get();
 
             foreach ($tasks as $task) {
+                /** @var Task $task */
                 info("Processing task {$task->id}: {$task->title}");
                 DB::beginTransaction();
                 try {
@@ -54,13 +58,14 @@ class RepeatTaskCron extends Command
                             $shouldRepeat = true;
                             break;
                         case 'weekly':
-                            $recurrenceDays = TaskRecurrenceDay::where('task_id', $task->id)->pluck('day')->toArray();
-                            if (in_array($currentDayAbbreviation, $recurrenceDays)) {
+                            $recurrenceDays = TaskRecurrenceDay::query()->where('task_id', $task->id)->pluck('day')->toArray();
+                            if (in_array($currentDayAbbreviation, $recurrenceDays, true)) {
                                 $shouldRepeat = true;
                             }
                             break;
                         case 'monthly':
-                            $taskDay = $task->created_at->day;
+                            $createdAt = $task->created_at ?? Carbon::now();
+                            $taskDay = $createdAt->day;
                             $currentMonthLastDay = Carbon::now()->endOfMonth()->day;
                             if ($taskDay > $currentMonthLastDay) {
                                 $taskDay = $currentMonthLastDay;
@@ -79,7 +84,7 @@ class RepeatTaskCron extends Command
                             continue;
                         }
 
-                        $existingTask = Task::where('title', $task->title)
+                        $existingTask = Task::query()->where('title', $task->title)
                             ->where('due_date', $nextDueDate)
                             ->where('user_id', $task->user_id)
                             ->exists();
@@ -127,12 +132,12 @@ class RepeatTaskCron extends Command
             return;
         }
 
-        $repeatedTask = Task::create([
+        $repeatedTask = Task::query()->create([
             'title' => $task->title,
             'description' => $task->description,
             'category_id' => $task->category_id,
             'priority' => $task->priority,
-            'label_id' => is_numeric($task->label_id) ? $task->label_id : null,
+            'label_id' => is_numeric($task->label_id) ? (int) $task->label_id : null,
             'due_date' => $nextDueDate,
             'status' => 'pending',
             'user_id' => $task->user_id,
@@ -143,9 +148,11 @@ class RepeatTaskCron extends Command
         $assignedUserIds = [];
         foreach ($task->taskAssignments as $assignment) {
             $user = $assignment->user;
-            if ($user && $user->status === 1 && !in_array($assignment->user_id, $assignedUserIds)) {
+            if ($user && $user->status === 1 && !in_array($assignment->user_id, $assignedUserIds, true)) {
                 $repeatedTask->taskAssignments()->create(['user_id' => $assignment->user_id]);
-                Mail::to($user->email)->send(new TaskAssignedMail($repeatedTask, $user));
+                if (filled($user->email)) {
+                    Mail::to($user->email)->send(new TaskAssignedMail($repeatedTask, $user));
+                }
                 $assignedUserIds[] = $assignment->user_id;
             }
         }
@@ -160,13 +167,16 @@ class RepeatTaskCron extends Command
             $selectedUsers = $task->taskAssignments->filter(function ($assignment) {
                 return $assignment->user && $assignment->user->status === 1;
             })->pluck('user_id')->unique()->toArray();
-            $this->createTaskReminders($repeatedTask, $reminder->reminder_value, $reminder->reminder_unit, $selectedUsers);
+
+            /** @var array<int, int> $selectedUsers */
+            $this->createTaskReminders($repeatedTask, (int) $reminder->reminder_value, (string) $reminder->reminder_unit, $selectedUsers);
         }
     }
 
     private function calculateNextDueDate(Task $task): ?Carbon
     {
         $now = Carbon::now();
+        $createdAt = $task->created_at ?? $now;
 
         switch ($task->recurrence) {
             case 'daily':
@@ -175,14 +185,14 @@ class RepeatTaskCron extends Command
                 return $now->copy()->addWeek()->endOfDay();
             case 'monthly':
                 $nextDueDate = $now->copy()->addMonthNoOverflow();
-                $taskDay = $task->created_at->day;
+                $taskDay = $createdAt->day;
                 $currentMonthLastDay = $nextDueDate->copy()->endOfMonth()->day;
                 if ($taskDay > $currentMonthLastDay) {
                     $nextDueDate->day($currentMonthLastDay);
                 } else {
                     $nextDueDate->day($taskDay);
                 }
-                if ($task->created_at->month == 2 && $task->created_at->day == 29 && !$nextDueDate->isLeapYear()) {
+                if ($createdAt->month == 2 && $createdAt->day == 29 && !$nextDueDate->isLeapYear()) {
                     $nextDueDate->day(28);
                 }
                 return $nextDueDate->endOfDay();
@@ -212,7 +222,7 @@ class RepeatTaskCron extends Command
         })->pluck('user_id')->unique()->toArray();
 
         foreach ($assignedUsers as $userId) {
-            $existingNotification = Notification::where('task_id', $task->id)
+            $existingNotification = Notification::query()->where('task_id', $task->id)
                 ->where('user_id', $userId)
                 ->where('type', 'due_date')
                 ->where('sent_at', $normalizedDueDate)
@@ -223,7 +233,7 @@ class RepeatTaskCron extends Command
                 continue;
             }
 
-            Notification::where('task_id', $task->id)
+            Notification::query()->where('task_id', $task->id)
                 ->where('user_id', $userId)
                 ->where('type', 'due_date')
                 ->delete();
@@ -241,9 +251,19 @@ class RepeatTaskCron extends Command
         SendDueDateNotificationJob::dispatch($task, $this->dueDateChannel, $normalizedDueDate)->delay(Carbon::parse($dueDate));
     }
 
+    /**
+     * @param Task $task
+     * @param int $reminderTime
+     * @param string $reminderUnit
+     * @param array<int, int> $selectedUsers
+     */
     public function createTaskReminders(Task $task, int $reminderTime, string $reminderUnit, array $selectedUsers): void
     {
         $dueDate = $task->due_date;
+        if (!$dueDate) {
+            return;
+        }
+
         $reminderValue = match ($reminderUnit) {
             'minutes' => Carbon::parse($dueDate)->subMinutes($reminderTime),
             'hours' => Carbon::parse($dueDate)->subHours($reminderTime),
@@ -257,7 +277,7 @@ class RepeatTaskCron extends Command
         }
 
         foreach ($selectedUsers as $userId) {
-            $existingReminder = Reminder::where('task_id', $task->id)
+            $existingReminder = Reminder::query()->where('task_id', $task->id)
                 ->where('user_id', $userId)
                 ->where('reminder_time', $reminderValue)
                 ->exists();
@@ -267,11 +287,11 @@ class RepeatTaskCron extends Command
                 continue;
             }
 
-            Reminder::where('task_id', $task->id)
+            Reminder::query()->where('task_id', $task->id)
                 ->where('user_id', $userId)
                 ->delete();
 
-            $reminder = Reminder::create([
+            $reminder = Reminder::query()->create([
                 'task_id' => $task->id,
                 'user_id' => $userId,
                 'reminder_time' => $reminderValue,
