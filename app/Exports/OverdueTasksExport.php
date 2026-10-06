@@ -3,7 +3,9 @@
 namespace App\Exports;
 
 use App\Models\Task;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -13,34 +15,39 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class OverdueTasksExport implements WithMultipleSheets
 {
-    protected $filter;
-    protected $startDate;
-    protected $endDate;
+    protected string $filter;
+    protected ?string $startDate;
+    protected ?string $endDate;
 
-    public function __construct($filter = 'all', $startDate = null, $endDate = null)
+    public function __construct(string $filter = 'all', ?string $startDate = null, ?string $endDate = null)
     {
         $this->filter = $filter;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
     }
 
+    /**
+     * @return array<int, object>
+     */
     public function sheets(): array
     {
         return [
-            // Completed tasks sheet ma filters pass karya che
             new CompletedTasksSheet($this->filter, $this->startDate, $this->endDate),
             new OverdueTasksSheet(),
         ];
     }
 }
 
+/**
+ * @implements WithMapping<Task>
+ */
 class CompletedTasksSheet implements FromQuery, WithHeadings, WithMapping, WithTitle
 {
-    protected $filter;
-    protected $startDate;
-    protected $endDate;
+    protected string $filter;
+    protected ?string $startDate;
+    protected ?string $endDate;
 
-    public function __construct($filter = 'all', $startDate = null, $endDate = null)
+    public function __construct(string $filter = 'all', ?string $startDate = null, ?string $endDate = null)
     {
         $this->filter = $filter;
         $this->startDate = $startDate;
@@ -52,13 +59,19 @@ class CompletedTasksSheet implements FromQuery, WithHeadings, WithMapping, WithT
         return 'Completed Tasks';
     }
 
-    public function query()
+    /**
+     * @return Builder<Task>
+     */
+    public function query(): Builder
     {
+        /** @var User|null $authUser */
+        $authUser = Auth::user();
+        $authUserId = $authUser ? (int) $authUser->id : 0;
+
         $query = Task::query()
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', $authUserId)
             ->where('status', 'completed');
 
-        // Filter apply logic (updated_at/completion date par based)
         if ($this->filter === 'custom' && $this->startDate && $this->endDate) {
             $query->whereBetween('updated_at', [
                 Carbon::parse($this->startDate)->startOfDay(),
@@ -76,6 +89,9 @@ class CompletedTasksSheet implements FromQuery, WithHeadings, WithMapping, WithT
         return $query;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function headings(): array
     {
         return [
@@ -85,8 +101,15 @@ class CompletedTasksSheet implements FromQuery, WithHeadings, WithMapping, WithT
         ];
     }
 
-    public function map($task): array
+    /**
+     * @param mixed $row
+     * @return array<int, mixed>
+     */
+    public function map($row): array
     {
+        /** @var Task $task */
+        $task = $row;
+
         $completionDate = Carbon::parse($task->updated_at);
         $creationDate = Carbon::parse($task->created_at);
 
@@ -98,6 +121,9 @@ class CompletedTasksSheet implements FromQuery, WithHeadings, WithMapping, WithT
     }
 }
 
+/**
+ * @implements WithMapping<Task>
+ */
 class OverdueTasksSheet implements FromQuery, WithHeadings, WithMapping, WithTitle
 {
     public function title(): string
@@ -105,14 +131,24 @@ class OverdueTasksSheet implements FromQuery, WithHeadings, WithMapping, WithTit
         return 'Overdue Tasks';
     }
 
-    public function query()
+    /**
+     * @return Builder<Task>
+     */
+    public function query(): Builder
     {
+        /** @var User|null $authUser */
+        $authUser = Auth::user();
+        $authUserId = $authUser ? (int) $authUser->id : 0;
+
         return Task::query()
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', $authUserId)
             ->where('due_date', '<', Carbon::now())
             ->where('status', '!=', 'completed');
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function headings(): array
     {
         return [
@@ -122,15 +158,22 @@ class OverdueTasksSheet implements FromQuery, WithHeadings, WithMapping, WithTit
         ];
     }
 
-    public function map($task): array
+    /**
+     * @param mixed $row
+     * @return array<int, mixed>
+     */
+    public function map($row): array
     {
+        /** @var Task $task */
+        $task = $row;
+
         $daysOverdue = Carbon::parse($task->due_date)->isToday()
             ? 0
             : Carbon::parse($task->due_date)->diffInDays(Carbon::now());
 
         return [
             $task->title,
-            $task->due_date->format('Y-m-d'),
+            Carbon::parse($task->due_date)->format('Y-m-d'),
             (int) $daysOverdue
         ];
     }

@@ -11,6 +11,9 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class TaskStatusAndUserSummaryExport implements WithMultipleSheets
 {
+    /**
+     * @return array<int, object>
+     */
     public function sheets(): array
     {
         return [
@@ -27,6 +30,9 @@ class TaskStatusOverviewSheet implements FromArray, WithHeadings, WithTitle
         return 'Task Status Overview';
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function headings(): array
     {
         return [
@@ -37,14 +43,17 @@ class TaskStatusOverviewSheet implements FromArray, WithHeadings, WithTitle
         ];
     }
 
+    /**
+     * @return array<int, array<int, mixed>>
+     */
     public function array(): array
     {
         return [
             [
-                Task::count(),
-                Task::where('status', 'pending')->count(),
-                Task::where('status', 'in_progress')->count(),
-                Task::where('status', 'completed')->count(),
+                Task::query()->count(),
+                Task::query()->where('status', 'pending')->count(),
+                Task::query()->where('status', 'in_progress')->count(),
+                Task::query()->where('status', 'completed')->count(),
             ]
         ];
     }
@@ -57,6 +66,9 @@ class UserTaskSummarySheet implements FromArray, WithHeadings, WithTitle
         return 'User Task Summary';
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function headings(): array
     {
         return [
@@ -67,9 +79,12 @@ class UserTaskSummarySheet implements FromArray, WithHeadings, WithTitle
         ];
     }
 
+    /**
+     * @return array<int, array<int, mixed>>
+     */
     public function array(): array
     {
-        return User::withCount([
+        return User::query()->withCount([
             'tasks', // Total tasks assigned
             'tasks as completed_tasks_count' => function ($query) {
                 $query->where('status', 'completed');
@@ -78,6 +93,7 @@ class UserTaskSummarySheet implements FromArray, WithHeadings, WithTitle
                 $query->where('due_date', '<', now())->where('status', '!=', 'completed');
             }
         ])->get()->map(function ($user) {
+            /** @var User $user */
             $userName = trim($user->first_name . ' ' . $user->last_name);
             if (empty($userName)) {
                 $userName = $user->email ?? 'N/A';
@@ -85,9 +101,9 @@ class UserTaskSummarySheet implements FromArray, WithHeadings, WithTitle
 
             return [
                 $userName,
-                $user->tasks_count,
-                $user->completed_tasks_count,
-                $user->overdue_tasks_count,
+                $user->tasks_count ?? 0,
+                $user->completed_tasks_count ?? 0,
+                $user->overdue_tasks_count ?? 0,
             ];
         })->toArray();
     }

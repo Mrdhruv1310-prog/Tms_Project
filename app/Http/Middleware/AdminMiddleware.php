@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
@@ -15,13 +16,15 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check()) {
+        if (! Auth::check()) {
             return redirect()->route('admin.login');
         }
 
-        // Yahan humne check update kar diya hai taaki 'admin' aur 'super-admin' dono allow ho jayein
-        $role = auth()->user()->role;
-        if (!in_array($role, ['admin', 'super-admin'])) {
+        /** @var \App\Models\User|null $authUser */
+        $authUser = Auth::user();
+        $role = $authUser?->role ?? 'user';
+
+        if (! in_array($role, ['admin', 'super-admin'], true)) {
             return redirect()->route('login');
         }
 

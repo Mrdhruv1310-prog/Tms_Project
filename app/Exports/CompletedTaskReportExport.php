@@ -9,17 +9,25 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class CompletedTaskReportExport implements FromArray, WithHeadings
 {
-    protected $filter;
-    protected $startDate;
-    protected $endDate;
+    protected string $filter;
+    protected ?string $startDate;
+    protected ?string $endDate;
 
-    public function __construct($filter = 'all', $startDate = null, $endDate = null)
+    /**
+     * @param string $filter
+     * @param string|null $startDate
+     * @param string|null $endDate
+     */
+    public function __construct(string $filter = 'all', ?string $startDate = null, ?string $endDate = null)
     {
         $this->filter = $filter;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function headings(): array
     {
         return [
@@ -35,9 +43,12 @@ class CompletedTaskReportExport implements FromArray, WithHeadings
         ];
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function array(): array
     {
-        $query = Task::where('status', 'completed')->with(['user', 'category']);
+        $query = Task::query()->where('status', 'completed')->with(['user', 'category']);
 
         // Custom Date Range (jaise 10 Sept se 15 Sept)
         if ($this->filter === 'custom' && $this->startDate && $this->endDate) {
@@ -56,13 +67,14 @@ class CompletedTaskReportExport implements FromArray, WithHeadings
 
         $tasks = $query->get();
 
-        $reportData = $tasks->map(function ($task, $index) {
+        $reportData = $tasks->map(function ($task, int $index) {
+            /** @var Task $task */
             $completionDate = Carbon::parse($task->updated_at);
             $creationDate = Carbon::parse($task->created_at);
 
             $userName = 'N/A';
             if ($task->user) {
-                $userName = trim($task->user->first_name . ' ' . $task->user->last_name);
+                $userName = trim(($task->user->first_name ?? '') . ' ' . ($task->user->last_name ?? ''));
                 if (empty($userName)) {
                     $userName = $task->user->email ?? 'N/A';
                 }
