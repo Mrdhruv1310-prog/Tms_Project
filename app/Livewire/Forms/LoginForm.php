@@ -8,27 +8,31 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Livewire\Attributes\Validate;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Illuminate\Validation\ValidationException;
 
+#[Layout('components.layouts.login')]
+#[Title('Sign In | TMS')]
 class LoginForm extends Component
 {
     #[Validate('required|email')]
-    public $email;
+    public string $email = '';
 
     #[Validate('required')]
-    public $password;
-    public $error = false;
-    public $submitted = true;
+    public string $password = '';
+    public bool $error = false;
+    public bool $submitted = true;
 
-    public function mount()
+    public function mount(): void
     {
         // Agar user pehle se logged in hai, toh use seedhe dashboard par bhej do
         if (Auth::check()) {
-            return redirect()->route('dashboard'); // Apne dashboard route ka naam yahan likhein
+            $this->redirect(route('dashboard'), navigate: true);
         }
     }
 
-    public function login(Request $request)
+    public function login(Request $request): mixed
     {
         $this->submitted = true;
         $this->error = false;
@@ -43,26 +47,26 @@ class LoginForm extends Component
             'password.min' => 'The password must be at least 6 characters long.',
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = User::query()->where('email', $credentials['email'])->first();
 
         if ($user && $user->status == 0) {
             $this->addError('credentials', 'Permission denied.');
             $this->error = true;
-            return;
+            return null;
         }
 
         if (Auth::attempt($credentials, true)) {
             $request->session()->regenerate();
-            return redirect()->intended('dashboard');
+            return $this->redirect(route('dashboard'), navigate: true);
         }
 
         $this->addError('credentials', 'Invalid credentials!');
         $this->error = true;
+        return null;
     }
-    public function render()
+
+    public function render(): mixed
     {
-        return view('livewire.pages.auth.login-form')->layout('components.layouts.login', [
-            'pageTitle' => 'Sign In | TMS',
-        ]);
+        return view('livewire.pages.auth.login-form');
     }
 }

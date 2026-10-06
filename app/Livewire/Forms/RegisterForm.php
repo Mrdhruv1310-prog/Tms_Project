@@ -6,20 +6,24 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use App\Mail\RegisterUserMail;
 use Illuminate\Support\Facades\Mail;
 
+#[Layout('components.layouts.register')]
+#[Title('Register | TMS')]
 class RegisterForm extends Component
 {
-    public $first_name = '';
-    public $last_name = '';
-    public $phone_number = '';
-    public $email = '';
-    public $password = '';
+    public string $first_name = '';
+    public string $last_name = '';
+    public string $phone_number = '';
+    public string $email = '';
+    public string $password = '';
 
-    public $submitted = false;
+    public bool $submitted = false;
 
-    public function register()
+    public function register(): void
     {
         $this->submitted = true;
 
@@ -43,7 +47,7 @@ class RegisterForm extends Component
 
         $plainPassword = $validated['password'];
 
-        $user = User::create([
+        $user = User::query()->create([
             'first_name'   => $validated['first_name'],
             'last_name'    => $validated['last_name'],
             'email'        => $validated['email'],
@@ -61,13 +65,11 @@ class RegisterForm extends Component
 
         session()->flash('successmessage', 'Registration completed successfully.');
 
-        return $this->redirectRoute('dashboard', navigate: true);
+        $this->redirectRoute('dashboard', navigate: true);
     }
 
-    public function render()
+    public function render(): mixed
     {
-        return view('livewire.pages.auth.register')->layout('components.layouts.register', [
-            'pageTitle' => 'Register | TMS',
-        ]);
+        return view('livewire.pages.auth.register');
     }
 }

@@ -34,7 +34,8 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
 
     // Sirf Admin aur Super-Admin ke liye custom check (Bina kisi middleware conflict ke)
     Route::group(['middleware' => function ($request, $next) {
-        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'super-admin'])) {
+        $user = $request->user();
+        if (!$user || !in_array($user->role, ['admin', 'super-admin', 'user'])) {
             abort(403, 'Unauthorized action.');
         }
         return $next($request);

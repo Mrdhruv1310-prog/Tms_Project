@@ -112,6 +112,7 @@
                     @livewire('task-view-modal')
                     @livewire('user-details-modal')
                     @livewire('task-details-modal')
+                    @livewire('notifications')
         </div>
     </div>
     {{-- </div> --}}

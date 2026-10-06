@@ -1,12 +1,4 @@
 <?php
-
-// namespace App\Livewire;
-
-// use App\Models\Task;
-// use App\Models\User;
-// use Exception;
-// use Illuminate\Http\Request;
-// use Livewire\Component;
 namespace App\Livewire;
 
 use App\Models\Task;

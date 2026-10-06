@@ -1,4 +1,3 @@
-Conversation with Gemini
 <div
     class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)] p-4 sm:p-6 lg:p-8 overflow-hidden">
 
@@ -264,6 +263,7 @@ Conversation with Gemini
 
     </div>
 
+    <!-- Session messages ab is main container ke andar wrap kar diye gaye hain -->
     @if (session()->has('errormessage'))
         <div x-init="$dispatch('notify', { message: '{{ session('errormessage') }}', type: 'error' })"></div>
     @endif

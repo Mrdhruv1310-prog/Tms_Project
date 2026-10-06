@@ -7,11 +7,15 @@ use Livewire\Attributes\On;
 
 class ToastNotifier extends Component
 {
+    /** @var array<string, string> */
     protected $listeners = [
         'notify' => 'handleNotify',
     ];
 
-    public function handleNotify($data): void
+    /**
+     * @param array{message?: string, type?: string}|string $data
+     */
+    public function handleNotify(mixed $data): void
     {
         $message = is_array($data) ? ($data['message'] ?? '') : $data;
         $type = is_array($data) ? ($data['type'] ?? 'success') : 'success';
@@ -34,7 +38,7 @@ class ToastNotifier extends Component
         $this->dispatch('show-toast', type: 'warning', message: $message);
     }
 
-    public function render()
+    public function render(): mixed
     {
         return view('livewire.toast-notifier');
     }

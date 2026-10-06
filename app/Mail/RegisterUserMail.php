@@ -14,13 +14,15 @@ class RegisterUserMail extends Mailable
     use Queueable, SerializesModels;
 
     public User $user;
+    public string $password;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user)
+    public function __construct(User $user, string $password)
     {
         $this->user = $user;
+        $this->password = $password;
     }
 
     /**
@@ -45,6 +47,7 @@ class RegisterUserMail extends Mailable
             view: 'emails.register_user',
             with: [
                 'user' => $this->user,
+                'password' => $this->password,
                 'loginUrl' => $loginUrl,
             ],
         );

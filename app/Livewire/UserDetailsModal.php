@@ -9,34 +9,36 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
 use App\Mail\RegisterUserMail;
+use Illuminate\Contracts\View\View;
 
 class UserDetailsModal extends Component
 {
     #[Locked]
-    public string $route;
+    public string $route = '';
     public bool $isOpen = false;
-    public $first_name;
-    public $last_name;
-    public $email;
-    public $phone_number;
-    public $role = '';
-    public $status = '';
+    public ?string $first_name = null;
+    public ?string $last_name = null;
+    public ?string $email = null;
+    public ?string $phone_number = null;
+    public string $role = '';
+    public string $status = '';
 
-    public $password = '';
-    public $user_id;
-    public $submitted = true;
-    public $plainPassword = '';
+    public string $password = '';
+    public ?int $user_id = null;
+    public bool $submitted = true;
+    public string $plainPassword = '';
 
+    /** @var array<string, string> */
     protected $listeners = ['openModal' => 'open', 'closeModal' => 'close', 'edituser' => 'loadUser'];
 
-    public function open()
+    public function open(): void
     {
         $this->resetForm();
         $this->isOpen = true;
         $this->dispatch('addusermodalopened');
     }
 
-    public function close()
+    public function close(): void
     {
         $this->resetForm();
         $this->isOpen = false;
@@ -44,10 +46,10 @@ class UserDetailsModal extends Component
 
     public function mount(): void
     {
-        $this->route = Route::currentRouteName();
+        $this->route = Route::currentRouteName() ?? '';
     }
 
-    public function saveUser()
+    public function saveUser(): mixed
     {
         $this->submitted = true;
 
@@ -81,8 +83,12 @@ class UserDetailsModal extends Component
 
         $this->validate($rules, $messages);
 
+        $plainPassword = '';
+        $userEmail = '';
+
         if ($this->user_id) {
-            $user = User::findOrFail($this->user_id);
+            /** @var User $user */
+            $user = User::query()->findOrFail($this->user_id);
 
             $updateData = [
                 'first_name' => $this->first_name,
@@ -100,17 +106,19 @@ class UserDetailsModal extends Component
 
             $user->update($updateData);
 
-            // Agar admin ne password update kiya hai toh naye credentials ke sath mail bhej sakte hain
             if (!empty($this->password)) {
                 $user->refresh();
-                Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
+                $userEmail = (string) $user->getAttribute('email');
+                // Dono parameters pass kiye gaye hain
+                Mail::to($userEmail)->send(new RegisterUserMail($user, $plainPassword));
             }
 
             $message = 'User updated successfully.';
         } else {
             $plainPassword = $this->password;
 
-            $user = User::create([
+            /** @var User $user */
+            $user = User::query()->create([
                 'first_name' => $this->first_name,
                 'last_name' => $this->last_name,
                 'email' => $this->email,
@@ -120,7 +128,8 @@ class UserDetailsModal extends Component
                 'password' => Hash::make($plainPassword),
             ]);
 
-            Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
+            $userEmail = (string) $user->getAttribute('email');
+            Mail::to($userEmail)->send(new RegisterUserMail($user, $plainPassword));
 
             $message = 'User added successfully.';
         }
@@ -130,33 +139,36 @@ class UserDetailsModal extends Component
         $this->dispatch('usercreated');
 
         if ($this->route === 'users') {
-            $this->notify($message, 'success');
+            $this->dispatch('notify', ['message' => $message, 'type' => 'success']);
         } else {
             session()->flash('message', $message);
             return $this->redirect('users', navigate: true);
         }
+
+        return null;
     }
 
-    public function loadUser($id)
+    public function loadUser(int|string $id): void
     {
-        $user = User::findOrFail($id);
-        $this->user_id = $user->id;
-        $this->first_name = $user->first_name;
-        $this->last_name = $user->last_name;
-        $this->email = $user->email;
-        $this->phone_number = $user->phone_number;
-        $this->role = $user->role;
-        $this->status = $user->status;
+        /** @var User $user */
+        $user = User::query()->findOrFail($id);
+        $this->user_id = (int) $user->getKey();
+        $this->first_name = is_string($user->getAttribute('first_name')) ? $user->getAttribute('first_name') : null;
+        $this->last_name = is_string($user->getAttribute('last_name')) ? $user->getAttribute('last_name') : null;
+        $this->email = is_string($user->getAttribute('email')) ? $user->getAttribute('email') : null;
+        $this->phone_number = is_string($user->getAttribute('phone_number')) ? $user->getAttribute('phone_number') : null;
+        $this->role = (string) $user->getAttribute('role');
+        $this->status = (string) $user->getAttribute('status');
 
         $this->isOpen = true;
     }
 
-    public function resetForm()
+    public function resetForm(): void
     {
         $this->reset(['first_name', 'last_name', 'email', 'phone_number', 'role', 'status', 'user_id', 'password']);
     }
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.user-details-modal');
     }
