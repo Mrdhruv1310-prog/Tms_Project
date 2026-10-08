@@ -22,7 +22,7 @@ return new class extends Migration
             $table->enum('role', ['admin', 'user']);
             $table->boolean('status')->default(true); // true for active, false for inactive
             $table->unsignedBigInteger('reporting_manager_id')->nullable();
-            $table->foreign('reporting_manager_id')->references('id')->on('users');
+            $table->foreign('reporting_manager_id')->references('id')->on('users')->onDelete('cascade');;
             $table->timestamps();
         });
 
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable(); 
+            $table->text('user_agent')->nullable();
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
