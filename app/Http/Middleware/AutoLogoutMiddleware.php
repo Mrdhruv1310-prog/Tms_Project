@@ -19,9 +19,10 @@ class AutoLogoutMiddleware
         // Agar user authenticated (logged in) hai
         if (Auth::check()) {
             $lastActivity = session('last_activity_time');
-            $timeout = 10 * 60; // 10 minutes (600 seconds)
+            // 2 Days in seconds (2 * 24 * 60 * 60)
+            $timeout = 172800;
 
-            // Check karein ki last activity se 10 minutes (600 seconds) zyada ho chuke hain ya nahi
+            // Check karein ki last activity se 2 Days in seconds (2 * 24 * 60 * 60) zyada ho chuke hain ya nahi
             if ($lastActivity && (time() - $lastActivity > $timeout)) {
                 $authUser = Auth::user();
                 $role = $authUser?->role ?? 'user';
@@ -34,7 +35,7 @@ class AutoLogoutMiddleware
                 // Role ke hisab se login route par redirect karein
                 $redirectRoute = in_array($role, ['admin', 'super-admin'], true) ? 'admin.login' : 'login';
 
-                return redirect()->route($redirectRoute)->with('message', 'Session 10 minutes inactivity ki wajah se expire ho gaya hai.');
+                return redirect()->route($redirectRoute)->with('message', ' Please log in again.');
             }
 
             // Current time ko session me last activity update karein
