@@ -6,18 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateTaskRecurrenceDaysTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('task_recurrence_days', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('task_id');
             $table->enum('day', ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']);
-            
+
             $table->foreign('task_id')->references('id')->on('tasks');
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('task_recurrence_days');
     }

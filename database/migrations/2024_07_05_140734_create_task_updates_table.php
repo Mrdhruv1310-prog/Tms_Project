@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateTaskUpdatesTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('task_updates', function (Blueprint $table) {
             $table->id();
@@ -15,13 +15,13 @@ class CreateTaskUpdatesTable extends Migration
             $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
             $table->text('comment')->nullable();
             $table->timestamps();
-            
+
             $table->foreign('task_id')->references('id')->on('tasks');
             $table->foreign('user_id')->references('id')->on('users');
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('task_updates');
     }

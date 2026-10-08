@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateTasksTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
@@ -18,12 +18,12 @@ class CreateTasksTable extends Migration
             $table->dateTime('due_date')->nullable();
             $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
             $table->timestamps();
-            
+
             $table->foreign('category_id')->references('id')->on('categories');
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('tasks');
     }
