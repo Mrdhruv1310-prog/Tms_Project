@@ -68,6 +68,6 @@ class Category extends Model
             return $query;
         }
 
-        return $query->where('user_id', $user->id);
+        return $query->where('created_by', $user->id);
     }
 }
