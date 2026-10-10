@@ -4,19 +4,21 @@ namespace App\Livewire;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 
 #[Layout('components.layouts.app')]
-#[Title('Manage Users')]
+#[Title('Employee List')]
 class Users extends Component
 {
     /** @var \Illuminate\Database\Eloquent\Collection<int, User> */
     public $users;
+
+    // Modal control
+    public bool $userDetailsModalOpen = false;
+    public ?User $selectedUser = null;
 
     public function mount(): void
     {
@@ -35,7 +37,10 @@ class Users extends Component
     {
         /** @var User|null $currentUser */
         $currentUser = Auth::user();
-        if (!Auth::check() || !$currentUser || !in_array($currentUser->role, ['admin', 'super-admin'], true)) {
+
+        $allowedRoles = ['admin', 'super-admin', 'hr', 'manager', 'employee'];
+
+        if (!Auth::check() || !$currentUser || !in_array(strtolower(trim($currentUser->role ?? '')), $allowedRoles, true)) {
             abort(403, 'Unauthorized action.');
         }
     }
@@ -47,12 +52,27 @@ class Users extends Component
         $this->users = $users;
     }
 
+    /**
+     * Fetch user info along with Categories and Groups
+     */
+    public function showUserDetails(int $userId): void
+    {
+        $this->selectedUser = User::with(['categories', 'groups'])->find($userId);
+        $this->userDetailsModalOpen = true;
+    }
+
+    public function closeUserDetailsModal(): void
+    {
+        $this->userDetailsModalOpen = false;
+        $this->selectedUser = null;
+    }
+
     public function delete(int $userId): void
     {
         /** @var \App\Models\User|null $authUser */
         $authUser = Auth::user();
 
-        if (! $authUser || ! in_array($authUser->role, ['admin', 'super-admin'], true)) {
+        if (! $authUser || ! in_array(strtolower(trim($authUser->role ?? '')), ['admin'], true)) {
             abort(403, 'Unauthorized action.');
         }
 

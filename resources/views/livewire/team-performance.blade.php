@@ -73,10 +73,13 @@
                                         $percentage = $total > 0 ? ($statusCount / $total) * 100 : 0;
                                         $circumference = 565.48;
                                         $offset = $circumference - ($circumference * $percentage) / 100;
+
+                                        // Direct Clean URL Generation without route unpacking array
+                                        $userStatusUrl = url("/tasks/user/{$status}");
                                     @endphp
 
-                                    <div
-                                        class="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/60 hover:bg-slate-100/80 dark:hover:bg-slate-950/80 transition-colors">
+                                    <a href="{{ $userStatusUrl }}" wire:navigate
+                                        class="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800/60 hover:bg-blue-50/60 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700 transition-all cursor-pointer block">
 
                                         <!-- SVG Circular Progress Bar -->
                                         <div class="w-10 h-10 relative flex items-center justify-center shrink-0">
@@ -109,7 +112,7 @@
                                                 {{ $total }}
                                             </p>
                                         </div>
-                                    </div>
+                                    </a>
                                 @endforeach
                             </div>
                         </div>

@@ -101,7 +101,12 @@ class User extends Authenticatable
      */
     public function groups(): BelongsToMany
     {
-        return $this->groups(); // code flow preserved, original logic retained
+        return $this->belongsToMany(
+            Group::class,       // Target Group Model
+            'group_users',      // Pivot Table Name
+            'user_id',          // Foreign Key for User on pivot
+            'group_id'          // Foreign Key for Group on pivot
+        );
     }
 
     /**
@@ -119,5 +124,21 @@ class User extends Authenticatable
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Categories created by this user
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class, 'created_by');
+    }
+
+    /**
+     * User Groups where user_id matches
+     */
+    public function userGroups(): HasMany
+    {
+        return $this->hasMany(GroupUser::class, 'user_id');
     }
 }

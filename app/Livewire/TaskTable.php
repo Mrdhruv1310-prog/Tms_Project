@@ -58,12 +58,56 @@ class TaskTable extends Component implements HasForms, HasTable
 
     /** @var Builder<Task>|null */
     private ?Builder $taskQuery = null;
+    // Component Class ke top par ye property declare karein (do NOT use $tableFilters name)
+    public ?string $statusFilter = null;
+    public ?string $categoryFilter = null;
+    public ?int $userFilter = null;
 
     public function mount(): void
     {
         $this->taskView = request()->get('task_view', 'all_tasks');
-    }
 
+        // Path 1: /tasks/user/{status?}
+        if (request()->is('tasks/user*')) {
+            $this->userFilter = (int) Auth::id();
+            $statusSegment = request()->segment(3);
+            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed'], true)) {
+                $this->statusFilter = $statusSegment;
+            }
+        }
+        // Path 2: /tasks/category/{category}/{status?}
+        elseif (request()->is('tasks/category*')) {
+            $categorySegment = request()->segment(3);
+            $statusSegment = request()->segment(4);
+
+            if ($categorySegment) {
+                $this->categoryFilter = urldecode((string) $categorySegment);
+            }
+            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed'], true)) {
+                $this->statusFilter = $statusSegment;
+            }
+        }
+        // Path 3: /tasks/{status?}
+        else {
+            $statusSegment = request()->segment(2);
+            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed'], true)) {
+                $this->statusFilter = $statusSegment;
+            }
+        }
+
+        // Fallback via Query Parameters (if any)
+        if (!$this->statusFilter && request()->has('status')) {
+            $reqStatus = (string) request()->get('status');
+            if (in_array($reqStatus, ['pending', 'in_progress', 'completed'], true)) {
+                $this->statusFilter = $reqStatus;
+            }
+        }
+
+        if (!$this->categoryFilter && request()->has('category')) {
+            $this->categoryFilter = urldecode((string) request()->get('category'));
+        }
+    }
+    
     protected function getDbFieldLabel(string $fieldName, string $defaultLabel): string
     {
         try {
@@ -654,10 +698,8 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visible(function (Task $task) {
                         /** @var \App\Models\User|null $authUser */
                         $authUser = Auth::user();
-                        return in_array($authUser?->role, ['admin', 'user', 'super-admin'], true)
-                            || Auth::id() === (int) $task->user_id;
+                        return $authUser?->role === 'admin';
                     }),
-
                 Action::make('delete')
                     ->action(fn(Task $task) => $this->delete($task))
                     ->badge()
@@ -675,8 +717,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->visible(function (Task $task) {
                         /** @var \App\Models\User|null $authUser */
                         $authUser = Auth::user();
-                        return in_array($authUser?->role, ['admin', 'user', 'super-admin'], true)
-                            || Auth::id() === (int) $task->user_id;
+                        return $authUser?->role === 'admin';
                     }),
             ], position: ActionsPosition::AfterColumns)
             ->bulkActions([
@@ -817,8 +858,8 @@ class TaskTable extends Component implements HasForms, HasTable
                             'reminder_time' => $reminderTriggerTime,
                             'reminder_unit' => $reminderUnitVal,
                             'reminder_value' => $reminderTimeVal,
-                            'created_at' => now(),
-                            'updated_at' => now(),
+                            // 'created_at' => now(),
+                            // 'updated_at' => now(),
                         ]);
 
                         SendReminderJob::dispatch(
@@ -1255,6 +1296,7 @@ class TaskTable extends Component implements HasForms, HasTable
         $authId = $user->id;
         $query = Task::query();
 
+        // User Role and Scope Filters
         if ($user->role === 'admin') {
             $adminCategoryId = $user->category_id ?? null;
             $adminGroupId = $user->group_id ?? null;
@@ -1271,49 +1313,37 @@ class TaskTable extends Component implements HasForms, HasTable
                 if ($adminGroupId) {
                     $q->orWhere('group_id', $adminGroupId);
                 }
-
-                if ($adminCategoryId || $adminGroupId) {
-                    $q->orWhereHas('assignedUsers', function (Builder $userQ) use ($adminCategoryId, $adminGroupId) {
-                        if ($adminCategoryId) {
-                            $userQ->where('category_id', $adminCategoryId);
-                        }
-                        if ($adminGroupId) {
-                            $userQ->where('group_id', $adminGroupId);
-                        }
-                    });
-                }
             });
         } elseif ($user->role !== 'super-admin') {
-            $userCategoryId = $user->category_id ?? null;
-            $userGroupId = $user->group_id ?? null;
-
-            $query->where(function (Builder $q) use ($authId, $userCategoryId, $userGroupId) {
+            $query->where(function (Builder $q) use ($authId) {
                 $q->where('user_id', $authId)
                     ->orWhereHas('taskAssignments', function (Builder $subQ) use ($authId) {
                         $subQ->where('user_id', $authId);
                     });
-
-                if ($userCategoryId) {
-                    $q->where('category_id', $userCategoryId);
-                }
-                if ($userGroupId) {
-                    $q->where('group_id', $userGroupId);
-                }
             });
         }
 
-        if ($user->role !== 'super-admin') {
-            if ($this->taskView === 'my_tasks') {
-                $query->where('user_id', '!=', $authId)
-                    ->whereHas('taskAssignments', function (Builder $q) use ($authId) {
-                        $q->where('user_id', $authId);
+        // User Performance Filter (If accessed via /tasks/user/{user}/{status?})
+        if (!empty($this->userFilter)) {
+            $targetUserId = $this->userFilter;
+            $query->where(function (Builder $q) use ($targetUserId) {
+                $q->where('user_id', $targetUserId)
+                    ->orWhereHas('taskAssignments', function (Builder $subQ) use ($targetUserId) {
+                        $subQ->where('user_id', $targetUserId);
                     });
-            } elseif ($this->taskView === 'assigned_to_others') {
-                $query->where('user_id', $authId)
-                    ->whereHas('taskAssignments', function (Builder $q) use ($authId) {
-                        $q->where('user_id', '!=', $authId);
-                    });
-            }
+            });
+        }
+
+        // Category Filter Apply
+        if (!empty($this->categoryFilter)) {
+            $query->whereHas('category', function (Builder $catQuery) {
+                $catQuery->where('name', $this->categoryFilter);
+            });
+        }
+
+        // Status Filter Apply
+        if (!empty($this->statusFilter) && in_array($this->statusFilter, ['pending', 'in_progress', 'completed'], true)) {
+            $query->where('status', $this->statusFilter);
         }
 
         $this->taskQuery = $query;
@@ -1393,7 +1423,7 @@ class TaskTable extends Component implements HasForms, HasTable
     {
         /** @var \App\Models\User|null $authUser */
         $authUser = Auth::user();
-        return Auth::check() && in_array($authUser?->role, ['admin', 'user', 'super-admin'], true);
+        return Auth::check() && in_array($authUser?->role, ['admin'], true);
     }
 
     private function deleteTaskWithRelatedData(Task $task, bool $useTransaction = true): void

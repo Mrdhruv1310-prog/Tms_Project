@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin', 'user', 'hr','employee','manager'])
-                ->change();
+        Schema::table('reminders', function (Blueprint $table) {
+            if (!Schema::hasColumn('reminders', 'created_at')) {
+                $table->timestamps();
+            }
         });
     }
 
@@ -22,8 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
+        Schema::table('reminders', function (Blueprint $table) {
+            $table->dropTimestamps();
         });
     }
 };

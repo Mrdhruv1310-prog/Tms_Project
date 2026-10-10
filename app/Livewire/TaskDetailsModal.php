@@ -183,7 +183,7 @@ class TaskDetailsModal extends Component
         // Auth user ko user list se exclude karne ke liye ->where('id', '!=', Auth::id()) add kiya hai
         /** @var \Illuminate\Database\Eloquent\Collection<int, User> $users */
         $users = User::query()->where('status', 1)
-            ->whereIn('role', ['admin', 'user', 'employee'])
+            ->whereIn('role', ['admin', 'hr', 'employee', 'manager'])
             ->get();
 
         $this->users = new \Illuminate\Database\Eloquent\Collection(
@@ -471,132 +471,62 @@ class TaskDetailsModal extends Component
         );
 
         DB::table('task_assignments')
-            ->where(
-                'task_id',
-                $task->id
-            )
+            ->where('task_id', $task->id)
             ->delete();
 
-        foreach (
-            $selectedUsers as $userId
-        ) {
-
-            DB::table(
-                'task_assignments'
-            )->updateOrInsert(
+        foreach ($selectedUsers as $userId) {
+            DB::table('task_assignments')->updateOrInsert(
                 [
-                    'task_id' =>
-                    $task->id,
-
-                    'user_id' =>
-                    $userId,
+                    'task_id' => $task->id,
+                    'user_id' => $userId,
                 ],
                 [
-                    'assigned_at' =>
-                    now(),
+                    'assigned_at' => now(),
                 ]
             );
         }
 
         DB::afterCommit(
-            function () use (
-                $task,
-                $selectedUsers
-            ) {
+            function () use ($task, $selectedUsers) {
+                $users = User::query()->whereIn('id', $selectedUsers)->get();
 
-                $users =
-                    User::query()->whereIn(
-                        'id',
-                        $selectedUsers
-                    )->get();
-
-                foreach (
-                    $users as $user
-                ) {
-
+                foreach ($users as $user) {
                     /*
-                |--------------------------------------------------------------------------
-                | TASK ASSIGNED EMAIL
-                |--------------------------------------------------------------------------
-                */
+                    |--------------------------------------------------------------------------
+                    | TASK ASSIGNED EMAIL
+                    |--------------------------------------------------------------------------
+                    */
+                    if (filled($user->email)) {
+                        $mailCacheKey = 'task_assigned_mail_sent_' . $task->id . '_' . $user->id;
 
-                    if (
-                        filled(
-                            $user->email
-                        )
-                    ) {
+                        if (Cache::add($mailCacheKey, true, now()->addDays(7))) {
+                            $mailable = new TaskAssignedMail($task, $user);
 
-                        $mailCacheKey =
-                            'task_assigned_mail_sent_'
-                            . $task->id
-                            . '_'
-                            . $user->id;
-
-                        if (
-                            Cache::add(
-                                $mailCacheKey,
-                                true,
-                                now()->addDays(7)
-                            )
-                        ) {
-
-                            Mail::to(
-                                $user->email
-                            )->queue(
-                                new TaskAssignedMail(
-                                    $task,
-                                    $user
-                                )
-                            );
+                            Mail::to($user->email)->send($mailable);
                         }
                     }
-
                     /*
-                |--------------------------------------------------------------------------
-                | TASK ASSIGNED WHATSAPP
-                |--------------------------------------------------------------------------
-                */
+                    |--------------------------------------------------------------------------
+                    | TASK ASSIGNED WHATSAPP
+                    |--------------------------------------------------------------------------
+                    */
+                    $phoneNumber = $user->phone_number ?? $user->mobile_number ?? null;
 
-                    $phoneNumber =
-                        $user->phone_number
-                        ?? $user->mobile_number
-                        ?? null;
+                    if (filled($phoneNumber)) {
+                        $whatsappCacheKey = 'task_assigned_whatsapp_dispatch_' . $task->id . '_' . $user->id;
 
-                    if (
-                        filled(
-                            $phoneNumber
-                        )
-                    ) {
-
-                        $whatsappCacheKey =
-                            'task_assigned_whatsapp_dispatch_'
-                            . $task->id
-                            . '_'
-                            . $user->id;
-
-                        if (
-                            Cache::add(
-                                $whatsappCacheKey,
-                                true,
-                                now()->addDays(7)
-                            )
-                        ) {
-
+                        if (Cache::add($whatsappCacheKey, true, now()->addDays(7))) {
                             SendTaskAssignedWhatsAppJob::dispatch(
                                 $task->id,
                                 $user->id
                             );
                         }
                     } else {
-
                         Log::warning(
                             'Task WhatsApp not dispatched: phone number missing.',
                             [
-                                'task_id' =>
-                                $task->id,
-
-                                'user_id' =>
-                                $user->id,
+                                'task_id' => $task->id,
+                                'user_id' => $user->id,
                             ]
                         );
                     }
@@ -920,8 +850,8 @@ class TaskDetailsModal extends Component
     // instant assignment notification
     public function createInstantNotifications(Task $task): void
     {
-        $this->selectedUsers = array_unique($this->selectedUsers);
-        foreach ($this->selectedUsers as $userId) {
+        $selectedUsers = array_values(array_unique(array_filter(array_map('intval', $this->selectedUsers))));
+        foreach ($selectedUsers as $userId) {
             Notification::where('task_id', $task->id)
                 ->where('user_id', $userId)
                 ->delete();
@@ -931,8 +861,7 @@ class TaskDetailsModal extends Component
                 'type' => 'due_date',
                 'message' => 'You have been assigned to task "' . $task->title . '".',
                 'sent_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
+                // created_at aur updated_at hata diya gaya hai
             ]);
         }
     }

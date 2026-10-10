@@ -45,12 +45,20 @@
                 </div>
             </div>
 
-            {{-- Summary Cards Grid (Colorful & Vibrant Redesign with Original Clean Backgrounds) --}}
+            {{-- Summary Cards Grid --}}
             <div class="mb-10 sm:mb-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                 @foreach ($labels as $label)
                     @php
                         $title = strtolower($label['title']);
+                        $statusKey = $label['status'] ?? 'total';
 
+                        // Redirect URL with Filament Table Filter Parameters
+                        $redirectUrl = match ($statusKey) {
+                            'pending' => url('/tasks/pending'),
+                            'in_progress' => url('/tasks/in_progress'),
+                            'completed' => url('/tasks/completed'),
+                            default => url('/tasks'),
+                        };
                         // Original clean background style with rich colorful glowing borders & shadows
                         $cardStyle = match ($title) {
                             'pending'
@@ -58,7 +66,7 @@
                             'in progress'
                                 => 'bg-white/95 border-amber-300/80 text-gray-900 shadow-[0_15px_35px_rgba(245,158,11,0.12)] hover:border-amber-400',
                             'completed'
-                                => 'bg-white/95 border-emerald-300/80 text-gray-900 shadow-[0_15px_35px_rgba(16,185,129,0.12)] hover:border-emerald-400',
+                                => 'bg-emerald-50/50 border-emerald-300/80 text-gray-900 shadow-[0_15px_35px_rgba(16,185,129,0.12)] hover:border-emerald-400',
                             'total'
                                 => 'bg-white/95 border-[rgb(7,139,221)]/40 text-gray-900 shadow-[0_15px_35px_rgba(7,139,221,0.12)] hover:border-[rgb(7,139,221)]',
                             default
@@ -95,8 +103,8 @@
                         };
                     @endphp
 
-                    <div
-                        class="group relative overflow-hidden rounded-3xl {{ $cardStyle }} backdrop-blur-xl p-6 border-2 ring-1 ring-white/80 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl">
+                    <a href="{{ $redirectUrl }}" wire:navigate
+                        class="group relative block overflow-hidden rounded-3xl {{ $cardStyle }} backdrop-blur-xl p-6 border-2 ring-1 ring-white/80 transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl">
 
                         <div class="relative z-10 flex items-start justify-between gap-3">
                             <div class="space-y-3">
@@ -151,7 +159,7 @@
                                 @endif
                             </div>
                         </div>
-                    </div>
+                    </a>
                 @endforeach
             </div>
 

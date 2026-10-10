@@ -79,6 +79,14 @@
                                         class="truncate text-base font-bold text-slate-900 dark:text-white tracking-tight">
                                         {{ ucwords($category['title']) }}
                                     </h4>
+
+                                    @if (!empty($category['creator_name']))
+                                        <p class="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                            By: <span
+                                                class="font-semibold text-slate-700 dark:text-slate-300">{{ $category['creator_name'] }}</span>
+                                        </p>
+                                    @endif
+
                                     <p
                                         class="mt-1 text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                         Total Scope: <span
@@ -104,10 +112,13 @@
                                             'completed' => 'Completed',
                                             default => ucwords($status),
                                         };
+
+                                        // FIXED: Passed as pure positional array to eliminate named unpacking errors
+                                        $categoryStatusUrl = route('tasks.category', [$category['title'], $status]);
                                     @endphp
 
-                                    <div
-                                        class="rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/80 dark:bg-slate-950/40 p-3.5 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-950/80 hover:border-slate-200 dark:hover:border-slate-700">
+                                    <a href="{{ $categoryStatusUrl }}" wire:navigate
+                                        class="block rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/80 dark:bg-slate-950/40 p-3.5 transition-all duration-200 hover:bg-slate-100/80 dark:hover:bg-slate-950/80 hover:border-blue-300 dark:hover:border-blue-700 hover:scale-[1.01] cursor-pointer">
                                         <div class="mb-3 flex items-center justify-between gap-3">
                                             <div class="flex items-center gap-3">
                                                 <div
@@ -152,7 +163,7 @@
                                                 style="width: {{ $percentage }}%; background-color: {{ $color }}">
                                             </div>
                                         </div>
-                                    </div>
+                                    </a>
                                 @endforeach
                             </div>
                         </div>

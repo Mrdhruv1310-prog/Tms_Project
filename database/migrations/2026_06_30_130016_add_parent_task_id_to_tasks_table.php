@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('task_conversations')) {
+            return;
+        }
+        
         Schema::table('tasks', function (Blueprint $table) {
             $table->unsignedBigInteger('parent_task_id')->nullable()->after('id');
         });
@@ -22,7 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tasks', function (Blueprint $table) {
-            // 
+            //
         });
     }
 };
