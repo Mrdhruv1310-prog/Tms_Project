@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone_number', 15)->nullable();
             $table->rememberToken();
-            $table->enum('role', ['admin', 'user']);
+            $table->enum('role', ['admin', 'user', 'hr', 'employee', 'manager']);
             $table->boolean('status')->default(true); // true for active, false for inactive
             $table->unsignedBigInteger('reporting_manager_id')->nullable();
             $table->foreign('reporting_manager_id')->references('id')->on('users')->onDelete('cascade');;

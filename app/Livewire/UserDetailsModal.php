@@ -21,7 +21,7 @@ class UserDetailsModal extends Component
     public ?string $email = null;
     public ?string $phone_number = null;
     public string $role = '';
-    public string $status = '';
+    public string $status = '1'; // Default Active rakha hai
 
     public string $password = '';
     public ?int $user_id = null;
@@ -53,50 +53,90 @@ class UserDetailsModal extends Component
     {
         $this->submitted = true;
 
+        // Validation Rules
         $rules = [
-            'first_name' => 'required|string|max:50',
-            'last_name' => 'required|string|max:50',
+            'first_name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z\s]+$/'
+            ],
+            'last_name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z\s]+$/'
+            ],
             'email' => [
                 'required',
-                'email:rfc,dns',
+                'string',
                 'max:255',
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
                 $this->user_id ? 'unique:users,email,' . $this->user_id : 'unique:users,email',
             ],
-            'phone_number' => 'required|string|max:15',
-            'role' => 'required|in:admin,user,super-admin',
+            'phone_number' => [
+                'required',
+                'regex:/^[0-9]{10}$/'
+            ],
+            'role' => 'required|in:admin,manager,employee,hr',
             'status' => 'required|in:1,0',
-            'password' => $this->user_id ? 'nullable|min:8|max:255' : 'required|min:8|max:255',
+            'password' => $this->user_id
+                ? ['nullable', 'string', 'min:8', 'max:255', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%!]).+$/']
+                : ['required', 'string', 'min:8', 'max:255', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%!]).+$/'],
         ];
 
+        // Custom Validation Messages
         $messages = [
-            'first_name.required' => 'Please enter the first name.',
-            'last_name.required' => 'Please enter the last name.',
-            'email.required' => 'Please enter the email address.',
-            'email.email' => 'Please enter a valid email address.',
-            'email.unique' => 'The email address has already been registered.',
+            'first_name.required' => 'Please enter first name.',
+            'first_name.regex' => 'First name can only contain letters and spaces.',
+            'first_name.max' => 'First name must not exceed 255 characters.',
+
+            'last_name.required' => 'Please enter last name.',
+            'last_name.regex' => 'Last name can only contain letters and spaces.',
+            'last_name.max' => 'Last name must not exceed 255 characters.',
+
+            'email.required' => 'Please enter email address.',
+            'email.regex' => 'Please enter a valid email format (e.g. user@gmail.com).',
+            'email.unique' => 'This email is already registered.',
+
+            'phone_number.regex' => 'Phone number must be exactly 10 digits.',
+            'phone_number.required' => 'Please enter phone number.',
+            
             'role.required' => 'Please select a role.',
             'role.in' => 'Please select a valid role.',
-            'status.required' => 'Please select the status.',
-            'password.required' => 'Please enter the password.',
-            'password.min' => 'The password must be at least 8 characters long.',
+
+            'status.required' => 'Please select status.',
+            'status.in' => 'Please select a valid status.',
+
+            'password.required' => 'Please enter password.',
+            'password.min' => 'Password must be at least 8 characters long.',
+            'password.regex' => 'Password must contain at least 1 uppercase (A-Z), 1 lowercase (a-z), 1 number (0-9), and 1 special character (@ # $ % !).',
         ];
 
         $this->validate($rules, $messages);
 
+        // HERE: $statusValue logic yahan add karein
+        if (!$this->user_id) {
+            // Insert karte waqt force Active ('1') set hoga
+            $statusValue = '1';
+        } else {
+            // Edit karte waqt selected value save hogi
+            $statusValue = $this->status;
+        }
+
         $plainPassword = '';
-        $userEmail = '';
 
         if ($this->user_id) {
             /** @var User $user */
             $user = User::query()->findOrFail($this->user_id);
 
             $updateData = [
-                'first_name' => $this->first_name,
-                'last_name' => $this->last_name,
-                'email' => $this->email,
-                'phone_number' => $this->phone_number,
+                'first_name' => trim($this->first_name),
+                'last_name' => trim($this->last_name),
+                'email' => trim($this->email),
+                'phone_number' => trim($this->phone_number),
                 'role' => $this->role,
-                'status' => $this->status,
+                'status' => $statusValue,
             ];
 
             if (!empty($this->password)) {
@@ -108,30 +148,27 @@ class UserDetailsModal extends Component
 
             if (!empty($this->password)) {
                 $user->refresh();
-                $userEmail = (string) $user->getAttribute('email');
-                // Dono parameters pass kiye gaye hain
-                Mail::to($userEmail)->send(new RegisterUserMail($user, $plainPassword));
+                Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
             }
 
-            $message = 'User updated successfully.';
+            $message = 'Employee updated successfully.';
         } else {
             $plainPassword = $this->password;
 
             /** @var User $user */
             $user = User::query()->create([
-                'first_name' => $this->first_name,
-                'last_name' => $this->last_name,
-                'email' => $this->email,
-                'phone_number' => $this->phone_number,
+                'first_name' => trim($this->first_name),
+                'last_name' => trim($this->last_name),
+                'email' => trim($this->email),
+                'phone_number' => trim($this->phone_number),
                 'role' => $this->role,
-                'status' => $this->status,
+                'status' => $statusValue,
                 'password' => Hash::make($plainPassword),
             ]);
 
-            $userEmail = (string) $user->getAttribute('email');
-            Mail::to($userEmail)->send(new RegisterUserMail($user, $plainPassword));
+            Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
 
-            $message = 'User added successfully.';
+            $message = 'Employee added successfully.';
         }
 
         $this->resetForm();
@@ -165,7 +202,9 @@ class UserDetailsModal extends Component
 
     public function resetForm(): void
     {
-        $this->reset(['first_name', 'last_name', 'email', 'phone_number', 'role', 'status', 'user_id', 'password']);
+        $this->reset(['first_name', 'last_name', 'email', 'phone_number', 'role', 'user_id', 'password']);
+        $this->status = '1'; // Default Active for Insert
+        $this->submitted = false;
     }
 
     public function render(): View

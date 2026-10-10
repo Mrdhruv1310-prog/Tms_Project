@@ -29,7 +29,7 @@
                     </div>
                     <div class="space-y-1">
                         <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
-                            Manager Users
+                            Employee List
                         </h1>
                     </div>
                 </div>
@@ -44,12 +44,16 @@
             @foreach ($users as $user)
                 @php
                     $initials =
-                        strtoupper(substr($user->first_name, 0, 1)) . strtoupper(substr($user->last_name, 0, 1));
+                        strtoupper(substr($user->first_name ?? '', 0, 1)) .
+                        strtoupper(substr($user->last_name ?? '', 0, 1));
                 @endphp
 
                 <div wire:key="{{ $user->id }}"
                     class="w-full bg-white border border-slate-100 rounded-3xl shadow-xl shadow-slate-100/50 dark:bg-gray-900 dark:border-gray-800 dark:shadow-none hover:shadow-2xl transition-all duration-300 overflow-hidden group">
-                    <div class="flex flex-col items-center p-6 sm:p-8">
+
+                    {{-- Click box to trigger modal --}}
+                    <div wire:click="showUserDetails({{ $user->id }})"
+                        class="flex flex-col items-center p-6 sm:p-8 cursor-pointer">
 
                         <!-- Profile Image or Initials -->
                         <div x-data="{ backgroundColor: generateRandomColor() }" :style="{ backgroundColor: backgroundColor }"
@@ -61,13 +65,17 @@
                             {{ Str::ucfirst($user->first_name) . ' ' . Str::ucfirst($user->last_name) }}
                         </h5>
 
+                        {{-- Role Badge (Always showing Employee) --}}
                         <span
                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-300 mb-6">
-                            {{ Str::ucfirst($user->role) }}
+                            Employee
                         </span>
+                    </div>
 
+                    {{-- Edit & Delete Buttons (Visible only to Admin) --}}
+                    @if (in_array(strtolower(trim(auth()->user()->role ?? '')), ['admin'], true))
                         <div
-                            class="flex items-center justify-center gap-2 w-full pt-4 border-t border-slate-100 dark:border-gray-800">
+                            class="px-6 pb-6 pt-0 flex items-center justify-center gap-2 w-full border-t border-slate-100 dark:border-gray-800">
                             <!-- Edit Button -->
                             <button wire:click="$dispatch('edituser', { id: {{ $user->id }} })"
                                 class="flex-1 inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-xl transition-all shadow-md shadow-blue-500/20 cursor-pointer">
@@ -81,7 +89,8 @@
                             </button>
 
                             <!-- Delete Button -->
-                            @if (auth()->user()->id !== $user->id)
+                            {{-- @if (auth()->user()->id !== $user->id) --}}
+                            @if (strtolower(trim(auth()->user()->role ?? '')) === 'admin')
                                 <button @click="userDeleteModalOpen=true; userId={{ $user->id }}"
                                     class="flex-1 py-2.5 px-4 text-red-600 dark:text-red-400 inline-flex items-center justify-center hover:text-white border border-red-200 dark:border-red-900/50 hover:bg-red-600 hover:border-red-600 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
                                     <svg class="mr-1.5 w-4 h-4" fill="currentColor" viewBox="0 0 20 20"
@@ -94,16 +103,103 @@
                                 </button>
                             @endif
                         </div>
-                    </div>
+                    @endif
+
                 </div>
             @endforeach
+
+            <!-- User Info Details Modal -->
+            @if ($userDetailsModalOpen && $selectedUser)
+                <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+                    aria-modal="true">
+                    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                        wire:click="closeUserDetailsModal"></div>
+
+                    <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                        <div
+                            class="relative transform overflow-hidden rounded-3xl bg-white dark:bg-gray-900 text-left shadow-2xl border border-slate-100 dark:border-gray-800 transition-all sm:my-8 sm:w-full sm:max-w-lg p-6 sm:p-8">
+
+                            {{-- Modal Header --}}
+                            <div
+                                class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-gray-800 mb-6">
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Employee Info Details</h3>
+                                <button wire:click="closeUserDetailsModal"
+                                    class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {{-- Modal Body --}}
+                            <div class="space-y-4">
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Name</span>
+                                    <p class="text-base font-semibold text-slate-800 dark:text-white">
+                                        {{ $selectedUser->first_name . ' ' . $selectedUser->last_name }}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Role</span>
+                                    <p class="text-sm font-semibold text-slate-800 dark:text-white">
+                                        {{ Str::ucfirst($selectedUser->role ?? 'employee') }}
+                                    </p>
+                                </div>
+
+                                {{-- Category Name --}}
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Category
+                                        Name</span>
+                                    <div class="flex flex-wrap gap-1.5 mt-1">
+                                        @forelse ($selectedUser->categories ?? [] as $category)
+                                            <span
+                                                class="px-3 py-1 text-xs font-medium rounded-lg bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                                                {{ $category->name }}
+                                            </span>
+                                        @empty
+                                            <p class="text-xs text-slate-400 italic">No categories available</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                {{-- Group Name --}}
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Group
+                                        Name</span>
+                                    <div class="flex flex-wrap gap-1.5 mt-1">
+                                        @forelse ($selectedUser->groups ?? [] as $group)
+                                            <span
+                                                class="px-3 py-1 text-xs font-medium rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100">
+                                                {{ $group->label ?? $group->label }}
+                                            </span>
+                                        @empty
+                                            <p class="text-xs text-slate-400 italic">No groups assigned</p>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Modal Footer --}}
+                            <div class="mt-8 pt-4 border-t border-slate-100 dark:border-gray-800 flex justify-end">
+                                <button wire:click="closeUserDetailsModal"
+                                    class="px-5 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-gray-800 dark:text-gray-300 text-xs font-bold uppercase tracking-wider rounded-xl transition cursor-pointer">
+                                    Close
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Modern Delete Modal/Dialog -->
             <div x-show="userDeleteModalOpen" x-cloak x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0" class="relative z-50" aria-labelledby="modal-title" role="dialog"
-                aria-modal="true">
+                x-transition:leave-end="opacity-0" class="relative z-50" aria-labelledby="modal-title"
+                role="dialog" aria-modal="true">
 
                 <!-- Backdrop -->
                 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"

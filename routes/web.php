@@ -27,6 +27,9 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
     Route::redirect('/', '/dashboard');
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/tasks', TaskTable::class)->name('tasks');
+    Route::get('/tasks/user/{status?}', TaskTable::class)->name('tasks.user');
+    Route::get('/tasks/category/{category}/{status?}', TaskTable::class)->name('tasks.category');
+    Route::get('/tasks/{status?}', TaskTable::class)->name('tasks');
     Route::get('/categoryReport', CategoryReport::class)->name('categoryReport');
     Route::get('/teamPerformance', TeamPerformance::class)->name('teamPerformance');
     Route::get('/export', ExportTaskModal::class)->name('export');
@@ -35,7 +38,7 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
     // Sirf Admin aur Super-Admin ke liye custom check (Bina kisi middleware conflict ke)
     Route::group(['middleware' => function ($request, $next) {
         $user = $request->user();
-        if (!$user || !in_array($user->role, ['admin', 'super-admin', 'user'])) {
+        if (!$user || !in_array($user->role, ['admin', 'hr', 'manager'])) {
             abort(403, 'Unauthorized action.');
         }
         return $next($request);

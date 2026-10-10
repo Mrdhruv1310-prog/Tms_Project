@@ -38,7 +38,7 @@
                 {{-- Add Users Dropdown Section --}}
                 <div class="space-y-2" x-data="{ isDropdownOpen: false }">
                     <label class="block text-xs font-bold text-slate-700 dark:text-gray-300 uppercase tracking-wider">
-                        Add Users to Group
+                        Add Employees to Group
                     </label>
 
                     <div class="relative">
@@ -46,7 +46,7 @@
                         <button @click="isDropdownOpen = !isDropdownOpen" @click.away="isDropdownOpen = false"
                             type="button"
                             class="flex justify-between items-center w-full px-4 py-3 text-sm text-slate-700 dark:text-white bg-slate-50/60 dark:bg-gray-900/50 rounded-xl border border-slate-200 dark:border-gray-700 hover:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all cursor-pointer shadow-2xs">
-                            <span class="font-medium">Select a user to add...</span>
+                            <span class="font-medium">Select an employee to add...</span>
                             <svg class="w-3 h-3 text-slate-400 transition-transform duration-200"
                                 :class="{ 'rotate-180': isDropdownOpen }" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 10 6">

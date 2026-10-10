@@ -928,7 +928,7 @@
             </a>
 
             @auth
-                @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
+                @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
                     <a href="{{ route('categories') }}" wire:navigate @click="mobileSidebarOpen = false"
                         :class="{ 'tms-mobile-active': $wire.activeMenu === 'categories' }">
                         <span data-tms-mobile-icon>
@@ -1045,7 +1045,7 @@
 
                 {{-- BUTTON FOR categories --}}
                 @auth
-                    @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
+                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
                         <button
                             @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'categoriesTab'; contentVisible = true"
                             @mouseleave="hoverTimeout = setTimeout(() => { if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 250)"
@@ -1079,7 +1079,7 @@
                 @endauth
 
                 @auth
-                    @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
+                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
                         {{-- button for users --}}
                         <button @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'usersTab'; contentVisible = true"
                             @mouseleave="hoverTimeout = setTimeout(() => { if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 250)"
@@ -1400,7 +1400,7 @@
             <div x-show="hoveredTab === 'categoriesTab'"
                 class="tms-menu-block group flex-1 px-4 space-y-2 overflow-hidden hover:overflow-auto mt-24">
                 @auth
-                    @if (in_array(auth()->user()->role, ['admin', 'super-admin']))
+                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
                         <a href="{{ route('categories') }}" wire:navigate
                             @click.prevent="activeTab = 'categoriesTab'; contentVisible = false"
                             class="flex items-center w-full space-x-2 text-white rounded-lg p-2 text-base font-medium"
@@ -1572,6 +1572,7 @@
         <div id="speed-dial-menu-dropdown-square"
             class="flex flex-col justify-end py-1 mb-4 space-y-2 bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:border-gray-600 hidden">
             <ul class="text-sm text-gray-500 dark:text-gray-300">
+                {{-- Add Tasks (Visible to Everyone) --}}
                 <li>
                     <a href="#" wire:click="$dispatch('openTaskModal', { component: 'task-details-modal' })"
                         x-data="{ isLoading: false }" x-on:addtaskmodalopened.window="isLoading = false"
@@ -1597,48 +1598,52 @@
                         <span class="text-sm font-medium">Add Tasks</span>
                     </a>
                 </li>
-                @can('view-admin-options')
-                    <li>
-                        <a href="{{ route('categories') }}" wire:navigate
-                            class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-                            <svg class="w-4 h-4 me-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path
-                                    d="M10 4a1 1 0 0 1 1 1v4h4a1 1 0 1 1 0 2h-4v4a1 1 0 1 1-2 0v-4H5a1 1 0 0 1 0-2h4V5a1 1 0 0 1 1-1z" />
-                                <path
-                                    d="M17 2H3a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM3 16V4h14v12H3z" />
-                            </svg>
-                            <span class="text-sm font-medium">Add Category</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" wire:click="$dispatch('openModal', { component: 'user-details-modal' })"
-                            id="UserDetailsModalButton" x-data="{ isLoading: false }"
-                            x-on:addusermodalopened.window="isLoading = false" x-on:click="isLoading = true"
-                            x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }" wire:loading.attr="disabled"
-                            wire:loading.class="opacity-50 cursor-not-allowed"
-                            class="flex items-center px-5 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white">
-                            <svg x-show="!isLoading" inert class="w-5 h-5 me-2" viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="7" fill="currentColor" r="5" />
-                                <path d="M20,19v1a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V19a6,6,0,0,1,6-6h4A6,6,0,0,1,20,19Z"
-                                    fill="currentColor" />
-                            </svg>
 
-                            <!-- Round loader spinner when loading -->
-                            <svg x-show="isLoading" inert
-                                class="animate-spin w-6 h-6 me-2 text-gray-500 transition duration-75 dark:text-gray-400"
-                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"
-                                    stroke-width="4"></circle>
-                                <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
-                                    stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
-                            </svg>
-                            <span class="text-sm font-medium">Add User</span>
-                        </a>
-                    </li>
-                @endcan
+                {{-- Add Category & Add Employee (Visible only to Admin, HR, Manager) --}}
+                @auth
+                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
+                        <li>
+                            <a href="{{ route('categories') }}" wire:navigate
+                                class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
+                                <svg class="w-4 h-4 me-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                                    viewBox="0 0 20 20">
+                                    <path
+                                        d="M10 4a1 1 0 0 1 1 1v4h4a1 1 0 1 1 0 2h-4v4a1 1 0 1 1-2 0v-4H5a1 1 0 0 1 0-2h4V5a1 1 0 0 1 1-1z" />
+                                    <path
+                                        d="M17 2H3a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM3 16V4h14v12H3z" />
+                                </svg>
+                                <span class="text-sm font-medium">Add Category</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" wire:click="$dispatch('openModal', { component: 'user-details-modal' })"
+                                id="UserDetailsModalButton" x-data="{ isLoading: false }"
+                                x-on:addusermodalopened.window="isLoading = false" x-on:click="isLoading = true"
+                                x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }" wire:loading.attr="disabled"
+                                wire:loading.class="opacity-50 cursor-not-allowed"
+                                class="flex items-center px-5 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white">
+                                <svg x-show="!isLoading" inert class="w-5 h-5 me-2" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="7" fill="currentColor" r="5" />
+                                    <path d="M20,19v1a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V19a6,6,0,0,1,6-6h4A6,6,0,0,1,20,19Z"
+                                        fill="currentColor" />
+                                </svg>
+
+                                <!-- Round loader spinner when loading -->
+                                <svg x-show="isLoading" inert
+                                    class="animate-spin w-6 h-6 me-2 text-gray-500 transition duration-75 dark:text-gray-400"
+                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-opacity="0.25" stroke-width="4"></circle>
+                                    <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
+                                </svg>
+                                <span class="text-sm font-medium">Add Employee</span>
+                            </a>
+                        </li>
+                    @endif
+                @endauth
             </ul>
         </div>
         <button type="button" data-dial-toggle="speed-dial-menu-dropdown-square"
@@ -1874,7 +1879,7 @@
                                         <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
                                             stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
                                     </svg>
-                                    <span class="text-sm font-medium">Add User</span>
+                                    <span class="text-sm font-medium">Add Employee</span>
                                 </a>
                             </li>
                         @endcan
@@ -1986,32 +1991,32 @@
                                                 <g>
                                                     <path
                                                         d="M330.691,85.346h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                                c-29.419,0-53.333,23.936-53.333,53.333v138.667h-53.333c-5.888,0-10.667,4.779-10.667,10.667s4.779,10.667,10.667,10.667h53.333
-                                                                                                                v138.667c0,29.397,23.915,53.333,53.333,53.333h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                                c-17.643,0-32-14.357-32-32V277.346h74.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-74.667V117.346
-                                                                                                                C298.691,99.703,313.049,85.346,330.691,85.346z"
+                                                                                                                    c-29.419,0-53.333,23.936-53.333,53.333v138.667h-53.333c-5.888,0-10.667,4.779-10.667,10.667s4.779,10.667,10.667,10.667h53.333
+                                                                                                                    v138.667c0,29.397,23.915,53.333,53.333,53.333h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
+                                                                                                                    c-17.643,0-32-14.357-32-32V277.346h74.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-74.667V117.346
+                                                                                                                    C298.691,99.703,313.049,85.346,330.691,85.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M177.646,179.831c-3.349-29.525-26.752-51.819-54.4-51.819H68.782c-27.648,0-51.051,22.272-54.4,51.819L0.238,303.735
-                                                                                                                c-1.173,10.368,2.027,20.651,8.768,28.224c5.803,6.528,13.547,10.304,21.909,10.773l11.776,159.403
-                                                                                                                c0.427,5.568,5.056,9.877,10.645,9.877h85.333c5.589,0,10.219-4.309,10.645-9.877l11.776-159.403
-                                                                                                                c8.384-0.469,16.107-4.267,21.909-10.773c6.741-7.552,9.941-17.856,8.768-28.224L177.646,179.831z"
+                                                                                                                    c-1.173,10.368,2.027,20.651,8.768,28.224c5.803,6.528,13.547,10.304,21.909,10.773l11.776,159.403
+                                                                                                                    c0.427,5.568,5.056,9.877,10.645,9.877h85.333c5.589,0,10.219-4.309,10.645-9.877l11.776-159.403
+                                                                                                                    c8.384-0.469,16.107-4.267,21.909-10.773c6.741-7.552,9.941-17.856,8.768-28.224L177.646,179.831z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M96.025,106.679c29.461,0,53.333-23.872,53.333-53.333c0-29.461-23.872-53.333-53.333-53.333
-                                                                                                                c-29.461,0-53.333,23.872-53.333,53.333C42.691,82.807,66.563,106.679,96.025,106.679z"
+                                                                                                                    c-29.461,0-53.333,23.872-53.333,53.333C42.691,82.807,66.563,106.679,96.025,106.679z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,405.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                                v-42.667C512.025,419.703,497.667,405.346,480.025,405.346z"
+                                                                                                                    v-42.667C512.025,419.703,497.667,405.346,480.025,405.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,213.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                                v-42.667C512.025,227.703,497.667,213.346,480.025,213.346z"
+                                                                                                                    v-42.667C512.025,227.703,497.667,213.346,480.025,213.346z"
                                                         fill="currentColor" />
                                                     <path
                                                         d="M480.025,21.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                                V53.346C512.025,35.703,497.667,21.346,480.025,21.346z"
+                                                                                                                    V53.346C512.025,35.703,497.667,21.346,480.025,21.346z"
                                                         fill="currentColor" />
                                                 </g>
                                             </g>

@@ -207,7 +207,7 @@
                         </a>
                     </li>
                     <li>
-                        <button type="button" 
+                        <button type="button"
                             x-bind:class="{
                                 'bg-[#1d4ed8] text-white hover:bg-[#1d4ed8]': $wire.activeMenu === 'users' || $wire.activeMenu === 'manageusergroup',
                                 'hover:bg-gray-100 dark:hover:bg-gray-700': !($wire.activeMenu === 'users' || $wire.activeMenu === 'manageusergroup')
@@ -397,7 +397,7 @@
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25" stroke-width="4"></circle>
                                 <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
                             </svg>
-                            <span class="text-sm font-medium">Add User</span>
+                            <span class="text-sm font-medium">Add Employee</span>
                         </a>
                     </li>
                 @endcan
@@ -627,7 +627,7 @@
                                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25" stroke-width="4"></circle>
                                         <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
                                     </svg>
-                                    <span class="text-sm font-medium">Add User</span>
+                                    <span class="text-sm font-medium">Add Employee</span>
                                 </a>
                             </li>
                         @endcan

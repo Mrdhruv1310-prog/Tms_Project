@@ -198,7 +198,7 @@
                             <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
                                 stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
                         </svg>
-                        <span class="text-sm font-medium">Add User</span>
+                        <span class="text-sm font-medium">Add Employee</span>
                     </a>
                 </li>
                 @endcan
@@ -444,7 +444,7 @@
                                     <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
                                         stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
                                 </svg>
-                                <span class="text-sm font-medium">Add User</span>
+                                <span class="text-sm font-medium">Add Employee</span>
                             </a>
                         </li>
                         @endcan

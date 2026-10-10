@@ -7,6 +7,7 @@ use Illuminate\Database\QueryException;
 use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class CategoryManager extends Component
 {
@@ -20,63 +21,89 @@ class CategoryManager extends Component
 
     public function mount(): void
     {
-        $this->authorizeAdmin();
         $this->loadCategories();
     }
 
     /**
-     * Centralized authorization check to avoid code repetition.
+     * Check if current user has permission to manage categories.
      */
-    private function authorizeAdmin(): void
+    public function canManageCategories(): bool
     {
         if (! Auth::check()) {
-            abort(403, 'Unauthorized action.');
+            return false;
         }
 
-        /** @var \App\Models\User|null $authUser */
+        /** @var \App\Models\User $authUser */
         $authUser = Auth::user();
-        $role = $authUser->role ?? 'user';
+        $role = strtolower(trim($authUser->role ?? 'user'));
 
-        if (! in_array($role, ['admin', 'super-admin'], true)) {
-            abort(403, 'Unauthorized action.');
-        }
+        return in_array($role, ['admin', 'hr', 'manager'], true);
     }
 
     /**
-     * Load all categories.
+     * Authorization check for editing/deleting specific category instance.
      */
+    private function authorizeCategoryAccess(Category $category): bool
+    {
+        if (! $this->canManageCategories()) {
+            return false;
+        }
+
+        /** @var \App\Models\User $authUser */
+        $authUser = Auth::user();
+        $role = strtolower(trim($authUser->role ?? 'user'));
+
+        if ($role !== 'admin' && (int) $category->created_by !== (int) $authUser->id) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function loadCategories(): void
     {
-        $this->categories = Category::all();
+        if (! Auth::check()) {
+            $this->categories = collect();
+            return;
+        }
+
+        $this->categories = Category::forCurrentUser()->with('creator')->get();
     }
 
-    /**
-     * Helper to dispatch toast notifications safely.
-     */
     private function notifyUser(string $message, string $type = 'success'): void
     {
         $this->dispatch('notify', ['message' => $message, 'type' => $type]);
     }
 
-    // Add category function
     public function addCategory(): void
     {
-        $this->authorizeAdmin();
+        if (! $this->canManageCategories()) {
+            $this->notifyUser('You do not have permission to add categories.', 'error');
+            return;
+        }
 
-        // Trim whitespace
         $this->newCategory = trim($this->newCategory);
+        $userId = Auth::id();
 
-        // Validate input with built-in unique rule for concurrency safety
         $this->validate([
-            'newCategory' => 'required|string|max:255|unique:categories,name',
+            'newCategory' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')->where(function ($query) use ($userId) {
+                    return $query->where('created_by', $userId);
+                }),
+            ],
         ], [
             'newCategory.unique' => 'The category already exists.',
         ]);
 
         try {
-            Category::create(['name' => $this->newCategory]);
+            Category::create([
+                'name' => $this->newCategory,
+                'created_by' => $userId,
+            ]);
 
-            // Clear input and refresh list
             $this->newCategory = '';
             $this->loadCategories();
 
@@ -86,43 +113,54 @@ class CategoryManager extends Component
         }
     }
 
-    /**
-     * Set up category for editing.
-     */
     public function editCategorySetup(int $id): void
     {
-        $this->authorizeAdmin();
         $category = Category::findOrFail($id);
+
+        if (! $this->authorizeCategoryAccess($category)) {
+            $this->notifyUser('You do not have permission to edit this category.', 'error');
+            return;
+        }
+
         $this->editCategoryId = $category->id;
         $this->editCategory = $category->name;
     }
 
-    // Update category function
     public function updateCategory(): void
     {
-        $this->authorizeAdmin();
-
-        if (!$this->editCategoryId) {
+        if (! $this->editCategoryId) {
             $this->notifyUser('No category selected for update.', 'error');
             return;
         }
 
-        // Trim whitespace
+        $category = Category::findOrFail($this->editCategoryId);
+
+        if (! $this->authorizeCategoryAccess($category)) {
+            $this->notifyUser('You do not have permission to update this category.', 'error');
+            return;
+        }
+
         $this->editCategory = trim($this->editCategory);
 
-        // Validate input ignoring current ID
         $this->validate([
-            'editCategory' => 'required|string|max:255|unique:categories,name,' . $this->editCategoryId,
+            'editCategory' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')
+                    ->where(function ($query) use ($category) {
+                        return $query->where('created_by', $category->created_by);
+                    })
+                    ->ignore($this->editCategoryId),
+            ],
         ], [
             'editCategory.unique' => 'The category already exists.',
         ]);
 
         try {
-            $category = Category::findOrFail($this->editCategoryId);
             $category->name = $this->editCategory;
             $category->save();
 
-            // Reset edit state and refresh
             $this->editCategoryId = null;
             $this->editCategory = '';
             $this->loadCategories();
@@ -133,14 +171,15 @@ class CategoryManager extends Component
         }
     }
 
-    // Delete Category with check for assigned tasks
     public function deleteCategory(int $categoryId): void
     {
-        $this->authorizeAdmin();
-
         $category = Category::findOrFail($categoryId);
 
-        // Check if the category has any tasks assigned
+        if (! $this->authorizeCategoryAccess($category)) {
+            $this->notifyUser('You do not have permission to delete this category.', 'error');
+            return;
+        }
+
         if ($category->tasks()->exists()) {
             $this->notifyUser('Cannot delete category. There are tasks assigned to it.', 'error');
             return;
@@ -149,10 +188,9 @@ class CategoryManager extends Component
         $category->delete();
         $this->loadCategories();
 
-        $this->notifyUser('Category deleted successfully.', 'success');
+        $this->notifyUser('Category deleted successfully.', 'error');
     }
 
-    // Render category page
     public function render(): View
     {
         return view('livewire.category-manager')->layout('components.layouts.app', ['title' => 'Categories | TMS']);
