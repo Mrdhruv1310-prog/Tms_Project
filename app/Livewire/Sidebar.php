@@ -5,7 +5,11 @@ namespace App\Livewire;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Sidebar | TMS')]
 class Sidebar extends Component
 {
     public string $activeMenu = '';

@@ -127,19 +127,6 @@
                     {{ __('Sign in') }}
                 </button>
             </div>
-
-            <!-- Sign Up -->
-            <div class="text-center text-sm pt-2">
-                <span class="text-gray-500">
-                    Don't have an account?
-                </span>
-
-                <a href="{{ route('register') }}" wire:navigate
-                    class="font-semibold text-[rgb(7,139,221)] hover:underline ml-1">
-                    Sign Up
-                </a>
-            </div>
-
         </form>
     </div>
 

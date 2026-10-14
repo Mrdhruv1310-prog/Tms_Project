@@ -13,7 +13,7 @@ use Livewire\Attributes\Title;
 #[Title('Employee List')]
 class Users extends Component
 {
-    /** @var \Illuminate\Database\Eloquent\Collection<int, User> */
+    /** @var \Illuminate\Database\Eloquent\Collection<int, User>|array */
     public $users;
 
     // Modal control
@@ -38,7 +38,7 @@ class Users extends Component
         /** @var User|null $currentUser */
         $currentUser = Auth::user();
 
-        $allowedRoles = ['admin', 'super-admin', 'hr', 'manager', 'employee'];
+        $allowedRoles = ['super-admin', 'admin', 'hr', 'manager', 'employee'];
 
         if (!Auth::check() || !$currentUser || !in_array(strtolower(trim($currentUser->role ?? '')), $allowedRoles, true)) {
             abort(403, 'Unauthorized action.');
@@ -47,14 +47,46 @@ class Users extends Component
 
     private function loadUsers(): void
     {
-        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $users */
-        $users = User::query()->where('status', 1)->orderBy('created_at', 'desc')->get();
-        $this->users = $users;
+        $authUserId = Auth::id();
+
+        /** @var \Illuminate\Database\Eloquent\Collection<int, User> $allUsers */
+        $allUsers = User::query()->where('status', 1)->orderBy('created_at', 'desc')->get();
+
+        // Keep Auth User ALWAYS on 1st Position
+        $authUserObj = $allUsers->firstWhere('id', $authUserId);
+        $otherUsers = $allUsers->reject(fn($u) => $u->id === $authUserId)->values();
+
+        $sortedList = collect();
+        if ($authUserObj) {
+            $sortedList->push($authUserObj);
+        }
+
+        $this->users = $sortedList->concat($otherUsers);
     }
 
-    /**
-     * Fetch user info along with Categories and Groups
-     */
+    public function editUser(int $userId): void
+    {
+        /** @var User|null $authUser */
+        $authUser = Auth::user();
+
+        if (! $authUser) {
+            return;
+        }
+
+        $authUserId = (int) $authUser->id;
+        $userRole = strtolower(trim($authUser->role ?? ''));
+
+        // Permission: Super Admin can edit anyone, OR Auth user can edit their own profile
+        if ($userRole !== 'super-admin' && $authUserId !== $userId) {
+            $this->dispatch('notify', ['message' => 'Aap sirf apna profile edit kar sakte hain.', 'type' => 'error']);
+            return;
+        }
+
+        // Open modal event dispatch with target user ID
+        $this->dispatch('openUserModal', userId: $userId);
+        $this->dispatch('open-user-modal', userId: $userId);
+    }
+
     public function showUserDetails(int $userId): void
     {
         $this->selectedUser = User::with(['categories', 'groups'])->find($userId);
@@ -72,7 +104,8 @@ class Users extends Component
         /** @var \App\Models\User|null $authUser */
         $authUser = Auth::user();
 
-        if (! $authUser || ! in_array(strtolower(trim($authUser->role ?? '')), ['admin'], true)) {
+        // SIRF SUPER-ADMIN HI DELETE KAR SAKTA HAI
+        if (! $authUser || strtolower(trim($authUser->role ?? '')) !== 'super-admin') {
             abort(403, 'Unauthorized action.');
         }
 

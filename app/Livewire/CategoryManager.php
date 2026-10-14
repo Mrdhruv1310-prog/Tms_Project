@@ -8,7 +8,11 @@ use Livewire\Component;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Category Manager | TMS')]
 class CategoryManager extends Component
 {
     public string $newCategory = '';
@@ -37,7 +41,7 @@ class CategoryManager extends Component
         $authUser = Auth::user();
         $role = strtolower(trim($authUser->role ?? 'user'));
 
-        return in_array($role, ['admin', 'hr', 'manager'], true);
+        return in_array($role, ['admin', 'hr', 'manager', 'super-admin'], true);
     }
 
     /**
@@ -53,7 +57,11 @@ class CategoryManager extends Component
         $authUser = Auth::user();
         $role = strtolower(trim($authUser->role ?? 'user'));
 
-        if ($role !== 'admin' && (int) $category->created_by !== (int) $authUser->id) {
+        if (in_array($role, ['admin', 'super-admin'], true)) {
+            return true;
+        }
+
+        if ((int) $category->created_by !== (int) $authUser->id) {
             return false;
         }
 
@@ -67,7 +75,15 @@ class CategoryManager extends Component
             return;
         }
 
-        $this->categories = Category::forCurrentUser()->with('creator')->get();
+        /** @var \App\Models\User $authUser */
+        $authUser = Auth::user();
+        $role = strtolower(trim($authUser->role ?? 'user'));
+
+        if ($role === 'super-admin') {
+            $this->categories = Category::with('creator')->get();
+        } else {
+            $this->categories = Category::forCurrentUser()->with('creator')->get();
+        }
     }
 
     private function notifyUser(string $message, string $type = 'success'): void

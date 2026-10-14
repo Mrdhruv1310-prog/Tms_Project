@@ -23,7 +23,7 @@
                     {{-- Icon Box --}}
                     <div class="flex flex-col gap-1">
                         <h3 class="text-lg sm:text-xl font-bold text-slate-700 dark:text-white tracking-tight">
-                            Manage Users Group
+                            Manage Employee Group
                         </h3>
                         <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-gray-400">
                             View, edit and manage system user groups seamlessly with advanced controls.

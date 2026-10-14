@@ -4,7 +4,11 @@ namespace App\Livewire;
 
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Counter | TMS')]
 class Counter extends Component
 {
     // Enforce strict integer typing to prevent payload tampering/type mismatch

@@ -1,18 +1,7 @@
 <div x-data="{
     show: @entangle('isOpen'),
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone_number: '',
-    role: '',
-    status: '',
     resetForm() {
-        this.first_name = '';
-        this.last_name = '';
-        this.email = '';
-        this.phone_number = '';
-        this.role = '';
-        this.status = '';
+        $wire.resetForm();
     }
 }" x-cloak x-show="show" class="fixed inset-0 flex items-center justify-center z-50 p-4 sm:p-6"
     aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -39,12 +28,10 @@
                 <div>
                     <h3 class="text-lg sm:text-xl font-bold text-slate-700 dark:text-white tracking-tight">
                         <span x-text="$wire.user_id ? 'Edit Employee Details' : 'Add New Employee'"></span>
-                        {{-- Add New User --}}
                     </h3>
                     <p class="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">
                         <span
                             x-text="$wire.user_id ? 'Update employee profile and configuration' : 'Create and configure a new system profile with custom role access'"></span>
-                        {{-- Create and configure a new system profile with custom role access --}}
                     </p>
                 </div>
 
@@ -57,6 +44,15 @@
                     <span class="sr-only">Close modal</span>
                 </button>
             </div>
+
+            @php
+                $authUserRole = strtolower(trim(Auth::user()->role ?? ''));
+                $isSuperAdmin = $authUserRole === 'super-admin';
+                $isEditing = !empty($user_id);
+
+                // Disable Role and Status if non-super-admin is editing profile
+                $disableRoleAndStatus = $isEditing && !$isSuperAdmin;
+            @endphp
 
             <!-- Modal body -->
             <form wire:submit.prevent="saveUser" class="space-y-5">
@@ -128,35 +124,35 @@
                         @enderror
                     </div>
 
-                    <!-- Role -->
+                    <!-- Role (Super-Admin can edit any, non-super-admin disabled when editing) -->
                     <div>
                         <label for="role"
                             class="block mb-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             Role <span class="text-rose-500">*</span>
                         </label>
-                        <select id="role" wire:model.defer="role"
-                            class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm rounded-2xl block w-full p-3.5 focus:ring-2 transition-all shadow-2xs font-medium
+                        <select id="role" wire:model.defer="role" @if ($disableRoleAndStatus) disabled @endif
+                            class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm rounded-2xl block w-full p-3.5 focus:ring-2 transition-all shadow-2xs font-medium disabled:opacity-60 disabled:cursor-not-allowed
                         @error('role') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror">
-                            <option value="" disabled selected>Select Role</option>
+                            <option value="" disabled>Select Role</option>
                             <option value="manager">Manager</option>
-                            <option value="employee">Employee</option>
                             <option value="hr">HR</option>
+                            <option value="employee">Employee</option>
                         </select>
                         @error('role')
                             <p class="mt-2 text-xs font-bold text-rose-600 dark:text-rose-400">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- Status -->
+                    <!-- Status (Super-Admin can edit any, non-super-admin disabled when editing) -->
                     <div>
                         <label for="status"
                             class="block mb-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             Status <span class="text-rose-500">*</span>
                         </label>
                         <select id="status" wire:model.defer="status"
-                            @if (!$user_id) disabled @endif
+                            @if ($disableRoleAndStatus) disabled @endif
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm rounded-2xl block w-full p-3.5 focus:ring-2 transition-all shadow-2xs font-medium disabled:opacity-60 disabled:cursor-not-allowed
-                        @error('status') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror">
+    @error('status') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror">
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
                         </select>

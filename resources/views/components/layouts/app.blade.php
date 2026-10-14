@@ -11,10 +11,12 @@
     <meta name="theme-color" content="#1a56db" />
     <link rel="apple-touch-icon" href="{{ asset('icons/nslogo.png') }}">
     <link rel="manifest" href="{{ asset('/1manifest.json') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <title>{{ $title ?? 'Page Title' }}</title>
     <!-- Include jQuery from a CDN -->
     <script src="{{ asset('/sw.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <!-- Flatpickr CSS & JS CDN -->
 
     @vite(['resources/js/app.js', 'resources/css/app.css'])

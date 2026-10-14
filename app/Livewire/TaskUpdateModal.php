@@ -11,7 +11,11 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Filament\Notifications\Notification;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Task Update | TMS')]
 class TaskUpdateModal extends Component
 {
     public $task;
