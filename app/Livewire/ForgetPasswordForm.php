@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Forget Password | TMS')]
 class ForgetPasswordForm extends Component
 {
     public string $email = '';
@@ -26,7 +30,7 @@ class ForgetPasswordForm extends Component
     {
         return [
             'email.required' => 'Please enter the email address.',
-            'email.email' => 'Please provide a valid email address.',
+            'email.email' => 'Invalid credentials!',
         ];
     }
 
@@ -49,7 +53,7 @@ class ForgetPasswordForm extends Component
             ->first();
 
         if (! $user) {
-            $this->addError('email', 'No account associated with this email address was found in our system.');
+            $this->addError('email', 'Invalid credentials!.');
             return;
         }
 

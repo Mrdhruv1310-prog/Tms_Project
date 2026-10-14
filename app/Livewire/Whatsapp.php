@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Livewire;
 
 use App\Models\Task;
@@ -6,7 +7,11 @@ use Exception;
 use Illuminate\Http\Request;
 use Livewire\Component;
 use Twilio\Rest\Client;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('WhatsApp Message | TMS')]
 class Whatsapp extends Component
 {
     public function render()

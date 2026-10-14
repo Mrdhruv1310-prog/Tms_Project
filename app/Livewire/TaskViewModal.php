@@ -5,7 +5,11 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Task;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Task View | TMS')]
 class TaskViewModal extends Component
 {
     public $taskId = null;

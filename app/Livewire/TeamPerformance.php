@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Illuminate\Database\Eloquent\Builder;
 
 #[Layout('components.layouts.app')]
 #[Title('Team Performance | TMS')]
@@ -27,8 +28,8 @@ class TeamPerformance extends Component
         }
 
         $authUserId = (int) $authUser->id;
-        $role = $authUser->role ?? 'employee';
-        $isAdmin = in_array($role, ['admin', 'manager', 'hr'], true);
+        $role = strtolower($authUser->role ?? 'employee');
+        $isAdmin = in_array($role, ['admin', 'manager', 'hr', 'super-admin'], true);
 
         if ($isAdmin) {
             $userQuery = User::query();
@@ -61,31 +62,36 @@ class TeamPerformance extends Component
             $userQuery = User::query()->whereIn('id', $uniqueUserIds);
         }
 
-        $this->team = $userQuery->get()
+        $allMembers = $userQuery->get()
             ->map(function (User $user) use ($isAdmin, $authUserId): array {
                 $targetUserId = (int) $user->id;
 
-                // Base query for tasks related to target user
-                $taskBaseQuery = Task::query()->where(function ($q) use ($targetUserId) {
-                    $q->where('user_id', $targetUserId)
-                        ->orWhereHas('taskAssignments', fn($sub) => $sub->where('user_id', $targetUserId));
-                });
+                // Extract UNIQUE task IDs where target user is Creator or Assignee
+                $assignedTaskIds = \Illuminate\Support\Facades\DB::table('task_assignments')
+                    ->where('user_id', $targetUserId)
+                    ->pluck('task_id');
 
-                // For non-admin, filter tasks to shared scope with Auth User (if viewing another user)
+                $createdTaskIds = Task::query()
+                    ->where('user_id', $targetUserId)
+                    ->pluck('id');
+
+                $allUniqueTaskIds = $assignedTaskIds->merge($createdTaskIds)->unique()->values()->toArray();
+
+                $taskBaseQuery = Task::query()
+                    ->whereIn('id', $allUniqueTaskIds)
+                    ->whereHas('creator');
+
                 if (! $isAdmin && $targetUserId !== $authUserId) {
-                    $taskBaseQuery->where(function ($q) use ($authUserId, $targetUserId, $user) {
-                        // Auth User created task & assigned to Target User
-                        $q->where(function ($sub) use ($authUserId, $targetUserId) {
+                    $taskBaseQuery->where(function (Builder $q) use ($authUserId, $targetUserId, $user) {
+                        $q->where(function (Builder $sub) use ($authUserId, $targetUserId) {
                             $sub->where('user_id', $authUserId)
-                                ->whereHas('taskAssignments', fn($a) => $a->where('user_id', $targetUserId));
+                                ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $targetUserId));
                         })
-                            // Or Target User created task & assigned to Auth User
-                            ->orWhere(function ($sub) use ($authUserId, $targetUserId) {
+                            ->orWhere(function (Builder $sub) use ($authUserId, $targetUserId) {
                                 $sub->where('user_id', $targetUserId)
-                                    ->whereHas('taskAssignments', fn($a) => $a->where('user_id', $authUserId));
+                                    ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $authUserId));
                             });
 
-                        // Or both belong to same group
                         if (!empty(Auth::user()->group_id) && (int) Auth::user()->group_id === (int) $user->group_id) {
                             $q->orWhere('user_id', $targetUserId);
                         }
@@ -115,8 +121,19 @@ class TeamPerformance extends Component
                     'percentage' => $total > 0 ? round(($completed / $total) * 100) : 0,
                 ];
             })
-            ->values()
-            ->toArray();
+            ->filter(fn($m) => $m['pending'] > 0)
+            ->values();
+
+        // Ensure Auth User is Always 1st Card
+        $authUserCard = $allMembers->firstWhere('id', $authUserId);
+        $otherCards = $allMembers->reject(fn($m) => $m['id'] === $authUserId)->values();
+
+        $sortedTeam = collect();
+        if ($authUserCard) {
+            $sortedTeam->push($authUserCard);
+        }
+
+        $this->team = $sortedTeam->concat($otherCards)->toArray();
     }
 
     public function render(): mixed

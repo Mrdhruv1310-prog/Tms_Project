@@ -7,7 +7,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Task | TMS')]
 class Task extends Component
 {
     /** @var \Illuminate\Database\Eloquent\Collection<int, TaskModel> */

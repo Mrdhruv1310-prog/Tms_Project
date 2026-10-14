@@ -4,13 +4,18 @@ namespace App\Livewire;
 
 use App\Models\User;
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
 use App\Mail\RegisterUserMail;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('User Details | TMS')]
 class UserDetailsModal extends Component
 {
     #[Locked]
@@ -20,8 +25,8 @@ class UserDetailsModal extends Component
     public ?string $last_name = null;
     public ?string $email = null;
     public ?string $phone_number = null;
-    public string $role = '';
-    public string $status = '1'; // Default Active rakha hai
+    public string $role = 'employee';
+    public string $status = '1';
 
     public string $password = '';
     public ?int $user_id = null;
@@ -53,6 +58,10 @@ class UserDetailsModal extends Component
     {
         $this->submitted = true;
 
+        /** @var User $currentUser */
+        $currentUser = Auth::user();
+        $isSuperAdmin = strtolower($currentUser->role ?? '') === 'super-admin';
+
         // Validation Rules
         $rules = [
             'first_name' => [
@@ -78,14 +87,16 @@ class UserDetailsModal extends Component
                 'required',
                 'regex:/^[0-9]{10}$/'
             ],
-            'role' => 'required|in:admin,manager,employee,hr',
-            'status' => 'required|in:1,0',
             'password' => $this->user_id
                 ? ['nullable', 'string', 'min:8', 'max:255', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%!]).+$/']
                 : ['required', 'string', 'min:8', 'max:255', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%!]).+$/'],
         ];
 
-        // Custom Validation Messages
+        if ($isSuperAdmin || !$this->user_id) {
+            $rules['role'] = 'required|in:admin,manager,employee,hr,super-admin';
+            $rules['status'] = 'required|in:1,0';
+        }
+
         $messages = [
             'first_name.required' => 'Please enter first name.',
             'first_name.regex' => 'First name can only contain letters and spaces.',
@@ -101,7 +112,7 @@ class UserDetailsModal extends Component
 
             'phone_number.regex' => 'Phone number must be exactly 10 digits.',
             'phone_number.required' => 'Please enter phone number.',
-            
+
             'role.required' => 'Please select a role.',
             'role.in' => 'Please select a valid role.',
 
@@ -115,27 +126,20 @@ class UserDetailsModal extends Component
 
         $this->validate($rules, $messages);
 
-        // HERE: $statusValue logic yahan add karein
-        if (!$this->user_id) {
-            // Insert karte waqt force Active ('1') set hoga
-            $statusValue = '1';
-        } else {
-            // Edit karte waqt selected value save hogi
-            $statusValue = $this->status;
-        }
-
-        $plainPassword = '';
-
         if ($this->user_id) {
-            /** @var User $user */
-            $user = User::query()->findOrFail($this->user_id);
+            /** @var User $targetUser */
+            $targetUser = User::query()->findOrFail($this->user_id);
+
+            // If NOT super-admin, preserve target user's existing role and status
+            $roleValue = $isSuperAdmin ? $this->role : (string)$targetUser->role;
+            $statusValue = $isSuperAdmin ? $this->status : (string)$targetUser->status;
 
             $updateData = [
                 'first_name' => trim($this->first_name),
                 'last_name' => trim($this->last_name),
                 'email' => trim($this->email),
                 'phone_number' => trim($this->phone_number),
-                'role' => $this->role,
+                'role' => $roleValue,
                 'status' => $statusValue,
             ];
 
@@ -144,16 +148,17 @@ class UserDetailsModal extends Component
                 $updateData['password'] = Hash::make($plainPassword);
             }
 
-            $user->update($updateData);
+            $targetUser->update($updateData);
 
             if (!empty($this->password)) {
-                $user->refresh();
-                Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
+                $targetUser->refresh();
+                Mail::to($targetUser->email)->send(new RegisterUserMail($targetUser, $plainPassword));
             }
 
             $message = 'Employee updated successfully.';
         } else {
             $plainPassword = $this->password;
+            $statusValue = '1';
 
             /** @var User $user */
             $user = User::query()->create([
@@ -203,7 +208,8 @@ class UserDetailsModal extends Component
     public function resetForm(): void
     {
         $this->reset(['first_name', 'last_name', 'email', 'phone_number', 'role', 'user_id', 'password']);
-        $this->status = '1'; // Default Active for Insert
+        $this->role = 'employee';
+        $this->status = '1';
         $this->submitted = false;
     }
 

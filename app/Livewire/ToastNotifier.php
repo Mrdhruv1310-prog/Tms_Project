@@ -4,7 +4,11 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Toast Notifier | TMS')]
 class ToastNotifier extends Component
 {
     /** @var array<string, string> */

@@ -928,7 +928,7 @@
             </a>
 
             @auth
-                @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
+                @if (in_array(auth()->user()->role, ['super-admin','admin', 'hr', 'manager']))
                     <a href="{{ route('categories') }}" wire:navigate @click="mobileSidebarOpen = false"
                         :class="{ 'tms-mobile-active': $wire.activeMenu === 'categories' }">
                         <span data-tms-mobile-icon>
@@ -1045,7 +1045,7 @@
 
                 {{-- BUTTON FOR categories --}}
                 @auth
-                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
+                    @if (in_array(auth()->user()->role, ['super-admin', 'admin', 'hr', 'manager']))
                         <button
                             @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'categoriesTab'; contentVisible = true"
                             @mouseleave="hoverTimeout = setTimeout(() => { if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 250)"
@@ -1079,7 +1079,7 @@
                 @endauth
 
                 @auth
-                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
+                    @if (in_array(auth()->user()->role, ['super-admin', 'admin', 'hr', 'manager']))
                         {{-- button for users --}}
                         <button @mouseenter="clearTimeout(hoverTimeout); hoveredTab = 'usersTab'; contentVisible = true"
                             @mouseleave="hoverTimeout = setTimeout(() => { if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 250)"
@@ -1400,7 +1400,7 @@
             <div x-show="hoveredTab === 'categoriesTab'"
                 class="tms-menu-block group flex-1 px-4 space-y-2 overflow-hidden hover:overflow-auto mt-24">
                 @auth
-                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
+                    @if (in_array(auth()->user()->role, ['super-admin', 'admin', 'hr', 'manager']))
                         <a href="{{ route('categories') }}" wire:navigate
                             @click.prevent="activeTab = 'categoriesTab'; contentVisible = false"
                             class="flex items-center w-full space-x-2 text-white rounded-lg p-2 text-base font-medium"
@@ -1601,7 +1601,7 @@
 
                 {{-- Add Category & Add Employee (Visible only to Admin, HR, Manager) --}}
                 @auth
-                    @if (in_array(auth()->user()->role, ['admin', 'hr', 'manager']))
+                    @if (in_array(auth()->user()->role, ['super-admin', 'admin', 'hr', 'manager']))
                         <li>
                             <a href="{{ route('categories') }}" wire:navigate
                                 class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">

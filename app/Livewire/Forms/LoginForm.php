@@ -41,10 +41,10 @@ class LoginForm extends Component
             'email' => 'required|max:255',
             'password' => 'required|min:6|max:255',
         ], [
-            'email.required' => 'Please enter the email address.',
-            'email.email' => 'Please enter a valid email address.',
-            'password.required' => 'Please enter the password.',
-            'password.min' => 'The password must be at least 6 characters long.',
+            'email.required' => 'Invalid credentials!',
+            'email.email' => 'Invalid credentials!',
+            'password.required' => 'Invalid credentials!',
+            'password.min' => 'Invalid credentials!',
         ]);
 
         $user = User::query()->where('email', $credentials['email'])->first();

@@ -7,7 +7,11 @@ use App\Models\User;
 use App\Models\Group;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('View User Groups | TMS')]
 class ViewUserGroups extends Component
 {
     public bool $isOpen = false;

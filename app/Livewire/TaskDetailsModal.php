@@ -25,7 +25,11 @@ use Illuminate\Support\Facades\Mail;
 use App\Jobs\SendTaskUpdateJob;
 use App\Jobs\SendTaskAssignedWhatsAppJob;
 use App\Jobs\SendTaskDueWhatsAppJob;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 
+#[Layout('components.layouts.app')]
+#[Title('Task Details | TMS')]
 class TaskDetailsModal extends Component
 {
     public string $route = '';

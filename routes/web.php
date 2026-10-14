@@ -38,7 +38,7 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
     // Sirf Admin aur Super-Admin ke liye custom check (Bina kisi middleware conflict ke)
     Route::group(['middleware' => function ($request, $next) {
         $user = $request->user();
-        if (!$user || !in_array($user->role, ['admin', 'hr', 'manager'])) {
+        if (!$user || !in_array($user->role, ['super-admin','admin', 'hr', 'manager','employee'], true)) {
             abort(403, 'Unauthorized action.');
         }
         return $next($request);
@@ -52,7 +52,6 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
 
 
 Route::middleware(['guest'])->group(function () {
-    Route::get('/register', RegisterForm::class)->name('register');
     Route::get('/login', LoginForm::class)->name('login');
     Volt::route('forgot-password', 'pages.auth.forgot-password')->name('password.request');
     Volt::route('reset-password/{token}', 'pages.auth.reset-password')->name('password.reset');

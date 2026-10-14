@@ -46,10 +46,19 @@
                     $initials =
                         strtoupper(substr($user->first_name ?? '', 0, 1)) .
                         strtoupper(substr($user->last_name ?? '', 0, 1));
+                    $isAuthUser = (int) $user->id === (int) auth()->id();
                 @endphp
 
                 <div wire:key="{{ $user->id }}"
-                    class="w-full bg-white border border-slate-100 rounded-3xl shadow-xl shadow-slate-100/50 dark:bg-gray-900 dark:border-gray-800 dark:shadow-none hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+                    class="relative w-full bg-white border border-slate-100 rounded-3xl shadow-xl shadow-slate-100/50 dark:bg-gray-900 dark:border-gray-800 dark:shadow-none hover:shadow-2xl transition-all duration-300 overflow-hidden group">
+
+                    {{-- Auth User "You" Badge on Top Right --}}
+                    @if ($isAuthUser)
+                        <span
+                            class="absolute top-4 right-4 z-10 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/60 dark:text-blue-300 dark:border-blue-800 shadow-2xs">
+                            You
+                        </span>
+                    @endif
 
                     {{-- Click box to trigger modal --}}
                     <div wire:click="showUserDetails({{ $user->id }})"
@@ -65,17 +74,17 @@
                             {{ Str::ucfirst($user->first_name) . ' ' . Str::ucfirst($user->last_name) }}
                         </h5>
 
-                        {{-- Role Badge (Always showing Employee) --}}
+                        {{-- Role Badge (Role koi bhi ho hamesha Employee hi show hoga) --}}
                         <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-300 mb-6">
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-300 mb-2">
                             Employee
                         </span>
                     </div>
 
-                    {{-- Edit & Delete Buttons (Visible only to Admin) --}}
-                    @if (in_array(strtolower(trim(auth()->user()->role ?? '')), ['admin'], true))
+                    {{-- Edit & Delete Buttons (Visible to Admin/Super-Admin EXCEPT for Auth User) --}}
+                    @if (!$isAuthUser && in_array(strtolower(trim(auth()->user()->role ?? '')), ['admin', 'super-admin'], true))
                         <div
-                            class="px-6 pb-6 pt-0 flex items-center justify-center gap-2 w-full border-t border-slate-100 dark:border-gray-800">
+                            class="px-6 pb-6 pt-0 flex items-center justify-center gap-2 w-full border-t border-slate-100 dark:border-gray-800 pt-4">
                             <!-- Edit Button -->
                             <button wire:click="$dispatch('edituser', { id: {{ $user->id }} })"
                                 class="flex-1 inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-xl transition-all shadow-md shadow-blue-500/20 cursor-pointer">
@@ -89,19 +98,16 @@
                             </button>
 
                             <!-- Delete Button -->
-                            {{-- @if (auth()->user()->id !== $user->id) --}}
-                            @if (strtolower(trim(auth()->user()->role ?? '')) === 'admin')
-                                <button @click="userDeleteModalOpen=true; userId={{ $user->id }}"
-                                    class="flex-1 py-2.5 px-4 text-red-600 dark:text-red-400 inline-flex items-center justify-center hover:text-white border border-red-200 dark:border-red-900/50 hover:bg-red-600 hover:border-red-600 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
-                                    <svg class="mr-1.5 w-4 h-4" fill="currentColor" viewBox="0 0 20 20"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    Delete
-                                </button>
-                            @endif
+                            <button @click="userDeleteModalOpen=true; userId={{ $user->id }}"
+                                class="flex-1 py-2.5 px-4 text-red-600 dark:text-red-400 inline-flex items-center justify-center hover:text-white border border-red-200 dark:border-red-900/50 hover:bg-red-600 hover:border-red-600 focus:ring-4 focus:outline-none focus:ring-red-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
+                                <svg class="mr-1.5 w-4 h-4" fill="currentColor" viewBox="0 0 20 20"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd"
+                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
+                                Delete
+                            </button>
                         </div>
                     @endif
 

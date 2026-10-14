@@ -8,7 +8,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 
 #[Layout('components.layouts.app')]
-#[Title('Manage User Groups')]
+#[Title('Manage Employee Groups')]
 class UserGroupCard extends Component
 {
     /** @var \Illuminate\Database\Eloquent\Collection<int, Group> */
