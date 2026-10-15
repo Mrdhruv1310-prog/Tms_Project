@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -46,7 +47,6 @@ class Dashboard extends Component
 
     public function mount(): void
     {
-        // Session se stored filters load karein (Persistence across navigation)
         $this->selectedTimeRange = session('dashboard_time_range', 'all');
         $this->selectedYear = session('dashboard_year', null);
         $this->selectedMonth = session('dashboard_month', null);
@@ -58,7 +58,6 @@ class Dashboard extends Component
     public function updated($propertyName): void
     {
         if (in_array($propertyName, ['selectedYear', 'selectedMonth', 'selectedDate', 'selectedTimeRange', 'selectedStatusFilter'])) {
-            // Save to Session
             session([
                 'dashboard_time_range' => $this->selectedTimeRange,
                 'dashboard_year' => $this->selectedYear,
@@ -93,6 +92,19 @@ class Dashboard extends Component
         return redirect()->to('/tasks/user/pending?' . http_build_query($queryParams));
     }
 
+    public function navigateToGroupTasks(int $groupId)
+    {
+        $group = Group::find($groupId);
+        $groupName = $group ? ($group->label ?? $group->name) : '';
+
+        $queryParams = $this->getDateQueryParams();
+        if (!empty($groupName)) {
+            $queryParams['group'] = $groupName;
+        }
+
+        return redirect()->to('/tasks?' . http_build_query($queryParams));
+    }
+
     public function clearDateFilters(): void
     {
         $this->selectedYear = null;
@@ -100,7 +112,6 @@ class Dashboard extends Component
         $this->selectedDate = null;
         $this->selectedTimeRange = 'all';
 
-        // Session reset karein
         session()->forget(['dashboard_time_range', 'dashboard_year', 'dashboard_month', 'dashboard_date']);
 
         $this->refreshDashboardData();
@@ -142,14 +153,6 @@ class Dashboard extends Component
         $this->setGroups($role, $authUserId);
     }
 
-    private function hasActiveDateFilter(): bool
-    {
-        return filled($this->selectedDate)
-            || ($this->selectedTimeRange !== 'all')
-            || filled($this->selectedYear)
-            || filled($this->selectedMonth);
-    }
-
     private function applyDateFilters(Builder $query): void
     {
         if (filled($this->selectedDate)) {
@@ -187,12 +190,10 @@ class Dashboard extends Component
 
         $this->applyDateFilters($query);
 
-        // ONLY Super-Admin gets un-restricted access across all tasks
         if ($role === 'super-admin') {
             return $query;
         }
 
-        // For EVERYONE else (Admin, HR, Manager, Employee), count ONLY tasks created by or assigned to Auth User
         return $query->where(function (Builder $q) use ($authUserId) {
             $q->where('tasks.user_id', $authUserId)
                 ->orWhereHas('taskAssignments', function ($aq) use ($authUserId) {
@@ -291,7 +292,6 @@ class Dashboard extends Component
         /** @var Builder<User> $query */
         $query = User::query();
 
-        // Unless super-admin, only fetch auth user card on dashboard
         if ($role !== 'super-admin') {
             $query->where('id', $authUserId);
         }
@@ -300,8 +300,7 @@ class Dashboard extends Component
             ->map(function ($user) use ($role, $authUserId) {
                 $targetUserId = (int) $user->id;
 
-                // Unique Task IDs where target user is Creator or Assignee
-                $assignedTaskIds = \Illuminate\Support\Facades\DB::table('task_assignments')
+                $assignedTaskIds = DB::table('task_assignments')
                     ->where('user_id', $targetUserId)
                     ->pluck('task_id');
 
@@ -315,10 +314,8 @@ class Dashboard extends Component
                     ->whereIn('id', $allUniqueTaskIds)
                     ->whereHas('creator');
 
-                // Apply Dashboard Active Date Filters
                 $this->applyDateFilters($taskBaseQuery);
 
-                // For Non Super-Admin, restrict tasks to strictly assigned-by or assigned-to Auth User
                 if ($role !== 'super-admin' && $targetUserId !== $authUserId) {
                     $taskBaseQuery->where(function (Builder $q) use ($authUserId, $targetUserId) {
                         $q->where(function (Builder $sub) use ($authUserId, $targetUserId) {
@@ -369,69 +366,57 @@ class Dashboard extends Component
 
     private function setGroups(string $role, int $authUserId): void
     {
-        /** @var Builder<Group> $groupQuery */
-        $groupQuery = Group::query();
+        $allGroups = Group::query()->get();
 
-        $this->groups = $groupQuery->withCount([
-            'tasks as pending_tasks_count' => function ($query) use ($role, $authUserId) {
-                $query->where('status', 'pending')->whereHas('creator');
-                $this->applyDateFilters($query);
+        $this->groups = $allGroups->map(function ($group) use ($role, $authUserId) {
+            // 1. group_users pivot table se is Group ke saare Users nikaalein
+            $groupUserIds = DB::table('group_users')
+                ->where('group_id', $group->id)
+                ->pluck('user_id')
+                ->map(fn($id) => (int) $id)
+                ->toArray();
 
-                if ($role !== 'super-admin') {
-                    $query->where(function ($sub) use ($authUserId) {
-                        $sub->where('tasks.user_id', $authUserId)
-                            ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
-                    });
-                }
-            },
-            'tasks as inprogress_tasks_count' => function ($query) use ($role, $authUserId) {
-                $query->where('status', 'in_progress')->whereHas('creator');
-                $this->applyDateFilters($query);
+            // 2. Task query: Task direct label_id ka ho YA group ke kisi member ka (Creator ya Assigned)
+            $taskBaseQuery = Task::query()
+                ->whereHas('creator')
+                ->where(function (Builder $q) use ($group, $groupUserIds) {
+                    $q->where('label_id', $group->id);
 
-                if ($role !== 'super-admin') {
-                    $query->where(function ($sub) use ($authUserId) {
-                        $sub->where('tasks.user_id', $authUserId)
-                            ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
-                    });
-                }
-            },
-            'tasks as completed_tasks_count' => function ($query) use ($role, $authUserId) {
-                $query->where('status', 'completed')->whereHas('creator');
-                $this->applyDateFilters($query);
+                    if (!empty($groupUserIds)) {
+                        $q->orWhereIn('tasks.user_id', $groupUserIds)
+                            ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->whereIn('user_id', $groupUserIds));
+                    }
+                });
 
-                if ($role !== 'super-admin') {
-                    $query->where(function ($sub) use ($authUserId) {
-                        $sub->where('tasks.user_id', $authUserId)
-                            ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
-                    });
-                }
-            },
-            'tasks as total_tasks_count' => function ($query) use ($role, $authUserId) {
-                $query->whereHas('creator');
-                $this->applyDateFilters($query);
+            // Dashboard Date Filters
+            $this->applyDateFilters($taskBaseQuery);
 
-                if ($role !== 'super-admin') {
-                    $query->where(function ($sub) use ($authUserId) {
-                        $sub->where('tasks.user_id', $authUserId)
-                            ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
-                    });
-                }
-            },
-        ])
-            ->get()
-            ->map(function ($group) {
-                return [
-                    'id' => $group->id,
-                    'name' => $group->label ?? $group->name ?? 'No Group Name',
-                    'pending' => $group->pending_tasks_count,
-                    'in_progress' => $group->inprogress_tasks_count,
-                    'completed' => $group->completed_tasks_count,
-                    'total' => $group->total_tasks_count,
-                    'percentage' => $group->total_tasks_count > 0
-                        ? round(($group->completed_tasks_count / $group->total_tasks_count) * 100)
-                        : 0,
-                ];
-            })
+            // Access Restrictions for non Super-Admin
+            if ($role !== 'super-admin') {
+                $taskBaseQuery->where(function ($sub) use ($authUserId) {
+                    $sub->where('tasks.user_id', $authUserId)
+                        ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
+                });
+            }
+
+            $pending = (clone $taskBaseQuery)->where('status', 'pending')->count();
+            $inProgress = (clone $taskBaseQuery)->where('status', 'in_progress')->count();
+            $completed = (clone $taskBaseQuery)->where('status', 'completed')->count();
+            $total = (clone $taskBaseQuery)->count();
+
+            return [
+                'id' => $group->id,
+                'name' => $group->label ?? $group->name ?? 'No Group Name',
+                'group_users_count' => count($groupUserIds),
+                'pending' => $pending,
+                'in_progress' => $inProgress,
+                'completed' => $completed,
+                'total' => $total,
+                'percentage' => $total > 0
+                    ? round(($completed / $total) * 100)
+                    : 0,
+            ];
+        })
             ->values()
             ->toArray();
     }

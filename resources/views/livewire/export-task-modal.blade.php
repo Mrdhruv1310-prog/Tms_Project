@@ -45,7 +45,7 @@
 
         <!-- Display Export Options Based on Role -->
         <div class="space-y-3 mb-8">
-            @if (Auth::user()->role === 'admin')
+            @if (Auth::check() && Auth::user()?->role === 'super-admin')
                 <!-- Admin Report Options -->
                 <div @click="selectedReport = 'myTasksSummary'"
                     :class="{ 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/20 shadow-sm': selectedReport === 'myTasksSummary', 'border-slate-200 dark:border-gray-800 hover:border-slate-300 dark:hover:border-gray-700 bg-slate-50/50 dark:bg-gray-800/40': selectedReport !== 'myTasksSummary' }"

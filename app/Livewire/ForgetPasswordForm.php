@@ -12,7 +12,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 
-#[Layout('components.layouts.app')]
+#[Layout('components.layouts.login')]
 #[Title('Forget Password | TMS')]
 class ForgetPasswordForm extends Component
 {
@@ -34,9 +34,6 @@ class ForgetPasswordForm extends Component
         ];
     }
 
-    /**
-     * Helper to dispatch toast notifications safely.
-     */
     private function notifyUser(string $message, string $type = 'success'): void
     {
         $this->dispatch('notify', ['message' => $message, 'type' => $type]);
@@ -57,7 +54,6 @@ class ForgetPasswordForm extends Component
             return;
         }
 
-        // Clean up old tokens for this email
         PasswordResetToken::where('email', $user->email)->delete();
 
         $token = Str::random(60);
@@ -81,8 +77,6 @@ class ForgetPasswordForm extends Component
 
     public function render()
     {
-        return view('livewire.forget-password-form')->layout('components.layouts.login', [
-            'pageTitle' => 'Forgot Password | TMS',
-        ]);
+        return view('livewire.forget-password-form');
     }
 }
