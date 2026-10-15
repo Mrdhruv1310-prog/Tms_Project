@@ -97,6 +97,11 @@ class ExportTaskModal extends Component
         }
     }
 
+    public function getUserRoleProperty(): ?string
+    {
+        return Auth::user()?->role;
+    }
+
     public function render(): View
     {
         return view('livewire.export-task-modal');

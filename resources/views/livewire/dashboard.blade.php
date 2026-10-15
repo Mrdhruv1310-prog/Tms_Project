@@ -586,87 +586,72 @@
                             };
                         @endphp
 
-                        <a href="{{ route('group.details', ['id' => $group['id'] ?? 0]) }}" wire:navigate
-                            class="block h-full group outline-none">
-                            <div
-                                class="relative flex h-full flex-col justify-between rounded-lg sm:rounded-2xl border border-gray-200/80 bg-white/90 backdrop-blur-md p-3.5 sm:p-6 transition-all duration-300 hover:border-[rgb(7,139,221)]/50 hover:shadow-lg">
-                                <div>
-                                    <div class="mb-3 sm:mb-6 flex items-start justify-between gap-2.5">
-                                        <div class="truncate">
-                                            <h3
-                                                class="truncate text-xs sm:text-base font-semibold text-gray-800 group-hover:text-[rgb(7,139,221)]">
-                                                {{ !empty($group['name']) ? ucwords($group['name']) : 'No Group Name' }}
-                                            </h3>
-                                            <p class="text-[9px] sm:text-[11px] font-medium text-gray-500 mt-0.5">Group
-                                                task analytics summary</p>
-                                        </div>
-                                        <div
-                                            class="flex h-7 w-7 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-gray-50 text-gray-500 group-hover:bg-[rgb(7,139,221)] group-hover:text-white transition-all border border-gray-200/80 shadow-xs">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                                stroke-width="2.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                            </svg>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex flex-row items-center gap-3 sm:gap-6">
-                                        <div
-                                            class="relative flex h-14 w-14 sm:h-20 sm:w-20 shrink-0 items-center justify-center">
-                                            <svg class="h-full w-full -rotate-90 drop-shadow-xs"
-                                                viewBox="0 0 100 100">
-                                                <circle r="40" cx="50" cy="50" fill="transparent"
-                                                    stroke="#F3F4F6" stroke-width="9" />
-                                                <circle r="40" cx="50" cy="50" fill="transparent"
-                                                    stroke="{{ $strokeColor }}" stroke-width="9"
-                                                    stroke-linecap="round" stroke-dasharray="{{ $circumference }}"
-                                                    stroke-dashoffset="{{ $offset }}"
-                                                    class="transition-all duration-1000 ease-out" />
-                                            </svg>
-                                            <span
-                                                class="absolute text-[11px] sm:text-sm font-bold text-gray-800 font-mono">{{ $percentage }}%</span>
-                                        </div>
-
-                                        <div class="w-full space-y-1 text-xs font-semibold text-gray-600">
-                                            <div
-                                                class="flex justify-between items-center border-b border-gray-100 pb-1">
-                                                <span
-                                                    class="flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-gray-500"><span
-                                                        class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-xs"></span>Pending</span>
-                                                <span
-                                                    class="font-bold text-gray-800 font-mono text-xs">{{ $group['pending'] ?? 0 }}</span>
-                                            </div>
-
-                                            <div
-                                                class="flex justify-between items-center border-b border-gray-100 pb-1">
-                                                <span
-                                                    class="flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-gray-500"><span
-                                                        class="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-xs"></span>In
-                                                    Progress</span>
-                                                <span
-                                                    class="font-bold text-gray-800 font-mono text-xs">{{ $group['in_progress'] ?? 0 }}</span>
-                                            </div>
-
-                                            <div class="flex justify-between items-center pt-0.5">
-                                                <span
-                                                    class="flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-gray-500"><span
-                                                        class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-xs"></span>Completed</span>
-                                                <span
-                                                    class="font-bold text-gray-800 font-mono text-xs">{{ $group['completed'] ?? 0 }}</span>
-                                            </div>
-                                        </div>
+                        <div wire:click="navigateToGroupTasks({{ $group['id'] }})"
+                            class="relative flex h-full flex-col justify-between rounded-lg sm:rounded-2xl border border-gray-200/80 bg-white/90 backdrop-blur-md p-3.5 sm:p-6 transition-all duration-300 hover:border-[rgb(7,139,221)]/50 hover:shadow-lg cursor-pointer group">
+                            <div>
+                                <div class="mb-3 sm:mb-6 flex items-start justify-between gap-2.5">
+                                    <div class="truncate">
+                                        <h3
+                                            class="truncate text-xs sm:text-base font-semibold text-gray-800 group-hover:text-[rgb(7,139,221)]">
+                                            {{ !empty($group['name']) ? ucwords($group['name']) : 'No Group Name' }}
+                                        </h3>
+                                        <p class="text-[9px] sm:text-[11px] font-medium text-gray-500 mt-0.5">Group
+                                            task analytics summary</p>
                                     </div>
                                 </div>
 
-                                <div
-                                    class="mt-3 sm:mt-6 h-1.5 sm:h-2 w-full overflow-hidden rounded-full bg-gray-100 p-0.5 shadow-inner">
-                                    <div class="h-full rounded-full transition-all duration-1000 shadow-xs"
-                                        style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}">
+                                <div class="flex flex-row items-center gap-3 sm:gap-6">
+                                    <div
+                                        class="relative flex h-14 w-14 sm:h-20 sm:w-20 shrink-0 items-center justify-center">
+                                        <svg class="h-full w-full -rotate-90 drop-shadow-xs" viewBox="0 0 100 100">
+                                            <circle r="40" cx="50" cy="50" fill="transparent"
+                                                stroke="#F3F4F6" stroke-width="9" />
+                                            <circle r="40" cx="50" cy="50" fill="transparent"
+                                                stroke="{{ $strokeColor }}" stroke-width="9" stroke-linecap="round"
+                                                stroke-dasharray="{{ $circumference }}"
+                                                stroke-dashoffset="{{ $offset }}"
+                                                class="transition-all duration-1000 ease-out" />
+                                        </svg>
+                                        <span
+                                            class="absolute text-[11px] sm:text-sm font-bold text-gray-800 font-mono">{{ $percentage }}%</span>
+                                    </div>
+
+                                    <div class="w-full space-y-1 text-xs font-semibold text-gray-600">
+                                        <div class="flex justify-between items-center border-b border-gray-100 pb-1">
+                                            <span
+                                                class="flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-gray-500"><span
+                                                    class="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-xs"></span>Pending</span>
+                                            <span
+                                                class="font-bold text-gray-800 font-mono text-xs">{{ $group['pending'] ?? 0 }}</span>
+                                        </div>
+
+                                        <div class="flex justify-between items-center border-b border-gray-100 pb-1">
+                                            <span
+                                                class="flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-gray-500"><span
+                                                    class="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-xs"></span>In
+                                                Progress</span>
+                                            <span
+                                                class="font-bold text-gray-800 font-mono text-xs">{{ $group['in_progress'] ?? 0 }}</span>
+                                        </div>
+
+                                        <div class="flex justify-between items-center pt-0.5">
+                                            <span
+                                                class="flex items-center gap-1 text-[10px] sm:text-[11px] font-medium text-gray-500"><span
+                                                    class="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-xs"></span>Completed</span>
+                                            <span
+                                                class="font-bold text-gray-800 font-mono text-xs">{{ $group['completed'] ?? 0 }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </a>
+
+                            <div
+                                class="mt-3 sm:mt-6 h-1.5 sm:h-2 w-full overflow-hidden rounded-full bg-gray-100 p-0.5 shadow-inner">
+                                <div class="h-full rounded-full transition-all duration-1000 shadow-xs"
+                                    style="width: {{ $percentage }}%; background-color: {{ $strokeColor }}">
+                                </div>
+                            </div>
+                        </div>
                     @empty
                         <div
                             class="col-span-full rounded-xl border border-dashed border-gray-300 bg-gray-50/50 p-6 sm:p-12 text-center text-xs sm:text-sm font-medium text-gray-500">

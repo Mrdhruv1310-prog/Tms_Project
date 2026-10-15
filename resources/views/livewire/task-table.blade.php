@@ -1,6 +1,6 @@
 <div>
     <div
-        class="relative min-h-screen bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)] overflow-x-hidden">
+        class="relative min-h-screen bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)]">
 
         <!-- Decorative Glow Elements -->
         <div
@@ -34,8 +34,8 @@
                 </a>
             </div>
 
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg bg-white p-2">
-                <section class="pt-2">
+            <div class="relative shadow-md sm:rounded-lg bg-white p-2">
+                <section class="pt-1">
                     @if (session()->has('message'))
                         <div x-init="$dispatch('notify', { msg: '{{ session('message') }}', type: 'success' })"></div>
                     @endif

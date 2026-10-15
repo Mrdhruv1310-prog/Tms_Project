@@ -67,18 +67,17 @@ class TaskTable extends Component implements HasForms, HasTable
     public ?string $filterTimeRange = null;
     public ?string $filterYear = null;
     public ?string $filterMonth = null;
+    public ?string $groupFilter = null;
 
     public function mount(): void
     {
         $this->taskView = request()->get('task_view', 'all_tasks');
 
-        // Capture Date/Timeline Query Parameters from Session or Request
         $this->filterDate = request()->get('date', session('dashboard_date'));
         $this->filterTimeRange = request()->get('time_range', session('dashboard_time_range', 'all'));
         $this->filterYear = request()->get('year', session('dashboard_year'));
         $this->filterMonth = request()->get('month', session('dashboard_month'));
 
-        // Path 1: /tasks/user/{status?}
         if (request()->is('tasks/user*')) {
             if (request()->has('user_id')) {
                 $this->userFilter = (int) request()->get('user_id');
@@ -87,40 +86,39 @@ class TaskTable extends Component implements HasForms, HasTable
             }
 
             $statusSegment = request()->segment(3);
-            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed'], true)) {
+            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed', 'canceled'], true)) {
                 $this->statusFilter = $statusSegment;
             }
-        }
-        // Path 2: /tasks/category/{category}/{status?}
-        elseif (request()->is('tasks/category*')) {
+        } elseif (request()->is('tasks/category*')) {
             $categorySegment = request()->segment(3);
             $statusSegment = request()->segment(4);
 
             if ($categorySegment) {
                 $this->categoryFilter = urldecode((string) $categorySegment);
             }
-            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed'], true)) {
+            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed', 'canceled'], true)) {
                 $this->statusFilter = $statusSegment;
             }
-        }
-        // Path 3: /tasks/{status?}
-        else {
+        } else {
             $statusSegment = request()->segment(2);
-            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed'], true)) {
+            if ($statusSegment && in_array($statusSegment, ['pending', 'in_progress', 'completed', 'canceled'], true)) {
                 $this->statusFilter = $statusSegment;
             }
         }
 
-        // Fallback via Query Parameters
         if (! $this->statusFilter && request()->has('status')) {
             $reqStatus = (string) request()->get('status');
-            if (in_array($reqStatus, ['pending', 'in_progress', 'completed'], true)) {
+            if (in_array($reqStatus, ['pending', 'in_progress', 'completed', 'canceled'], true)) {
                 $this->statusFilter = $reqStatus;
             }
         }
 
         if (! $this->categoryFilter && request()->has('category')) {
             $this->categoryFilter = urldecode((string) request()->get('category'));
+        }
+
+        if (! $this->groupFilter && request()->has('group')) {
+            $this->groupFilter = urldecode((string) request()->get('group'));
         }
     }
 
@@ -168,9 +166,9 @@ class TaskTable extends Component implements HasForms, HasTable
 
         $query = Task::query()->whereHas('creator');
 
-        // Apply Date Filters
         $this->applyDateFiltersToTaskQuery($query);
 
+        // Super Admin ke ilawa normal user restrictions
         if ($userRole !== 'super-admin') {
             $query->where(function (Builder $q) use ($authId) {
                 $q->where('user_id', $authId)
@@ -196,15 +194,52 @@ class TaskTable extends Component implements HasForms, HasTable
             });
         }
 
-        if (! empty($this->statusFilter) && in_array($this->statusFilter, ['pending', 'in_progress', 'completed'], true)) {
+        if (! empty($this->statusFilter) && in_array($this->statusFilter, ['pending', 'in_progress', 'completed', 'canceled'], true)) {
             $query->where('status', $this->statusFilter);
         }
+
+        // Group Filter: Group Label_ID ya Group Members ke tasks (group_users table ke users)
+        if (! empty($this->groupFilter)) {
+            $group = DB::table('groups')->where('label', $this->groupFilter)->first();
+
+            if ($group) {
+                $groupUserIds = DB::table('group_users')
+                    ->where('group_id', $group->id)
+                    ->pluck('user_id')
+                    ->map(fn($id) => (int) $id)
+                    ->toArray();
+
+                $query->where(function (Builder $q) use ($group, $groupUserIds) {
+                    $q->where('label_id', $group->id);
+
+                    if (! empty($groupUserIds)) {
+                        $q->orWhereIn('tasks.user_id', $groupUserIds)
+                            ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->whereIn('user_id', $groupUserIds));
+                    }
+                });
+            } else {
+                $query->whereHas('group', function (Builder $gQuery) {
+                    $gQuery->where('label', $this->groupFilter);
+                });
+            }
+        }
+
+        // Status Order: Pending -> In Progress -> Complete Intimation -> Completed -> Canceled
+        $query->orderByRaw("
+        CASE
+            WHEN status = 'pending' THEN 1
+            WHEN status = 'in_progress' THEN 2
+            WHEN status = 'complete_intimation' THEN 3
+            WHEN status = 'completed' THEN 4
+            WHEN status = 'canceled' THEN 5
+            ELSE 6
+        END ASC
+    ")->orderBy('id', 'desc');
 
         $this->taskQuery = $query;
 
         return $query;
     }
-
     protected function getDbFieldLabel(string $fieldName, string $defaultLabel): string
     {
         try {
@@ -233,7 +268,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         $this->dispatch('openTaskViewModal', $record->id);
                     })
                     ->extraAttributes([
-                        'class' => 'cursor-pointer text-primary-600 hover:underline dark:text-primary-400 text-xs py-1 px-1',
+                        'class' => 'cursor-pointer text-primary-600 hover:underline dark:text-primary-400 text-xs py-1 px-1 min-w-[140px]',
                     ]),
 
                 TextColumn::make('creator.first_name')
@@ -246,7 +281,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         $creator = $record->creator;
                         return $creator ? $creator->first_name . ' ' . $creator->last_name : 'N/A';
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1']),
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('assignedUsers')
                     ->label($this->getDbFieldLabel('assigned_users', 'Assigned To'))
@@ -258,7 +293,7 @@ class TaskTable extends Component implements HasForms, HasTable
                             return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
                         })->join(', ');
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1']),
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 min-w-[120px]']),
 
                 TextColumn::make('due_date')
                     ->label($this->getDbFieldLabel('due_date', 'Due Date'))
@@ -277,7 +312,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->icon('heroicon-o-tag')
                     ->sortable()
                     ->placeholder('No Category')
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1']),
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('recurrence')
                     ->label($this->getDbFieldLabel('recurrence', 'Repeat'))
@@ -289,7 +324,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         'none' => 'No Repeat',
                         default => ucfirst(strtolower($state)),
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1']),
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('priority')
                     ->label($this->getDbFieldLabel('priority', 'Priority'))
@@ -302,7 +337,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         default => 'gray',
                     })
                     ->formatStateUsing(fn($state) => Str::ucfirst($state) . ' Priority')
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1']),
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('group.label')
                     ->label($this->getDbFieldLabel('group_label', 'Group'))
@@ -312,7 +347,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->sortable()
                     ->searchable()
                     ->formatStateUsing(fn($state) => $state ? $state : '-')
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1']),
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('status')
                     ->label($this->getDbFieldLabel('status', 'Status'))
@@ -324,6 +359,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         'complete_intimation' => 'info',
                         'completed' => 'success',
                         'reassignment_pending' => 'danger',
+                        'canceled' => 'gray',
                         default => 'gray',
                     })
                     ->formatStateUsing(function (string $state, Task $record) {
@@ -351,7 +387,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                         return $state === 'complete_intimation' ? 'Request Complete' : ($state === 'reassignment_pending' ? 'Re-assignment Pending' : Str::headline($state));
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1']),
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -361,6 +397,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         'complete_intimation' => 'Request Complete',
                         'completed' => 'Completed',
                         'reassignment_pending' => 'Re-assignment Pending',
+                        'canceled' => 'Canceled',
                     ]),
 
                 SelectFilter::make('assigned_by')
@@ -404,70 +441,192 @@ class TaskTable extends Component implements HasForms, HasTable
             ], layout: FiltersLayout::AboveContentCollapsible)
             ->actions([
                 Action::make('task_verification')
-                    ->label($this->getDbFieldLabel('btn_verify', 'Verify'))
+                    ->label(function (Task $task): string {
+                        /** @var object{status?: string, approval_status?: string}|null $existing */
+                        $existing = DB::table('task_verifications')
+                            ->where('task_id', $task->id)
+                            ->latest('id')
+                            ->first();
+
+                        if (!$existing) {
+                            return 'Verify';
+                        }
+
+                        if (isset($existing->approval_status) && $existing->approval_status === 'pending') {
+                            return 'Approval Pending (' . ucfirst($existing->status) . ')';
+                        }
+
+                        return ucfirst($existing->status ?? 'Verify');
+                    })
                     ->button()
                     ->size(ActionSize::ExtraSmall)
-                    ->color('warning')
+                    ->color(function (Task $task): string {
+                        $existing = DB::table('task_verifications')
+                            ->where('task_id', $task->id)
+                            ->latest('id')
+                            ->first();
+
+                        if (!$existing) {
+                            return 'primary';
+                        }
+
+                        return match ($existing->status) {
+                            'pending' => 'primary',
+                            'verified' => 'success',
+                            'hold' => 'warning',
+                            'cancel' => 'danger',
+                            default => 'primary',
+                        };
+                    })
                     ->icon('heroicon-o-shield-check')
-                    ->modalHeading(fn(Task $task) => 'Task Verification & Reason - ' . $task->title)
+                    ->modalHeading(fn(Task $task) => 'Task Verification Request - ' . $task->title)
                     ->modalWidth('lg')
                     ->modalSubmitActionLabel('Save Verification')
-                    ->form(function (Task $task): array {
-                        /** @var object{change_user_reason?: string, status?: string}|null $existing */
+                    ->fillForm(function (Task $task): array {
+                        /** @var object{change_user_reason?: string, status?: string, approval_status?: string, previous_status?: string}|null $existing */
                         $existing = DB::table('task_verifications')
                             ->where('task_id', $task->id)
                             ->latest('id')
                             ->first();
 
                         return [
+                            'change_user_reason' => $existing?->change_user_reason ?? '',
+                            'status' => $existing?->status ?? 'verified',
+                            'approval_decision' => ($existing && isset($existing->approval_status) && $existing->approval_status === 'pending') ? 'approve' : 'approve',
+                        ];
+                    })
+                    ->form(function (Task $task): array {
+                        $userId = Auth::id();
+                        /** @var \App\Models\User|null $creator */
+                        $creator = $task->creator;
+                        $isCreator = ($creator?->id === $userId) || ((int) $task->user_id === $userId);
+
+                        /** @var object{approval_status?: string}|null $existing */
+                        $existing = DB::table('task_verifications')
+                            ->where('task_id', $task->id)
+                            ->latest('id')
+                            ->first();
+
+                        $isPendingApproval = $isCreator && $existing && isset($existing->approval_status) && $existing->approval_status === 'pending';
+
+                        $schema = [
                             Textarea::make('change_user_reason')
-                                ->label('Reason (change_user_reason)')
-                                ->placeholder('Enter reason for change or verification...')
-                                ->default($existing && isset($existing->change_user_reason) ? $existing->change_user_reason : '')
+                                ->label('Reason / Notes')
+                                ->placeholder('Enter reason for option selection...')
                                 ->required()
                                 ->maxLength(1000)
                                 ->rows(3),
 
                             Select::make('status')
-                                ->label('Verification Status')
+                                ->label('Select Verification Option')
                                 ->options([
                                     'pending' => 'Pending',
                                     'verified' => 'Verified',
                                     'hold' => 'Hold',
                                     'cancel' => 'Cancel',
                                 ])
-                                ->default($existing && isset($existing->status) ? $existing->status : 'pending')
                                 ->required()
                                 ->native(false),
                         ];
+
+                        if ($isPendingApproval) {
+                            array_unshift(
+                                $schema,
+                                Select::make('approval_decision')
+                                    ->label('Approval Action')
+                                    ->options([
+                                        'approve' => 'Approve Requested Status',
+                                        'reject' => 'Reject Requested Status',
+                                    ])
+                                    ->default('approve')
+                                    ->required()
+                                    ->native(false)
+                            );
+                        }
+
+                        return $schema;
                     })
                     ->action(function (Task $task, array $data): void {
-                        DB::transaction(function () use ($task, $data) {
-                            DB::table('task_verifications')->updateOrInsert(
-                                ['task_id' => $task->id],
-                                [
-                                    'change_user_reason' => trim($data['change_user_reason']),
-                                    'status' => $data['status'],
-                                    'created_by' => Auth::id(),
-                                    'updated_at' => now(),
+                        $userId = Auth::id();
+                        /** @var \App\Models\User|null $creator */
+                        $creator = $task->creator;
+                        $isCreator = ($creator?->id === $userId) || ((int) $task->user_id === $userId);
+
+                        DB::transaction(function () use ($task, $data, $isCreator, $userId) {
+                            /** @var object{status?: string, previous_status?: string}|null $existingVerification */
+                            $existingVerification = DB::table('task_verifications')
+                                ->where('task_id', $task->id)
+                                ->latest('id')
+                                ->first();
+
+                            if ($isCreator) {
+                                if (isset($data['approval_decision']) && $data['approval_decision'] === 'reject') {
+                                    // Revert back to previous status before request was sent
+                                    $oldStatus = $existingVerification?->previous_status ?? 'verified';
+
+                                    DB::table('task_verifications')
+                                        ->where('task_id', $task->id)
+                                        ->update([
+                                            'status' => $oldStatus,
+                                            'approval_status' => 'rejected',
+                                            'updated_at' => now(),
+                                        ]);
+
+                                    DB::table('task_conversations')->insert([
+                                        'task_id' => $task->id,
+                                        'user_id' => $userId,
+                                        'message' => 'Verification status change request was REJECTED. Reverted back to [' . strtoupper($oldStatus) . ']. Reason: ' . trim($data['change_user_reason']),
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                    ]);
+
+                                    Notification::make()
+                                        ->title('Request Rejected')
+                                        ->body('Verification status request was rejected and restored to previous status.')
+                                        ->warning()
+                                        ->send();
+                                } else {
+                                    $this->applyVerificationChange($task, $data['status'], $data['change_user_reason']);
+
+                                    Notification::make()
+                                        ->title('Verification Saved')
+                                        ->body('Task verification status updated successfully.')
+                                        ->success()
+                                        ->send();
+                                }
+                            } else {
+                                // Store current active status as previous_status before submitting request
+                                $currentStatus = $existingVerification?->status ?? 'verified';
+
+                                DB::table('task_verifications')->updateOrInsert(
+                                    ['task_id' => $task->id],
+                                    [
+                                        'change_user_reason' => trim($data['change_user_reason']),
+                                        'previous_status' => $currentStatus,
+                                        'status' => $data['status'],
+                                        'approval_status' => 'pending',
+                                        'requested_by' => $userId,
+                                        'created_by' => $userId,
+                                        'updated_at' => now(),
+                                        'created_at' => now(),
+                                    ]
+                                );
+
+                                DB::table('task_conversations')->insert([
+                                    'task_id' => $task->id,
+                                    'user_id' => $userId,
+                                    'message' => 'Requested verification status change to [' . strtoupper($data['status']) . ']. Sent to Assigned By user for approval. Reason: ' . trim($data['change_user_reason']),
                                     'created_at' => now(),
-                                ]
-                            );
+                                    'updated_at' => now(),
+                                ]);
 
-                            DB::table('task_conversations')->insert([
-                                'task_id' => $task->id,
-                                'user_id' => Auth::id(),
-                                'message' => 'Verification status updated to [' . strtoupper($data['status']) . ']. Reason: ' . trim($data['change_user_reason']),
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+                                Notification::make()
+                                    ->title('Request Sent to Creator')
+                                    ->body('Verification status change request has been sent to Person A for approval.')
+                                    ->info()
+                                    ->send();
+                            }
                         });
-
-                        Notification::make()
-                            ->title('Task Verification Updated')
-                            ->body('Verification details saved successfully.')
-                            ->success()
-                            ->send();
 
                         $this->dispatch('$refresh');
                     })
@@ -774,6 +933,90 @@ class TaskTable extends Component implements HasForms, HasTable
             ->striped();
     }
 
+    private function applyVerificationChange(Task $task, string $status, string $reason): void
+    {
+        DB::transaction(function () use ($task, $status, $reason) {
+            DB::table('task_verifications')->updateOrInsert(
+                ['task_id' => $task->id],
+                [
+                    'change_user_reason' => trim($reason),
+                    'status' => $status,
+                    'approval_status' => 'approved',
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
+
+            if ($status === 'hold' || $status === 'verified' || $status === 'cancel') {
+                Reminder::query()->where('task_id', $task->id)->delete();
+            }
+
+            if ($status === 'cancel') {
+                $task->update(['status' => 'canceled']);
+            } elseif ($status === 'pending') {
+                if ($task->status === 'canceled') {
+                    $task->update(['status' => 'pending']);
+                }
+                $this->scheduleTaskReminders($task);
+            }
+
+            DB::table('task_conversations')->insert([
+                'task_id' => $task->id,
+                'user_id' => Auth::id(),
+                'message' => 'Verification status officially updated to [' . strtoupper($status) . ']. Reason: ' . trim($reason),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+    }
+
+    private function scheduleTaskReminders(Task $task): void
+    {
+        if ($task->due_date && $task->reminderTime && $task->reminderUnit) {
+            $dueDate = Carbon::parse($task->due_date);
+            $reminderTriggerTime = match ($task->reminderUnit) {
+                'minutes' => $dueDate->copy()->subMinutes((int)$task->reminderTime),
+                'hours' => $dueDate->copy()->subHours((int)$task->reminderTime),
+                'days' => $dueDate->copy()->subDays((int)$task->reminderTime),
+                default => null,
+            };
+
+            if ($reminderTriggerTime) {
+                $selectedUsers = DB::table('task_assignments')
+                    ->where('task_id', $task->id)
+                    ->pluck('user_id')
+                    ->map(fn($id) => (int) $id)
+                    ->unique();
+
+                if ($selectedUsers->isEmpty()) {
+                    $selectedUsers = collect([(int) $task->user_id]);
+                }
+
+                foreach ($selectedUsers as $userId) {
+                    $reminderId = DB::table('reminders')->insertGetId([
+                        'task_id' => $task->id,
+                        'user_id' => $userId,
+                        'reminder_time' => $reminderTriggerTime,
+                        'reminder_unit' => $task->reminderUnit,
+                        'reminder_value' => $task->reminderTime,
+                    ]);
+
+                    SendReminderJob::dispatch(
+                        $reminderId,
+                        ['email', 'SMS'],
+                        "Reminder: Your task '{$task->title}' is due on " . $dueDate->format('d-m-Y H:i') . "."
+                    )->delay($reminderTriggerTime);
+
+                    \App\Jobs\SendTaskDueWhatsAppJob::dispatch(
+                        $task->id,
+                        $userId,
+                        $dueDate->format('Y-m-d H:i:s')
+                    )->delay($reminderTriggerTime);
+                }
+            }
+        }
+    }
+
     public function updateStatus(Task $task, string $status): void
     {
         $this->dispatch('status-updated', [
@@ -803,7 +1046,7 @@ class TaskTable extends Component implements HasForms, HasTable
             }
 
             $newStatus = $data['status'] ?? $status;
-            $allowedStatuses = ['pending', 'in_progress', 'completed'];
+            $allowedStatuses = ['pending', 'in_progress', 'completed', 'canceled'];
 
             if (! in_array($newStatus, $allowedStatuses, true)) {
                 Notification::make()
@@ -874,7 +1117,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 DB::table('reminders')->where('task_id', $task->id)->delete();
 
-                if ($newStatus !== 'completed' && $dueDate && $reminderTriggerTime) {
+                if ($newStatus !== 'completed' && $newStatus !== 'canceled' && $dueDate && $reminderTriggerTime) {
                     $selectedUsers = DB::table('task_assignments')
                         ->where('task_id', $task->id)
                         ->pluck('user_id')
@@ -966,6 +1209,7 @@ class TaskTable extends Component implements HasForms, HasTable
             'pending'     => 'Pending',
             'in_progress' => 'In Progress',
             'completed'   => 'Complete',
+            'canceled'    => 'Canceled',
             default       => 'Pending',
         };
     }
@@ -976,6 +1220,7 @@ class TaskTable extends Component implements HasForms, HasTable
             'pending' => 'warning',
             'in_progress' => 'info',
             'completed' => 'success',
+            'canceled' => 'gray',
             default => 'warning',
         };
     }
@@ -1183,87 +1428,6 @@ class TaskTable extends Component implements HasForms, HasTable
             ->send();
 
         $this->dispatch('$refresh');
-    }
-
-    public function handleTaskReassignment(Task $task, int $newUserId): void
-    {
-        /** @var object{status: string}|null $verification */
-        $verification = DB::table('task_verifications')
-            ->where('task_id', $task->id)
-            ->latest('id')
-            ->first();
-
-        if (! $verification || $verification->status !== 'verified') {
-            Notification::make()
-                ->title('Verification Required')
-                ->body('Task cannot be reassigned until its verification status is marked as "Verified".')
-                ->warning()
-                ->send();
-            return;
-        }
-
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        $loggedInRole = strtolower($user->role ?? 'user');
-
-        if (in_array($loggedInRole, ['admin', 'super-admin'], true)) {
-            DB::transaction(function () use ($task, $newUserId) {
-                DB::table('task_assignments')->where('task_id', $task->id)->delete();
-                DB::table('task_assignments')->insert([
-                    'task_id' => $task->id,
-                    'user_id' => $newUserId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                $task->update(['status' => 'in_progress']);
-
-                DB::table('task_conversations')->insert([
-                    'task_id' => $task->id,
-                    'user_id' => Auth::id(),
-                    'message' => 'Task directly reassigned to a new user after verification.',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            });
-
-            Notification::make()
-                ->title('Task Reassigned Successfully')
-                ->success()
-                ->send();
-            return;
-        }
-
-        /** @var \App\Models\User|null $creator */
-        $creator = $task->creator;
-        if ($loggedInRole === 'user' && $creator?->id !== Auth::id()) {
-            DB::transaction(function () use ($task, $newUserId) {
-                DB::table('task_reassignment_requests')->insert([
-                    'task_id' => $task->id,
-                    'requested_by' => Auth::id(),
-                    'new_user_id' => $newUserId,
-                    'status' => 'pending',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                $task->update(['status' => 'reassignment_pending']);
-
-                DB::table('task_conversations')->insert([
-                    'task_id' => $task->id,
-                    'user_id' => Auth::id(),
-                    'message' => 'Requested task re-assignment to another user after verification. Pending creator approval.',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            });
-
-            Notification::make()
-                ->title('Verification Request Sent')
-                ->body('Task re-assignment is sent to the original Assigned By user for approval.')
-                ->info()
-                ->send();
-        }
     }
 
     public function sendTaskMessage(Task $task, string $message): void
