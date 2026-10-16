@@ -1,13 +1,13 @@
 <div
     class="relative min-h-screen bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)] overflow-x-hidden">
-    <main class="scrollcontainer md:ml-16 px-4 sm:px-6 lg:px-8 py-6 pt-20 pb-16">
+    <main class="scrollcontainer md:ml-16 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pt-16 sm:pt-20 pb-12 sm:pb-16 max-w-full">
 
         {{-- Back Navigation --}}
-        <div class="mb-5 flex items-center justify-between">
+        <div class="mb-4 sm:mb-5 flex items-center justify-between">
             <a href="{{ route('dashboard') }}" wire:navigate
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200/80 dark:border-gray-700 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-[rgb(7,139,221)] hover:border-[rgb(7,139,221)]/30 shadow-sm transition-all duration-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-4 h-4">
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200/80 dark:border-gray-700 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-[rgb(7,139,221)] hover:border-[rgb(7,139,221)]/30 shadow-xs transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" class="w-3.5 h-3.5 sm:w-4 sm:h-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
                 <span>Back to Dashboard</span>
@@ -16,17 +16,15 @@
 
         {{-- Executive Header --}}
         <div
-            class="mb-8 overflow-hidden rounded-3xl border border-blue-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xl shadow-blue-900/5 dark:shadow-none p-6 sm:p-8 relative">
-
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-                <div class="flex items-start gap-4">
-                    {{-- Icon Box --}}
-                    <div class="flex flex-col gap-1">
-                        <h3 class="text-lg sm:text-xl font-bold text-slate-700 dark:text-white tracking-tight">
+            class="mb-5 sm:mb-8 overflow-hidden rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg shadow-blue-900/5 dark:shadow-none p-4 sm:p-6 lg:p-8 relative">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                <div class="flex items-start gap-3">
+                    <div class="flex flex-col gap-0.5">
+                        <h3 class="text-base sm:text-xl font-bold text-slate-700 dark:text-white tracking-tight">
                             Manage Employee Group
                         </h3>
-                        <p class="text-xs sm:text-sm font-medium text-slate-500 dark:text-gray-400">
-                            View, edit and manage system user groups seamlessly with advanced controls.
+                        <p class="text-[11px] sm:text-sm font-medium text-slate-500 dark:text-gray-400">
+                            View, edit and manage system user groups seamlessly.
                         </p>
                     </div>
                 </div>
@@ -35,30 +33,30 @@
 
         {{-- Add New Group Section Container --}}
         <div
-            class="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200/80 dark:border-gray-700 p-6 sm:p-8 mb-8">
-            <div class="mb-4">
-                <h2 class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-1">
+            class="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/80 dark:border-gray-700 p-4 sm:p-6 lg:p-8 mb-5 sm:mb-8">
+            <div class="mb-3 sm:mb-4">
+                <h2 class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-0.5">
                     Add New Group
                 </h2>
-                <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-[11px] sm:text-sm text-gray-500 dark:text-gray-400">
                     Create a new group category for organizing system users.
                 </p>
             </div>
 
-            <hr class="border-slate-100 dark:border-gray-700 mb-6">
+            <hr class="border-slate-100 dark:border-gray-700 mb-4 sm:mb-6">
 
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 max-w-4xl">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-4xl">
                 <div class="relative flex-1">
                     <input wire:model="newGroup" type="text"
-                        class="block w-full px-4 py-3 text-sm text-gray-900 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all shadow-2xs"
+                        class="block w-full px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm text-gray-900 bg-gray-50/50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all shadow-2xs"
                         placeholder="Enter group name..." />
                     @error('newGroup')
-                        <span class="text-rose-500 text-xs mt-1 block font-medium">{{ $message }}</span>
+                        <span class="text-rose-500 text-[11px] mt-1 block font-medium">{{ $message }}</span>
                     @enderror
                 </div>
 
                 <button wire:click="addGroup" wire:loading.attr="disabled" type="button"
-                    class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-bold rounded-xl text-xs uppercase tracking-wider px-6 py-3.5 shadow-lg shadow-blue-500/25 transition-all duration-200 flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50">
+                    class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-bold rounded-xl text-xs uppercase tracking-wider px-5 py-3 sm:px-6 sm:py-3.5 shadow-md shadow-blue-500/25 transition-all duration-200 flex items-center justify-center shrink-0 cursor-pointer disabled:opacity-50">
                     <span wire:loading.remove wire:target="addGroup">+ Add Group</span>
                     <span wire:loading wire:target="addGroup" class="flex items-center gap-2">
                         Adding...
@@ -74,31 +72,31 @@
 
         {{-- Groups List Container --}}
         <div
-            class="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200/80 dark:border-gray-700 p-6 sm:p-8">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            class="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-xs border border-slate-200/80 dark:border-gray-700 p-4 sm:p-6 lg:p-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
                 <div>
-                    <div class="flex items-center gap-2 mb-1">
+                    <div class="flex items-center gap-2 mb-0.5">
                         <span
-                            class="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block ring-4 ring-blue-100 dark:ring-blue-900/30"></span>
+                            class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-blue-600 inline-block ring-4 ring-blue-100 dark:ring-blue-900/30"></span>
                         <h2 class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">
                             Groups Directory
                         </h2>
                     </div>
-                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-[11px] sm:text-sm text-gray-500 dark:text-gray-400">
                         Overview and management of all active user groups.
                     </p>
                 </div>
 
                 <div
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50/80 dark:bg-blue-900/30 border border-blue-200/60 dark:border-blue-700/50 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 self-start sm:self-auto shadow-2xs">
+                    class="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-50/80 dark:bg-blue-900/30 border border-blue-200/60 dark:border-blue-700/50 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 self-start sm:self-auto shadow-2xs">
                     <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-                    Total Groups: <span class="text-sm font-extrabold">{{ count($groups) }}</span>
+                    Total Groups: <span class="text-xs sm:text-sm font-extrabold">{{ count($groups) }}</span>
                 </div>
             </div>
 
-            <hr class="border-slate-100 dark:border-gray-700 mb-6">
+            <hr class="border-slate-100 dark:border-gray-700 mb-4 sm:mb-6">
 
-            {{-- Group Cards Grid --}}
+            {{-- Group Cards Grid: 1 column on 360px screens --}}
             @php
                 $colorPalette = [
                     [
@@ -127,7 +125,7 @@
                 ];
             @endphp
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                 @foreach ($groups as $index => $group)
                     @php
                         $words = explode(' ', $group['label'] ?? '');
@@ -143,18 +141,18 @@
                     @endphp
 
                     <div wire:key="{{ $group['id'] }}"
-                        class="group relative bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-gray-900 dark:to-gray-900/80 border border-slate-200/80 dark:border-gray-700/80 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between p-5">
+                        class="group relative bg-gradient-to-b from-white via-white to-slate-50/50 dark:from-gray-900 dark:to-gray-900/80 border border-slate-200/80 dark:border-gray-700/80 rounded-2xl shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between p-4 sm:p-5">
 
-                        <div class="flex flex-col items-center pt-2 pb-4">
+                        <div class="flex flex-col items-center pt-1 pb-3">
                             {{-- Initials Avatar Box --}}
                             <div
-                                class="w-16 h-16 rounded-2xl {{ $selectedColor['bg'] }} text-white font-extrabold text-base flex items-center justify-center shadow-lg mb-3 tracking-wider group-hover:scale-105 transition-transform duration-300 ring-4 ring-white dark:ring-gray-900">
+                                class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl {{ $selectedColor['bg'] }} text-white font-extrabold text-sm sm:text-base flex items-center justify-center shadow-md mb-2.5 tracking-wider group-hover:scale-105 transition-transform duration-300 ring-4 ring-white dark:ring-gray-900">
                                 {{ $initials }}
                             </div>
 
                             {{-- Category Badge --}}
                             <span
-                                class="px-3 py-0.5 {{ $selectedColor['badge'] }} border text-[10px] font-bold tracking-wider uppercase rounded-full mb-3 shadow-2xs">
+                                class="px-2.5 py-0.5 {{ $selectedColor['badge'] }} border text-[9px] sm:text-[10px] font-bold tracking-wider uppercase rounded-full mb-2.5 shadow-2xs">
                                 Group
                             </span>
 
@@ -163,26 +161,26 @@
                                 <div class="w-full space-y-2">
                                     <input wire:model="editingGroupName" type="text"
                                         placeholder="@error('editingGroupName'){{ $message }}@else Group Name @enderror"
-                                        class="w-full rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-800 outline-none shadow-sm
+                                        class="w-full rounded-xl bg-white px-3 py-2 text-xs font-medium text-slate-800 outline-none shadow-2xs
                                         @error('editingGroupName')
                                             border border-rose-500 placeholder:text-rose-500 focus:border-rose-500 focus:ring-2 focus:ring-rose-100
                                         @else
                                             border border-slate-300 placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100
                                         @enderror">
-                                    <div class="flex gap-2 w-full">
+                                    <div class="flex gap-1.5 w-full">
                                         <button wire:click="saveGroupName"
-                                            class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1 flex-1 transition-colors cursor-pointer shadow-sm">
+                                            class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 flex-1 transition-colors cursor-pointer shadow-2xs">
                                             <span wire:loading.remove wire:target="saveGroupName">Save</span>
                                             <span wire:loading wire:target="saveGroupName">...</span>
                                         </button>
                                         <button wire:click="cancelEditing"
-                                            class="bg-slate-200 hover:bg-slate-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex-1 transition-colors cursor-pointer">
+                                            class="bg-slate-200 hover:bg-slate-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-slate-700 dark:text-gray-200 rounded-xl px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider flex-1 transition-colors cursor-pointer">
                                             Cancel
                                         </button>
                                     </div>
                                 </div>
                             @else
-                                <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white text-center truncate w-full px-2"
+                                <h3 class="text-xs sm:text-base font-bold text-slate-900 dark:text-white text-center truncate w-full px-1"
                                     title="{{ $group['label'] }}">
                                     {{ $group['label'] }}
                                 </h3>
@@ -190,9 +188,9 @@
                         </div>
 
                         {{-- Action Buttons Footer --}}
-                        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-gray-800 grid grid-cols-2 gap-2">
+                        <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-gray-800 grid grid-cols-2 gap-2">
                             <button wire:click="startEditing({{ $group['id'] }}, '{{ $group['label'] }}')"
-                                class="inline-flex items-center justify-center px-3 py-2 text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 rounded-xl transition-all border border-blue-200/60 dark:border-blue-800/40 cursor-pointer">
+                                class="inline-flex items-center justify-center px-2.5 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/80 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 rounded-xl transition-all border border-blue-200/60 dark:border-blue-800/40 cursor-pointer">
                                 <svg class="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -202,7 +200,7 @@
                             </button>
 
                             <button wire:click="$dispatch('openUserGroupModal',{ labelId: {{ $group['id'] }} })"
-                                class="inline-flex items-center justify-center px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl transition-all border border-slate-200 dark:border-gray-700 cursor-pointer">
+                                class="inline-flex items-center justify-center px-2.5 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl transition-all border border-slate-200 dark:border-gray-700 cursor-pointer">
                                 <svg class="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
