@@ -355,7 +355,7 @@
                             $offset = $circumference - ($circumference * $percentage) / 100;
 
                             $strokeColor = match (true) {
-                                $percentage >= 71 => '#10B981',
+                                $percentage >= 71 => '#EF4444',
                                 $percentage >= 31 => '#F59E0B',
                                 default => '#EF4444',
                             };

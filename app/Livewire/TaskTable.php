@@ -263,7 +263,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         $this->dispatch('openTaskViewModal', $record->id);
                     })
                     ->extraAttributes([
-                        'class' => 'cursor-pointer text-primary-600 hover:underline dark:text-primary-400 text-xs py-1 px-1 min-w-[140px]',
+                        'class' => 'cursor-pointer text-primary-600 hover:underline dark:text-primary-400 text-[11px] sm:text-xs py-1 px-1 min-w-[120px] max-w-[160px] truncate',
                     ]),
 
                 TextColumn::make('creator.first_name')
@@ -276,7 +276,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         $creator = $record->creator;
                         return $creator ? $creator->first_name . ' ' . $creator->last_name : 'N/A';
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
+                    ->extraAttributes(['class' => 'text-[11px] sm:text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('assignedUsers')
                     ->label($this->getDbFieldLabel('assigned_users', 'Assigned To'))
@@ -288,7 +288,7 @@ class TaskTable extends Component implements HasForms, HasTable
                             return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
                         })->join(', ');
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1 min-w-[120px]']),
+                    ->extraAttributes(['class' => 'text-[11px] sm:text-xs py-1 px-1 min-w-[100px]']),
 
                 TextColumn::make('due_date')
                     ->label($this->getDbFieldLabel('due_date', 'Due Date'))
@@ -339,12 +339,10 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->badge()
                     ->color('info')
                     ->state(function (Task $record) {
-                        // Agar label_id NULL ya blank hai to '-' dikhayein
                         if (blank($record->label_id)) {
                             return '-';
                         }
 
-                        // label_id ke basis par Group table se Label / Name fetch karein
                         $group = DB::table('groups')
                             ->where('id', $record->label_id)
                             ->orWhere('label', $record->label_id)
@@ -352,7 +350,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                         return $group ? ($group->label ?? $group->name ?? '-') : '-';
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
+                    ->extraAttributes(['class' => 'text-[10px] sm:text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('status')
                     ->label($this->getDbFieldLabel('status', 'Status'))
@@ -457,12 +455,10 @@ class TaskTable extends Component implements HasForms, HasTable
                             return 'Pending';
                         }
 
-                        // Rejection par jo status restore hua hai wahi button text banega
                         if (isset($existing->approval_status) && $existing->approval_status === 'rejected') {
                             return ucfirst($existing->status ?? 'Pending');
                         }
 
-                        // Approval Pending ke time
                         if (isset($existing->approval_status) && $existing->approval_status === 'pending') {
                             return 'Approval Pending (' . ucfirst($existing->status) . ')';
                         }
@@ -477,16 +473,29 @@ class TaskTable extends Component implements HasForms, HasTable
                             ->latest('id')
                             ->first();
 
-                        if (! $existing) {
-                            return 'warning';
-                        }
+                        $status = $existing?->status ?? 'pending';
 
-                        return match ($existing->status) {
-                            'pending' => 'warning',
+                        return match ($status) {
                             'verified' => 'success',
-                            'hold' => 'warning',
-                            'cancel' => 'danger',
-                            default => 'warning',
+                            'cancel'   => 'danger',
+                            'hold'     => 'warning',
+                            default    => 'warning',
+                        };
+                    })
+                    ->extraAttributes(function (Task $task): array {
+                        $existing = DB::table('task_verifications')
+                            ->where('task_id', $task->id)
+                            ->latest('id')
+                            ->first();
+
+                        $status = $existing?->status ?? 'pending';
+
+                        // Force inline CSS for accurate color rendering
+                        return match ($status) {
+                            'verified' => ['style' => 'background-color: #10b981 !important; color: #ffffff !important; border-color: #059669 !important; font-size: 11px !important; padding: 2px 6px !important;'],
+                            'cancel'   => ['style' => 'background-color: #ef4444 !important; color: #ffffff !important; border-color: #dc2626 !important; font-size: 11px !important; padding: 2px 6px !important;'],
+                            'hold'     => ['style' => 'background-color: #f59e0b !important; color: #ffffff !important; border-color: #d97706 !important; font-size: 11px !important; padding: 2px 6px !important;'],
+                            default    => ['style' => 'background-color: #f59e0b !important; color: #ffffff !important; border-color: #d97706 !important; font-size: 11px !important; padding: 2px 6px !important;'],
                         };
                     })
                     ->icon('heroicon-o-shield-check')
