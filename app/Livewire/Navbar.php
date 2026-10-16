@@ -38,7 +38,8 @@ class Navbar extends Component
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return $this->redirect('/login', navigate: true);
+        // Livewire navigate mode ko completely bypass karke browser level full redirect karein
+        return redirect('/login');
     }
 
     public function render(): View

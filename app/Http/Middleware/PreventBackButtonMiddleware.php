@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class PreventBackButtonMiddleware
@@ -14,12 +13,16 @@ class PreventBackButtonMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
+        /** @var Response $response */
         $response = $next($request);
-        $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+
+        // Chrome, Firefox aur Edge me Back button cache complete block karne ke liye headers
+        $response->headers->set('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate, post-check=0, pre-check=0');
         $response->headers->set('Pragma', 'no-cache');
         $response->headers->set('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
-        return $response;        
-    }    
+
+        return $response;
+    }
 }
