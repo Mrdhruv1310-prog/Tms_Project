@@ -46,12 +46,14 @@
             </div>
 
             @php
-                $authUserRole = strtolower(trim(Auth::user()->role ?? ''));
-                $isSuperAdmin = $authUserRole === 'super-admin';
-                $isEditing = !empty($user_id);
+                $authUserId = (int) Auth::id();
+                $editingUserId = (int) ($user_id ?? 0);
 
-                // Disable Role and Status if non-super-admin is editing profile
-                $disableRoleAndStatus = $isEditing && !$isSuperAdmin;
+                // Auth user cannot change their own role and status
+                $isSelfProfile = $editingUserId > 0 && $editingUserId === $authUserId;
+
+                // Disable Role and Status if Auth user is editing their own profile
+                $disableRoleAndStatus = $isSelfProfile;
             @endphp
 
             <!-- Modal body -->
@@ -124,7 +126,7 @@
                         @enderror
                     </div>
 
-                    <!-- Role (Super-Admin can edit any, non-super-admin disabled when editing) -->
+                    <!-- Role (Disabled for Auth User) -->
                     <div>
                         <label for="role"
                             class="block mb-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -143,7 +145,7 @@
                         @enderror
                     </div>
 
-                    <!-- Status (Super-Admin can edit any, non-super-admin disabled when editing) -->
+                    <!-- Status (Disabled for Auth User) -->
                     <div>
                         <label for="status"
                             class="block mb-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">

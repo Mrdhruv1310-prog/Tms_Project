@@ -35,7 +35,7 @@
             </div>
         </div>
 
-        <!-- User Cards Grid: Responsive for 360px * 800px -->
+        <!-- User Cards Grid -->
         <div x-data="{ userDeleteModalOpen: false, userId: null }" @userdeleted.window="userDeleteModalOpen = false"
             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
 
@@ -80,23 +80,23 @@
                         </span>
                     </div>
 
-                    {{-- Edit & Delete Action Buttons --}}
-                    @if (!$isAuthUser && in_array(strtolower(trim(auth()->user()->role ?? '')), ['admin', 'super-admin'], true))
-                        <div
-                            class="px-4 pb-4 sm:px-6 sm:pb-6 pt-3 flex items-center justify-center gap-2 w-full border-t border-slate-100">
-                            <!-- Edit Button -->
-                            <button wire:click="$dispatch('edituser', { id: {{ $user->id }} })"
-                                class="flex-1 inline-flex items-center justify-center px-3 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs cursor-pointer">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M12 20h9" />
-                                    <path d="M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
-                                </svg>
-                                Edit
-                            </button>
+                    {{-- Action Buttons --}}
+                    <div
+                        class="px-4 pb-4 sm:px-6 sm:pb-6 pt-3 flex items-center justify-center gap-2 w-full border-t border-slate-100">
+                        <!-- Edit Button (Sabhi users ke liye) -->
+                        <button wire:click="$dispatch('edituser', { id: {{ $user->id }} })"
+                            class="flex-1 inline-flex items-center justify-center px-3 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5l4 4L7 21H3v-4L16.5 3.5z" />
+                            </svg>
+                            Edit
+                        </button>
 
-                            <!-- Delete Button -->
+                        <!-- Delete Button (Auth user ke liye remove kar diya gaya hai) -->
+                        @if (!$isAuthUser)
                             <button @click="userDeleteModalOpen=true; userId={{ $user->id }}"
                                 class="flex-1 py-2 px-3 text-red-600 inline-flex items-center justify-center hover:text-white border border-red-200 hover:bg-red-600 hover:border-red-600 font-bold text-[11px] sm:text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
                                 <svg class="mr-1 w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"
@@ -107,8 +107,8 @@
                                 </svg>
                                 Delete
                             </button>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
 
                 </div>
             @endforeach
@@ -124,7 +124,6 @@
                         <div
                             class="relative transform overflow-hidden rounded-2xl sm:rounded-3xl bg-white text-left shadow-2xl border border-slate-100 transition-all sm:my-8 w-full max-w-lg p-4 sm:p-6 lg:p-8">
 
-                            {{-- Modal Header --}}
                             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                                 <h3 class="text-base sm:text-lg font-bold text-slate-900">Employee Info Details</h3>
                                 <button wire:click="closeUserDetailsModal" class="text-slate-400 hover:text-slate-600">
@@ -135,7 +134,6 @@
                                 </button>
                             </div>
 
-                            {{-- Modal Body --}}
                             <div class="space-y-3 sm:space-y-4">
                                 <div>
                                     <span
@@ -153,7 +151,6 @@
                                     </p>
                                 </div>
 
-                                {{-- Category Name --}}
                                 <div>
                                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Category
                                         Name</span>
@@ -169,7 +166,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Group Name --}}
                                 <div>
                                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Group
                                         Name</span>
@@ -186,7 +182,6 @@
                                 </div>
                             </div>
 
-                            {{-- Modal Footer --}}
                             <div class="mt-6 pt-3 border-t border-slate-100 flex justify-end">
                                 <button wire:click="closeUserDetailsModal"
                                     class="w-full sm:w-auto px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold uppercase tracking-wider rounded-xl transition cursor-pointer">
@@ -206,7 +201,6 @@
                 x-transition:leave-end="opacity-0" class="relative z-50" aria-labelledby="modal-title"
                 role="dialog" aria-modal="true">
 
-                <!-- Backdrop -->
                 <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
                     @click="userDeleteModalOpen = false" inert></div>
 
