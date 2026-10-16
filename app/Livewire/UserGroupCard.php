@@ -63,6 +63,7 @@ class UserGroupCard extends Component
 
     public function startEditing(int|string $groupId, string $groupName): void
     {
+        // Kisi bhi user check/restriction ke bina edit mode start kar rahe hain
         $this->editingGroupId = (int) $groupId;
         $this->editingGroupName = $groupName;
     }
@@ -100,6 +101,16 @@ class UserGroupCard extends Component
         $this->loadGroups();
 
         $this->dispatch('notify', ['message' => 'Group name updated successfully.', 'type' => 'success']);
+    }
+
+    public function deleteGroup(int|string $groupId): void
+    {
+        // Direct delete action without auth check
+        Group::query()->where('id', $groupId)->delete();
+
+        $this->loadGroups();
+
+        $this->dispatch('notify', ['message' => 'Group deleted successfully.', 'type' => 'success']);
     }
 
     public function render(): mixed
