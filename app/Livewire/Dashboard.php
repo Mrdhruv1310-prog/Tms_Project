@@ -369,29 +369,22 @@ class Dashboard extends Component
         $allGroups = Group::query()->get();
 
         $this->groups = $allGroups->map(function ($group) use ($role, $authUserId) {
-            // 1. group_users pivot table se is Group ke saare Users nikaalein
-            $groupUserIds = DB::table('group_users')
-                ->where('group_id', $group->id)
-                ->pluck('user_id')
-                ->map(fn($id) => (int) $id)
-                ->toArray();
+            $groupIdStr = (string) $group->id;
+            $groupLabel = $group->label ?? $group->name ?? '';
 
-            // 2. Task query: Task direct label_id ka ho YA group ke kisi member ka (Creator ya Assigned)
+            // Strictly count tasks directly linked to this group via label_id
             $taskBaseQuery = Task::query()
                 ->whereHas('creator')
-                ->where(function (Builder $q) use ($group, $groupUserIds) {
-                    $q->where('label_id', $group->id);
-
-                    if (!empty($groupUserIds)) {
-                        $q->orWhereIn('tasks.user_id', $groupUserIds)
-                            ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->whereIn('user_id', $groupUserIds));
-                    }
+                ->where(function (Builder $q) use ($group, $groupIdStr, $groupLabel) {
+                    $q->where('tasks.label_id', $group->id)
+                        ->orWhere('tasks.label_id', $groupIdStr)
+                        ->orWhere('tasks.label_id', $groupLabel);
                 });
 
-            // Dashboard Date Filters
+            // Apply Dashboard Timeline/Date Filters
             $this->applyDateFilters($taskBaseQuery);
 
-            // Access Restrictions for non Super-Admin
+            // Access Role Restriction (Non Super-Admin)
             if ($role !== 'super-admin') {
                 $taskBaseQuery->where(function ($sub) use ($authUserId) {
                     $sub->where('tasks.user_id', $authUserId)
@@ -406,8 +399,7 @@ class Dashboard extends Component
 
             return [
                 'id' => $group->id,
-                'name' => $group->label ?? $group->name ?? 'No Group Name',
-                'group_users_count' => count($groupUserIds),
+                'name' => $groupLabel ?: 'No Group Name',
                 'pending' => $pending,
                 'in_progress' => $inProgress,
                 'completed' => $completed,

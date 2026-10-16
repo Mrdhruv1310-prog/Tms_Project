@@ -17,6 +17,7 @@ use App\Livewire\Users;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Http\Middleware\PreventBackButtonMiddleware;
 use App\Services\WhatsAppService;
 
 Route::get('/password/reset/{token}', PasswordResetForm::class)->name('password.reset');
@@ -38,7 +39,7 @@ Route::group(['middleware' => ['auth', 'prevent-back-history']], function () {
     // Sirf Admin aur Super-Admin ke liye custom check (Bina kisi middleware conflict ke)
     Route::group(['middleware' => function ($request, $next) {
         $user = $request->user();
-        if (!$user || !in_array($user->role, ['super-admin','admin', 'hr', 'manager','employee'], true)) {
+        if (!$user || !in_array($user->role, ['super-admin', 'admin', 'hr', 'manager', 'employee'], true)) {
             abort(403, 'Unauthorized action.');
         }
         return $next($request);

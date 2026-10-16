@@ -200,27 +200,22 @@ class TaskTable extends Component implements HasForms, HasTable
 
         // Group Filter: Group Label_ID ya Group Members ke tasks (group_users table ke users)
         if (! empty($this->groupFilter)) {
-            $group = DB::table('groups')->where('label', $this->groupFilter)->first();
+            $groupName = trim($this->groupFilter);
+
+            // Group Table se HR Group ID fetch karein
+            $group = DB::table('groups')
+                ->where('label', $groupName)
+                ->first();
 
             if ($group) {
-                $groupUserIds = DB::table('group_users')
-                    ->where('group_id', $group->id)
-                    ->pluck('user_id')
-                    ->map(fn($id) => (int) $id)
-                    ->toArray();
-
-                $query->where(function (Builder $q) use ($group, $groupUserIds) {
-                    $q->where('label_id', $group->id);
-
-                    if (! empty($groupUserIds)) {
-                        $q->orWhereIn('tasks.user_id', $groupUserIds)
-                            ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->whereIn('user_id', $groupUserIds));
-                    }
+                // Strictly check label_id = group.id (or label_id = group.label)
+                $query->where(function (Builder $q) use ($group, $groupName) {
+                    $q->where('tasks.label_id', (string) $group->id)
+                        ->orWhere('tasks.label_id', $group->id)
+                        ->orWhere('tasks.label_id', $groupName);
                 });
             } else {
-                $query->whereHas('group', function (Builder $gQuery) {
-                    $gQuery->where('label', $this->groupFilter);
-                });
+                $query->where('tasks.label_id', $groupName);
             }
         }
 
@@ -339,14 +334,24 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->formatStateUsing(fn($state) => Str::ucfirst($state) . ' Priority')
                     ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
-                TextColumn::make('group.label')
+                TextColumn::make('group_display')
                     ->label($this->getDbFieldLabel('group_label', 'Group'))
                     ->badge()
-                    ->icon('heroicon-o-folder')
                     ->color('info')
-                    ->sortable()
-                    ->searchable()
-                    ->formatStateUsing(fn($state) => $state ? $state : '-')
+                    ->state(function (Task $record) {
+                        // Agar label_id NULL ya blank hai to '-' dikhayein
+                        if (blank($record->label_id)) {
+                            return '-';
+                        }
+
+                        // label_id ke basis par Group table se Label / Name fetch karein
+                        $group = DB::table('groups')
+                            ->where('id', $record->label_id)
+                            ->orWhere('label', $record->label_id)
+                            ->first();
+
+                        return $group ? ($group->label ?? $group->name ?? '-') : '-';
+                    })
                     ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
                 TextColumn::make('status')
@@ -442,21 +447,27 @@ class TaskTable extends Component implements HasForms, HasTable
             ->actions([
                 Action::make('task_verification')
                     ->label(function (Task $task): string {
-                        /** @var object{status?: string, approval_status?: string}|null $existing */
+                        /** @var object{status?: string, approval_status?: string, previous_status?: string}|null $existing */
                         $existing = DB::table('task_verifications')
                             ->where('task_id', $task->id)
                             ->latest('id')
                             ->first();
 
-                        if (!$existing) {
-                            return 'Verify';
+                        if (! $existing) {
+                            return 'Pending';
                         }
 
+                        // Rejection par jo status restore hua hai wahi button text banega
+                        if (isset($existing->approval_status) && $existing->approval_status === 'rejected') {
+                            return ucfirst($existing->status ?? 'Pending');
+                        }
+
+                        // Approval Pending ke time
                         if (isset($existing->approval_status) && $existing->approval_status === 'pending') {
                             return 'Approval Pending (' . ucfirst($existing->status) . ')';
                         }
 
-                        return ucfirst($existing->status ?? 'Verify');
+                        return ucfirst($existing->status ?? 'Pending');
                     })
                     ->button()
                     ->size(ActionSize::ExtraSmall)
@@ -466,16 +477,16 @@ class TaskTable extends Component implements HasForms, HasTable
                             ->latest('id')
                             ->first();
 
-                        if (!$existing) {
-                            return 'primary';
+                        if (! $existing) {
+                            return 'warning';
                         }
 
                         return match ($existing->status) {
-                            'pending' => 'primary',
+                            'pending' => 'warning',
                             'verified' => 'success',
                             'hold' => 'warning',
                             'cancel' => 'danger',
-                            default => 'primary',
+                            default => 'warning',
                         };
                     })
                     ->icon('heroicon-o-shield-check')
@@ -483,7 +494,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->modalWidth('lg')
                     ->modalSubmitActionLabel('Save Verification')
                     ->fillForm(function (Task $task): array {
-                        /** @var object{change_user_reason?: string, status?: string, approval_status?: string, previous_status?: string}|null $existing */
+                        /** @var object{change_user_reason?: string, status?: string, approval_status?: string}|null $existing */
                         $existing = DB::table('task_verifications')
                             ->where('task_id', $task->id)
                             ->latest('id')
@@ -491,7 +502,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                         return [
                             'change_user_reason' => $existing?->change_user_reason ?? '',
-                            'status' => $existing?->status ?? 'verified',
+                            'status' => $existing?->status ?? 'pending',
                             'approval_decision' => ($existing && isset($existing->approval_status) && $existing->approval_status === 'pending') ? 'approve' : 'approve',
                         ];
                     })
@@ -553,21 +564,23 @@ class TaskTable extends Component implements HasForms, HasTable
                         $isCreator = ($creator?->id === $userId) || ((int) $task->user_id === $userId);
 
                         DB::transaction(function () use ($task, $data, $isCreator, $userId) {
-                            /** @var object{status?: string, previous_status?: string}|null $existingVerification */
+                            /** @var object{id?: int, status?: string, previous_status?: string, approval_status?: string}|null $existingVerification */
                             $existingVerification = DB::table('task_verifications')
                                 ->where('task_id', $task->id)
                                 ->latest('id')
                                 ->first();
 
-                            if ($isCreator) {
-                                if (isset($data['approval_decision']) && $data['approval_decision'] === 'reject') {
-                                    // Revert back to previous status before request was sent
-                                    $oldStatus = $existingVerification?->previous_status ?? 'verified';
+                            if ($isCreator && isset($data['approval_decision'])) {
+                                // CASE 1: Creator Decision (Approve / Reject)
+                                if ($data['approval_decision'] === 'reject') {
+                                    // Rejection: previous_status me stored value fetch karke status me wapis restore karein
+                                    $restoredStatus = $existingVerification?->previous_status ?? 'pending';
 
                                     DB::table('task_verifications')
                                         ->where('task_id', $task->id)
                                         ->update([
-                                            'status' => $oldStatus,
+                                            'change_user_reason' => trim($data['change_user_reason']),
+                                            'status' => $restoredStatus, // Restored back to previous status
                                             'approval_status' => 'rejected',
                                             'updated_at' => now(),
                                         ]);
@@ -575,35 +588,62 @@ class TaskTable extends Component implements HasForms, HasTable
                                     DB::table('task_conversations')->insert([
                                         'task_id' => $task->id,
                                         'user_id' => $userId,
-                                        'message' => 'Verification status change request was REJECTED. Reverted back to [' . strtoupper($oldStatus) . ']. Reason: ' . trim($data['change_user_reason']),
+                                        'message' => 'Verification status change request was REJECTED. Restored back to previous status [' . strtoupper($restoredStatus) . ']. Reason: ' . trim($data['change_user_reason']),
                                         'created_at' => now(),
                                         'updated_at' => now(),
                                     ]);
 
                                     Notification::make()
                                         ->title('Request Rejected')
-                                        ->body('Verification status request was rejected and restored to previous status.')
+                                        ->body('Verification status request rejected and restored to ' . ucfirst($restoredStatus) . '.')
                                         ->warning()
                                         ->send();
                                 } else {
-                                    $this->applyVerificationChange($task, $data['status'], $data['change_user_reason']);
+                                    // Approval: Requested status officially accept hoga
+                                    DB::table('task_verifications')->updateOrInsert(
+                                        ['task_id' => $task->id],
+                                        [
+                                            'change_user_reason' => trim($data['change_user_reason']),
+                                            'status' => $data['status'],
+                                            'approval_status' => 'approved',
+                                            'requested_by' => $userId,
+                                            'created_by' => $userId,
+                                            'updated_at' => now(),
+                                            'created_at' => now(),
+                                        ]
+                                    );
+
+                                    if ($data['status'] === 'cancel') {
+                                        $task->update(['status' => 'canceled']);
+                                    } elseif ($data['status'] === 'pending' && $task->status === 'canceled') {
+                                        $task->update(['status' => 'pending']);
+                                    }
+
+                                    DB::table('task_conversations')->insert([
+                                        'task_id' => $task->id,
+                                        'user_id' => $userId,
+                                        'message' => 'Verification status APPROVED and set to [' . strtoupper($data['status']) . ']. Reason: ' . trim($data['change_user_reason']),
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                    ]);
 
                                     Notification::make()
-                                        ->title('Verification Saved')
+                                        ->title('Verification Approved')
                                         ->body('Task verification status updated successfully.')
                                         ->success()
                                         ->send();
                                 }
                             } else {
-                                // Store current active status as previous_status before submitting request
-                                $currentStatus = $existingVerification?->status ?? 'verified';
+                                // CASE 2: Assigned User Submit Request (Save Verification Click)
+                                // Pehle se jo active status tha use previous_status me store karein
+                                $activePreviousStatus = $existingVerification?->status ?? 'pending';
 
                                 DB::table('task_verifications')->updateOrInsert(
                                     ['task_id' => $task->id],
                                     [
                                         'change_user_reason' => trim($data['change_user_reason']),
-                                        'previous_status' => $currentStatus,
-                                        'status' => $data['status'],
+                                        'previous_status' => $activePreviousStatus, // Stored previous status before update
+                                        'status' => $data['status'], // New requested status
                                         'approval_status' => 'pending',
                                         'requested_by' => $userId,
                                         'created_by' => $userId,
@@ -615,14 +655,14 @@ class TaskTable extends Component implements HasForms, HasTable
                                 DB::table('task_conversations')->insert([
                                     'task_id' => $task->id,
                                     'user_id' => $userId,
-                                    'message' => 'Requested verification status change to [' . strtoupper($data['status']) . ']. Sent to Assigned By user for approval. Reason: ' . trim($data['change_user_reason']),
+                                    'message' => 'Requested verification status change to [' . strtoupper($data['status']) . ']. Sent for approval. Reason: ' . trim($data['change_user_reason']),
                                     'created_at' => now(),
                                     'updated_at' => now(),
                                 ]);
 
                                 Notification::make()
                                     ->title('Request Sent to Creator')
-                                    ->body('Verification status change request has been sent to Person A for approval.')
+                                    ->body('Verification status change request sent for approval.')
                                     ->info()
                                     ->send();
                             }

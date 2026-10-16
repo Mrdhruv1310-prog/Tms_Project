@@ -137,6 +137,14 @@
             // destroyDatepicker();
         });
     </script>
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (performance && performance.navigation.type === 2)) {
+                // Page agar back button se reload hua hai to force refresh karein
+                window.location.reload();
+            }
+        });
+    </script>
     {{-- <script data-navigate-once>
         document.addEventListener('DOMContentLoaded', function() {
 

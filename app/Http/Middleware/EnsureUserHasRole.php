@@ -15,10 +15,10 @@ class EnsureUserHasRole
      */
     public function handle(Request $request, Closure $next, string $role): Response
     {
-        // Assuming you have a 'hasRole' method in your User model
-        if (!$request->user() || !$request->user()->hasRole($role)) {
-            // Redirect or return a 403 response if unauthorized
-            abort(403, 'Unauthorized');
+        $user = $request->user();
+
+        if (! $user || (method_exists($user, 'hasRole') && ! $user->hasRole($role))) {
+            abort(403, 'Unauthorized access.');
         }
         return $next($request);
     }
