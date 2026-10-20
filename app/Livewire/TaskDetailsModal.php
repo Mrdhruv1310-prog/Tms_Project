@@ -93,7 +93,6 @@ class TaskDetailsModal extends Component
     /** @var array<string, string> */
     protected $listeners = ['openTaskModal' => 'open', 'closeTaskModal' => 'close', 'openTaskDetailsModal' => 'edit'];
 
-    // For custom validation messages to ensure users understand the required formats and constraints/** @return array<string, string> */
     /** @return array<string, string> */
     public function messages(): array
     {
@@ -156,11 +155,10 @@ class TaskDetailsModal extends Component
         ];
     }
 
-    // Opens modal and resets form when creating a new task
     public function open(): void
     {
-        $this->categories = Category::all(); // Refresh categories
-        $this->labels = Group::all(); // Refresh labels
+        $this->categories = Category::all();
+        $this->labels = Group::all();
         $this->resetForm();
         $this->isOpen = true;
         $this->dispatch('addtaskmodalopened');
@@ -171,23 +169,23 @@ class TaskDetailsModal extends Component
         $this->resetForm();
         $this->isOpen = false;
     }
+
     public function getRandomColor(): string
     {
         return sprintf('#%06X', mt_rand(0, 0xffffff));
     }
 
-    // Initialize component with task data when editing an existing task
     public function mount(?int $taskId = null): void
     {
         $this->route = Route::currentRouteName() ?? '';
         $this->categories = Category::all();
         $this->labels = Group::all();
         $this->label = Group::query()->select('id', 'label')->get();
-        // $this->label = Group::select('id', 'label')->get();
-        // Auth user ko user list se exclude karne ke liye ->where('id', '!=', Auth::id()) add kiya hai
+
+        // User Query me 'super-admin' role add kiya gaya hai
         /** @var \Illuminate\Database\Eloquent\Collection<int, User> $users */
         $users = User::query()->where('status', 1)
-            ->whereIn('role', ['admin', 'hr', 'employee', 'manager'])
+            ->whereIn('role', ['super-admin', 'admin', 'hr', 'employee', 'manager'])
             ->get();
 
         $this->users = new \Illuminate\Database\Eloquent\Collection(
@@ -197,10 +195,12 @@ class TaskDetailsModal extends Component
                 return $user;
             })->all()
         );
+
         $this->groupUserMap = GroupUser::all()
             ->groupBy('group_id')
             ->map(fn($items) => $items->pluck('user_id')->toArray())
             ->toArray();
+
         if ($taskId) {
             $task = Task::findOrFail($taskId);
             $this->taskId = $task->id;
@@ -217,84 +217,6 @@ class TaskDetailsModal extends Component
         }
     }
 
-    // Create or update task workflow with notifications and reminders
-    // public function saveTask()
-    // {
-    //     $this->validate();
-
-    //     $this->due_date = Carbon::createFromFormat('d/m/Y H:i',$this->due_date)->format('Y-m-d H:i:00');
-
-    //     if ($this->recurrence_end_date) {
-    //         $this->recurrence_end_date = Carbon::createFromFormat('d/m/Y',$this->recurrence_end_date)->format('Y-m-d');
-    //     } else {
-    //         $this->recurrence_end_date = null;
-    //     }
-
-    //     DB::beginTransaction();
-
-    //     try {
-    //         $isUpdate = !empty($this->taskId);
-    //         $oldTask = Task::find($this->taskId);
-    //         $oldDueDate = $oldTask ? $oldTask->due_date : null;
-
-    //         $task = Task::updateOrCreate(
-    //             ['id' => $this->taskId],
-    //             [
-    //                 'title' => $this->title,
-    //                 'description' => $this->description,
-    //                 'category_id' => $this->category_id,
-    //                 'priority' => $this->priority,
-    //                 'label_id' => $this->label_id,
-    //                 'recurrence' => $this->recurrence,
-    //                 'due_date' => $this->due_date,
-    //                 'recurrence_end_date' => $this->recurrence_end_date,
-    //                 'status' => $this->status,
-    //                 'user_id' => Auth::id(),
-    //             ]
-    //         );
-
-    //         $this->handleTaskRecurrence($task);
-    //         $this->handleTaskAssignments($task);
-    //         $this->handleNotificationsAndReminders($task);
-
-    //         DB::commit();
-
-    //         if ($oldDueDate !== $this->due_date) {
-    //             SendDueDateNotificationJob::dispatch(
-    //                 $task,
-    //                 $this->dueDateChannel,
-    //                 $this->due_date
-    //             )->delay(Carbon::parse($task->due_date));
-    //         }
-
-    //         if ($isUpdate) {
-    //             $assignedUsers = $task->assignedUsers;
-    //             foreach ($assignedUsers as $user) {
-    //                 SendTaskUpdateJob::dispatch(
-    //                     $task,
-    //                     $user,
-    //                     $task->status,
-    //                     'Task details updated successfully.'
-    //                 );
-    //             }
-    //         }
-
-    //         $this->dispatch('taskCreated');
-    //         $this->close();
-
-    //         $message = $isUpdate
-    //             ? 'Task updated successfully.'
-    //             : 'Task created successfully.';
-    //         $this->notify($message, 'success');
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         Log::error('Task Save Error: ' . $e->getMessage());
-    //         $this->notify(
-    //             'An error occurred while saving task.',
-    //             'error'
-    //         );
-    //     }
-    // }
     public function saveTask(): void
     {
         if ($this->isSaving) {
@@ -358,7 +280,6 @@ class TaskDetailsModal extends Component
             $this->dispatch('taskCreated');
             $this->close();
 
-            // Insert Success Message
             $this->dispatch('notify', [
                 'message' => 'Task created successfully.',
                 'type' => 'success'
@@ -373,7 +294,6 @@ class TaskDetailsModal extends Component
 
             Log::error('Task Save Error: ' . $e->getMessage());
 
-            // Insert Error Message
             $this->dispatch('notify', [
                 'message' => 'Task Save Error: ' . $e->getMessage(),
                 'type' => 'error'
@@ -383,8 +303,6 @@ class TaskDetailsModal extends Component
         }
     }
 
-
-    // Manage weekly task recurrence days
     private function handleTaskRecurrence(Task $task): void
     {
         DB::table('task_recurrence_days')
@@ -400,7 +318,6 @@ class TaskDetailsModal extends Component
             }
         }
     }
-
 
     private function UpdatehandleTaskRecurrence(Task $task): void
     {
@@ -436,34 +353,6 @@ class TaskDetailsModal extends Component
         }
     }
 
-
-    // private function sendTaskAssignedMails(Task $task): void
-    // {
-    //     foreach ($this->selectedUsers as $userId) {
-    //         $user = User::find($userId);
-
-    //         if (! $user) {
-    //             continue;
-    //         }
-
-    //         try {
-    //             Mail::to($user->email)->send(new TaskAssignedMail($task, $user));
-    //         } catch (\Throwable $e) {
-    //             Log::error('Task Assigned Mail Error: ' . $e->getMessage());
-    //         }
-    //     }
-    // }
-
-    // private function safeScheduleTaskMailFlow(Task $task): void
-    // {
-    //     try {
-    //         $this->selectedUsers = array_unique($this->selectedUsers);
-    //         $this->scheduleTaskMailFlow($task, $this->selectedUsers);
-    //     } catch (\Throwable $e) {
-    //         Log::error('Task Reminder Schedule Error: ' . $e->getMessage());
-    //     }
-    // }
-    // Assign tasks and send emails to assigned users
     private function handleTaskAssignments(Task $task): void
     {
         $selectedUsers = array_values(
@@ -495,11 +384,6 @@ class TaskDetailsModal extends Component
                 $users = User::query()->whereIn('id', $selectedUsers)->get();
 
                 foreach ($users as $user) {
-                    /*
-                    |--------------------------------------------------------------------------
-                    | TASK ASSIGNED EMAIL
-                    |--------------------------------------------------------------------------
-                    */
                     if (filled($user->email)) {
                         $mailCacheKey = 'task_assigned_mail_sent_' . $task->id . '_' . $user->id;
 
@@ -509,11 +393,7 @@ class TaskDetailsModal extends Component
                             Mail::to($user->email)->send($mailable);
                         }
                     }
-                    /*
-                    |--------------------------------------------------------------------------
-                    | TASK ASSIGNED WHATSAPP
-                    |--------------------------------------------------------------------------
-                    */
+
                     $phoneNumber = $user->phone_number ?? $user->mobile_number ?? null;
 
                     if (filled($phoneNumber)) {
@@ -545,18 +425,15 @@ class TaskDetailsModal extends Component
             DB::beginTransaction();
 
             if (!empty($this->selectedUsers)) {
-
                 $this->selectedUsers = array_unique($this->selectedUsers);
 
                 foreach ($this->selectedUsers as $userId) {
-
                     $exists = DB::table('task_assignments')
                         ->where('task_id', $task->id)
                         ->where('user_id', $userId)
                         ->exists();
 
                     if ($exists) {
-
                         DB::table('task_assignments')
                             ->where('task_id', $task->id)
                             ->where('user_id', $userId)
@@ -569,7 +446,6 @@ class TaskDetailsModal extends Component
 
             DB::commit();
         } catch (\Exception $e) {
-
             DB::rollBack();
 
             Log::error(
@@ -582,7 +458,6 @@ class TaskDetailsModal extends Component
         }
     }
 
-    // Handle task notifications and reminders
     private function handleNotificationsAndReminders(Task $task): void
     {
         $this->createInstantNotifications($task);
@@ -596,91 +471,6 @@ class TaskDetailsModal extends Component
         $this->selectedUsers = array_unique($this->selectedUsers);
         $this->scheduleTaskMailFlow($task, $this->selectedUsers);
     }
-
-    // private function scheduleTaskReminderEmails(Task $task, array $selectedUsers): void
-    // {
-    //     $dueDate = Carbon::parse($task->due_date);
-
-    //     Reminder::query()->where('task_id', $task->id)->delete();
-
-    //     $schedules = [
-    //         [
-    //             'type' => 'daily_reminder',
-    //             'time' => now()->addDay()->startOfDay(),
-    //             'message' => 'Reminder: You have a pending task "' . $task->title . '".',
-    //         ],
-    //         [
-    //             'type' => 'before_24_hours',
-    //             'time' => $dueDate->copy()->subHours(24),
-    //             'message' => 'Only 24 hours left to complete task "' . $task->title . '".',
-    //         ],
-    //         [
-    //             'type' => 'before_12_hours',
-    //             'time' => $dueDate->copy()->subHours(12),
-    //             'message' => 'Only 12 hours left to complete task "' . $task->title . '".',
-    //         ],
-    //         [
-    //             'type' => 'before_6_hours',
-    //             'time' => $dueDate->copy()->subHours(6),
-    //             'message' => 'Only 6 hours left to complete task "' . $task->title . '".',
-    //         ],
-    //         [
-    //             'type' => 'due_date',
-    //             'time' => $dueDate,
-    //             'message' => 'Task "' . $task->title . '" is due now.',
-    //         ],
-    //     ];
-
-    //     foreach ($selectedUsers as $userId) {
-    //         foreach ($schedules as $schedule) {
-    //             if ($schedule['time']->isPast()) {
-    //                 continue;
-    //             }
-
-    //             $reminder = Reminder::create([
-    //                 'task_id' => $task->id,
-    //                 'user_id' => $userId,
-    //                 'reminder_time' => $schedule['time'],
-    //                 'reminder_unit' => $schedule['type'],
-    //                 'reminder_value' => 0,
-    //             ]);
-
-    //             // $reminder = Reminder::query()->create([
-    //             //     'task_id' => $task->id,
-    //             //     'user_id' => $userId,
-    //             //     'reminder_time' => $schedule['time'],
-    //             //     'reminder_unit' => $schedule['type'],
-    //             //     'reminder_value' => 0,
-    //             // ]);
-
-    //             SendReminderJob::dispatch(
-    //                 $reminder->id,
-    //                 $this->reminderChannel,
-    //                 $schedule['message']
-    //             )->delay($schedule['time']);
-    //         }
-
-    //         $dailyDate = now()->addDay()->startOfDay();
-
-    //         while ($dailyDate->lt($dueDate->copy()->startOfDay())) {
-    //             $reminder = Reminder::create([
-    //                 'task_id' => $task->id,
-    //                 'user_id' => $userId,
-    //                 'reminder_time' => $dailyDate,
-    //                 'reminder_unit' => 'daily_reminder',
-    //                 'reminder_value' => 0,
-    //             ]);
-
-    //             SendReminderJob::dispatch(
-    //                 $reminder->id,
-    //                 $this->reminderChannel,
-    //                 'Reminder: Task "' . $task->title . '" is still pending.'
-    //             )->delay($dailyDate);
-
-    //             $dailyDate->addDay();
-    //         }
-    //     }
-    // }
 
     private function fillReminderFields(Task $task): void
     {
@@ -705,7 +495,6 @@ class TaskDetailsModal extends Component
         $this->reminderUnit = (string) $reminder->reminder_unit;
     }
 
-    // Handle Task Edit and Update the form with existing task details
     public function edit(Task $taskId): void
     {
         $task = Task::findOrFail($taskId->id);
@@ -801,10 +590,8 @@ class TaskDetailsModal extends Component
             }
 
             $this->dispatch('taskUpdated');
-
             $this->close();
 
-            // Update Success Message
             $this->dispatch('notify', [
                 'message' => 'Task updated successfully.',
                 'type' => 'success'
@@ -814,7 +601,6 @@ class TaskDetailsModal extends Component
 
             Log::error('Task Update Error: ' . $e->getMessage());
 
-            // Update Error Message
             $this->dispatch('notify', [
                 'message' => 'Update Error: ' . $e->getMessage(),
                 'type' => 'error'
@@ -846,12 +632,12 @@ class TaskDetailsModal extends Component
             ->map(fn($items) => $items->pluck('user_id')->toArray())
             ->toArray();
     }
+
     public function render(): \Illuminate\Contracts\View\View
     {
         return view('livewire.task-details-modal');
     }
 
-    // instant assignment notification
     public function createInstantNotifications(Task $task): void
     {
         $selectedUsers = array_values(array_unique(array_filter(array_map('intval', $this->selectedUsers))));
@@ -865,7 +651,6 @@ class TaskDetailsModal extends Component
                 'type' => 'due_date',
                 'message' => 'You have been assigned to task "' . $task->title . '".',
                 'sent_at' => now(),
-                // created_at aur updated_at hata diya gaya hai
             ]);
         }
     }
@@ -880,44 +665,7 @@ class TaskDetailsModal extends Component
             DB::table('notifications')->update(['user_id' => $userId, 'task_id' => $task->id, 'type' => 'due_date', 'message' => 'You have been assigned to task "' . $task->title . '".', 'sent_at' => $task->due_date]);
         }
     }
-    // Send Reminder Email Notification
-    // public function createTaskReminders($task, $reminderTime, $reminderUnit, $selectedUsers)
-    // {
-    //     $dueDate = $task->due_date;
-    //     switch ($reminderUnit) {
-    //         case 'minutes':
-    //             $reminderValue = Carbon::parse($dueDate)->subMinutes($reminderTime);
-    //             break;
-    //         case 'hours':
-    //             $reminderValue = Carbon::parse($dueDate)->subHours($reminderTime);
-    //             break;
-    //         case 'days':
-    //             $reminderValue = Carbon::parse($dueDate)->subDays($reminderTime);
-    //             break;
-    //         default:
-    //             throw new \Exception('Invalid reminder unit provided.');
-    //     }
-    //     if ($reminderValue->isPast()) {
-    //         throw new \Exception('Reminder time cannot be in the past.');
-    //     }
 
-    //     foreach ($selectedUsers as $userId) {
-    //         Reminder::where('task_id', $task->id)
-    //             ->where('user_id', $userId)
-    //             ->delete();
-
-    //         $reminder = Reminder::create([
-    //             'task_id' => $task->id,
-    //             'user_id' => $userId,
-    //             'reminder_time' => $reminderValue,
-    //             'reminder_unit' => $reminderUnit,
-    //             'reminder_value' => $reminderTime,
-    //         ]);
-
-    //         SendReminderJob::dispatch($reminder, $this->reminderChannel, $reminderValue)
-    //             ->delay($reminderValue);
-    //     }
-    // }
     /**
      * @param Task $task
      * @param array<int, int> $selectedUsers
@@ -940,13 +688,6 @@ class TaskDetailsModal extends Component
             return;
         }
 
-        /*
-         * Process 1: Due Date Mail
-         * Due date mail is independent. If due date is selected and reminder is not selected,
-         * this mail will still be scheduled exactly on due date/time.
-         * NOTE: reminder_unit column only allows minutes/hours/days, so due-date mail is
-         * stored as minutes + value 0 and identified by its due-date message/channel.
-         */
         if (! empty($task->due_date)) {
             $dueDateTime = Carbon::parse($task->due_date);
 
@@ -959,11 +700,6 @@ class TaskDetailsModal extends Component
             }
         }
 
-        /*
-         * Process 2: Custom Reminder Mail
-         * Reminder mail is independent from due date. If due date is not selected,
-         * reminder will still be sent after selected reminder time from assigned_at/created_at.
-         */
         if (empty($this->reminderTime) || empty($this->reminderUnit)) {
             return;
         }
@@ -1007,32 +743,17 @@ class TaskDetailsModal extends Component
         int $userId,
         Carbon $sendAt
     ): void {
-
-        if (
-            $sendAt->isPast()
-            ||
-            $task->status === 'completed'
-        ) {
+        if ($sendAt->isPast() || $task->status === 'completed') {
             return;
         }
 
-        $reminder =
-            Reminder::create([
-                'task_id' =>
-                $task->id,
-
-                'user_id' =>
-                $userId,
-
-                'reminder_time' =>
-                $sendAt,
-
-                'reminder_unit' =>
-                'minutes',
-
-                'reminder_value' =>
-                0,
-            ]);
+        $reminder = Reminder::create([
+            'task_id' => $task->id,
+            'user_id' => $userId,
+            'reminder_time' => $sendAt,
+            'reminder_unit' => 'minutes',
+            'reminder_value' => 0,
+        ]);
 
         SendReminderJob::dispatch(
             $reminder->id,
@@ -1043,7 +764,7 @@ class TaskDetailsModal extends Component
             ->afterCommit();
 
         Log::info('Dispatching WhatsApp job for task: ' . $task->id);
-        // SendTaskDueWhatsAppJob called with all 3 required arguments
+
         SendTaskDueWhatsAppJob::dispatch(
             $task->id,
             $userId,

@@ -22,6 +22,18 @@ class AdminMiddleware
 
         /** @var \App\Models\User|null $authUser */
         $authUser = Auth::user();
+
+        // Check if user is inactive (status == 0)
+        if ($authUser && (int) $authUser->status === 0) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'credentials' => 'Invalid credentials!',
+            ]);
+        }
+
         $role = $authUser?->role ?? 'user';
 
         if (! in_array($role, ['admin', 'super-admin'], true)) {

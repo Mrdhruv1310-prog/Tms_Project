@@ -145,7 +145,7 @@
                         @enderror
                     </div>
 
-                    <!-- Status (Disabled for Auth User) -->
+                    <!-- Status (Disabled for Auth User & Includes Delete Option) -->
                     <div>
                         <label for="status"
                             class="block mb-2 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -154,9 +154,12 @@
                         <select id="status" wire:model.defer="status"
                             @if ($disableRoleAndStatus) disabled @endif
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm rounded-2xl block w-full p-3.5 focus:ring-2 transition-all shadow-2xs font-medium disabled:opacity-60 disabled:cursor-not-allowed
-    @error('status') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror">
+                            @error('status') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror">
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
+                            @if ($user_id && !$disableRoleAndStatus)
+                                <option value="-1" class="text-rose-600 font-bold">Delete</option>
+                            @endif
                         </select>
                         @error('status')
                             <p class="mt-2 text-xs font-bold text-rose-600 dark:text-rose-400">{{ $message }}</p>
@@ -227,5 +230,35 @@
 
             input.type = input.type === 'password' ? 'text' : 'password';
         }
+    });
+</script>
+<script>
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('showDeleteConfirmationPrompt', () => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "Do you really want to delete this employee?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'No, cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Livewire.dispatch('confirmDeleteUser');
+                    } else {
+                        Livewire.dispatch('closeModal');
+                    }
+                });
+            } else {
+                if (confirm("Are you sure you want to delete this employee?")) {
+                    Livewire.dispatch('confirmDeleteUser');
+                } else {
+                    Livewire.dispatch('closeModal');
+                }
+            }
+        });
     });
 </script>

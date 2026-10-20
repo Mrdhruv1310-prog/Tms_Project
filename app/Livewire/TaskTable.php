@@ -55,9 +55,6 @@ class TaskTable extends Component implements HasForms, HasTable
     /** @var array<string, string> */
     protected $listeners = ['taskCreated' => '$refresh', 'taskStatusUpdated' => '$refresh'];
 
-    /** @var Builder<Task>|null */
-    private ?Builder $taskQuery = null;
-
     public ?string $statusFilter = null;
     public ?string $categoryFilter = null;
     public ?int $userFilter = null;
@@ -155,10 +152,6 @@ class TaskTable extends Component implements HasForms, HasTable
 
     private function getTaskQuery(): Builder
     {
-        if ($this->taskQuery) {
-            return $this->taskQuery;
-        }
-
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $authId = (int) $user->id;
@@ -168,20 +161,74 @@ class TaskTable extends Component implements HasForms, HasTable
 
         $this->applyDateFiltersToTaskQuery($query);
 
-        // Super Admin ke ilawa normal user restrictions
-        if ($userRole !== 'super-admin') {
-            $query->where(function (Builder $q) use ($authId) {
-                $q->where('user_id', $authId)
-                    ->orWhereHas('taskAssignments', function (Builder $subQ) use ($authId) {
-                        $subQ->where('user_id', $authId);
-                    });
+        // Safe fetch for Group IDs & Labels without breaking SQL errors
+        $userGroupIds = [];
+        $userGroupLabels = [];
+
+        try {
+            if (DB::getSchemaBuilder()->hasTable('group_user')) {
+                $userGroupIds = DB::table('group_user')
+                    ->where('user_id', $authId)
+                    ->pluck('group_id')
+                    ->filter()
+                    ->toArray();
+            } elseif (DB::getSchemaBuilder()->hasTable('groups_users')) {
+                $userGroupIds = DB::table('groups_users')
+                    ->where('user_id', $authId)
+                    ->pluck('group_id')
+                    ->filter()
+                    ->toArray();
+            } elseif (DB::getSchemaBuilder()->hasTable('user_groups')) {
+                $userGroupIds = DB::table('user_groups')
+                    ->where('user_id', $authId)
+                    ->pluck('group_id')
+                    ->filter()
+                    ->toArray();
+            }
+
+            if (! empty($userGroupIds)) {
+                $userGroupLabels = DB::table('groups')
+                    ->whereIn('id', $userGroupIds)
+                    ->pluck('label')
+                    ->filter()
+                    ->toArray();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Group user pivot table check warning: ' . $e->getMessage());
+        }
+
+        if ($this->taskView === 'my_tasks') {
+            // MY TASKS: Strictly fetch tasks assigned TO the logged-in user
+            $query->where(function (Builder $q) use ($authId, $userGroupIds, $userGroupLabels) {
+                $q->whereHas('taskAssignments', function (Builder $aq) use ($authId) {
+                    $aq->where('user_id', $authId);
+                });
+
+                if (! empty($userGroupIds) || ! empty($userGroupLabels)) {
+                    $q->orWhereIn('tasks.label_id', array_merge($userGroupIds, $userGroupLabels));
+                }
             });
+        } elseif ($this->taskView === 'assigned_to_others') {
+            $query->where('tasks.user_id', $authId);
+        } else {
+            if ($userRole !== 'super-admin') {
+                $query->where(function (Builder $q) use ($authId, $userGroupIds, $userGroupLabels) {
+                    $q->where('tasks.user_id', $authId)
+                        ->orWhereHas('taskAssignments', function (Builder $aq) use ($authId) {
+                            $aq->where('user_id', $authId);
+                        });
+
+                    if (! empty($userGroupIds) || ! empty($userGroupLabels)) {
+                        $q->orWhereIn('tasks.label_id', array_merge($userGroupIds, $userGroupLabels));
+                    }
+                });
+            }
         }
 
         if (! empty($this->userFilter)) {
             $targetUserId = $this->userFilter;
             $query->where(function (Builder $q) use ($targetUserId) {
-                $q->where('user_id', $targetUserId)
+                $q->where('tasks.user_id', $targetUserId)
                     ->orWhereHas('taskAssignments', function (Builder $subQ) use ($targetUserId) {
                         $subQ->where('user_id', $targetUserId);
                     });
@@ -195,20 +242,18 @@ class TaskTable extends Component implements HasForms, HasTable
         }
 
         if (! empty($this->statusFilter) && in_array($this->statusFilter, ['pending', 'in_progress', 'completed', 'canceled'], true)) {
-            $query->where('status', $this->statusFilter);
+            $query->where('tasks.status', $this->statusFilter);
         }
 
-        // Group Filter: Group Label_ID ya Group Members ke tasks (group_users table ke users)
         if (! empty($this->groupFilter)) {
             $groupName = trim($this->groupFilter);
 
-            // Group Table se HR Group ID fetch karein
             $group = DB::table('groups')
                 ->where('label', $groupName)
+                ->orWhere('id', $groupName)
                 ->first();
 
             if ($group) {
-                // Strictly check label_id = group.id (or label_id = group.label)
                 $query->where(function (Builder $q) use ($group, $groupName) {
                     $q->where('tasks.label_id', (string) $group->id)
                         ->orWhere('tasks.label_id', $group->id)
@@ -219,22 +264,9 @@ class TaskTable extends Component implements HasForms, HasTable
             }
         }
 
-        // Status Order: Pending -> In Progress -> Complete Intimation -> Completed -> Canceled
-        $query->orderByRaw("
-        CASE
-            WHEN status = 'pending' THEN 1
-            WHEN status = 'in_progress' THEN 2
-            WHEN status = 'complete_intimation' THEN 3
-            WHEN status = 'completed' THEN 4
-            WHEN status = 'canceled' THEN 5
-            ELSE 6
-        END ASC
-    ")->orderBy('id', 'desc');
-
-        $this->taskQuery = $query;
-
         return $query;
     }
+
     protected function getDbFieldLabel(string $fieldName, string $defaultLabel): string
     {
         try {
@@ -252,6 +284,7 @@ class TaskTable extends Component implements HasForms, HasTable
     {
         return $table
             ->query(fn() => $this->getTaskQuery())
+            ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('title')
                     ->label($this->getDbFieldLabel('title', 'Task Title'))
@@ -280,6 +313,13 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 TextColumn::make('assignedUsers')
                     ->label($this->getDbFieldLabel('assigned_users', 'Assigned To'))
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query->leftJoin('task_assignments', 'tasks.id', '=', 'task_assignments.task_id')
+                            ->leftJoin('users as assigned_users', 'task_assignments.user_id', '=', 'assigned_users.id')
+                            ->select('tasks.id', 'tasks.title', 'tasks.status', 'tasks.due_date', 'tasks.user_id', 'tasks.category_id', 'tasks.label_id', 'tasks.priority', 'tasks.recurrence', 'tasks.recurrence_end_date', 'tasks.created_at', 'tasks.updated_at')
+                            ->groupBy('tasks.id', 'tasks.title', 'tasks.status', 'tasks.due_date', 'tasks.user_id', 'tasks.category_id', 'tasks.label_id', 'tasks.priority', 'tasks.recurrence', 'tasks.recurrence_end_date', 'tasks.created_at', 'tasks.updated_at')
+                            ->orderBy(DB::raw('MIN(assigned_users.first_name)'), $direction);
+                    })
                     ->icon('heroicon-o-users')
                     ->formatStateUsing(function ($state, Task $record) {
                         /** @var Collection<int, \App\Models\User> $assignedUsers */
@@ -312,6 +352,7 @@ class TaskTable extends Component implements HasForms, HasTable
                 TextColumn::make('recurrence')
                     ->label($this->getDbFieldLabel('recurrence', 'Repeat'))
                     ->icon('heroicon-o-arrow-path')
+                    ->sortable()
                     ->formatStateUsing(fn($state) => match ($state) {
                         'daily' => 'Daily',
                         'weekly' => 'Weekly',
@@ -324,6 +365,7 @@ class TaskTable extends Component implements HasForms, HasTable
                 TextColumn::make('priority')
                     ->label($this->getDbFieldLabel('priority', 'Priority'))
                     ->badge()
+                    ->sortable()
                     ->icon('heroicon-o-exclamation-circle')
                     ->color(fn(string $state): string => match ($state) {
                         'low' => 'success',
@@ -334,11 +376,12 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->formatStateUsing(fn($state) => Str::ucfirst($state) . ' Priority')
                     ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
 
-                TextColumn::make('group_display')
+                TextColumn::make('label_id')
                     ->label($this->getDbFieldLabel('group_label', 'Group'))
                     ->badge()
                     ->color('info')
-                    ->state(function (Task $record) {
+                    ->sortable()
+                    ->formatStateUsing(function ($state, Task $record) {
                         if (blank($record->label_id)) {
                             return '-';
                         }
@@ -352,24 +395,25 @@ class TaskTable extends Component implements HasForms, HasTable
                     })
                     ->extraAttributes(['class' => 'text-[10px] sm:text-xs py-1 px-1 whitespace-nowrap']),
 
+                // --- STATUS COLUMN HEADER WITH MODAL ACTION ---
                 TextColumn::make('status')
-                    ->label($this->getDbFieldLabel('status', 'Status'))
+                    ->label('Status')
                     ->badge()
-                    ->icon('heroicon-o-check-badge')
+                    ->sortable()
+                    ->icon('heroicon-o-arrow-path-rounded-square')
                     ->color(fn(string $state): string => match ($state) {
-                        'pending' => 'primary',
-                        'in_progress' => 'warning',
+                        'pending' => 'warning',
+                        'in_progress' => 'info',
                         'complete_intimation' => 'info',
                         'completed' => 'success',
                         'reassignment_pending' => 'danger',
                         'canceled' => 'gray',
-                        default => 'gray',
+                        default => 'warning',
                     })
                     ->formatStateUsing(function (string $state, Task $record) {
                         $loggedInUserId = Auth::id();
 
                         if ($this->taskView === 'assigned_to_others') {
-                            /** @var \App\Models\User|null $creator */
                             $creator = $record->creator;
                             if ($creator?->id === $loggedInUserId) {
                                 return $state === 'complete_intimation' ? 'Request Complete' : ($state === 'reassignment_pending' ? 'Re-assignment Approval' : Str::headline($state));
@@ -390,7 +434,119 @@ class TaskTable extends Component implements HasForms, HasTable
 
                         return $state === 'complete_intimation' ? 'Request Complete' : ($state === 'reassignment_pending' ? 'Re-assignment Pending' : Str::headline($state));
                     })
-                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap']),
+                    ->action(
+                        Action::make('col_status_update')
+                            ->modalHeading(fn(Task $task) => 'Update Status & Conversation - ' . $task->title)
+                            ->modalWidth('2xl')
+                            ->modalSubmitActionLabel('Update')
+                            ->modalCloseButton(true)
+                            ->closeModalByClickingAway(true)
+                            ->closeModalByEscaping(true)
+                            ->fillForm(function (Task $task): array {
+                                $reminder = Reminder::where('task_id', $task->id)
+                                    ->whereIn('reminder_unit', ['minutes', 'hours', 'days'])
+                                    ->latest('id')
+                                    ->first();
+
+                                return [
+                                    'status' => $task->status ?? 'pending',
+                                    'repeat' => ($task->recurrence && $task->recurrence !== 'none'),
+                                    'recurrence' => $task->recurrence ?: 'none',
+                                    'recurrence_end_date' => $task->recurrence_end_date ? Carbon::parse($task->recurrence_end_date)->format('Y-m-d') : null,
+                                    'due_date' => $task->due_date ? Carbon::parse($task->due_date)->format('Y-m-d H:i') : null,
+                                    'reminderTime' => $reminder ? $reminder->reminder_value : $task->reminderTime,
+                                    'reminderUnit' => $reminder ? $reminder->reminder_unit : $task->reminderUnit,
+                                ];
+                            })
+                            ->form(function (): array {
+                                return [
+                                    Select::make('status')
+                                        ->label('Select Option')
+                                        ->options([
+                                            'pending' => 'Pending',
+                                            'in_progress' => 'In Progress',
+                                            'completed' => 'Completed',
+                                        ])
+                                        ->required()
+                                        ->dehydrated(true)
+                                        ->native(true),
+
+                                    Toggle::make('repeat')
+                                        ->label('Repeat')
+                                        ->live()
+                                        ->dehydrated(true)
+                                        ->afterStateUpdated(function ($state, callable $set) {
+                                            if (! $state) {
+                                                $set('recurrence', 'none');
+                                                $set('recurrence_end_date', null);
+                                            } else {
+                                                $set('recurrence', 'daily');
+                                            }
+                                        }),
+
+                                    Select::make('recurrence')
+                                        ->label('Frequency')
+                                        ->options([
+                                            'none' => 'No Repeat',
+                                            'daily' => 'Daily',
+                                            'weekly' => 'Weekly',
+                                            'monthly' => 'Monthly',
+                                        ])
+                                        ->native(false)
+                                        ->live()
+                                        ->dehydrated(true)
+                                        ->visible(fn(Get $get) => (bool) $get('repeat')),
+
+                                    DatePicker::make('recurrence_end_date')
+                                        ->label('Recurrence End Date')
+                                        ->native(false)
+                                        ->displayFormat('d/m/Y')
+                                        ->dehydrated(true)
+                                        ->visible(fn(Get $get) => (bool) $get('repeat') && $get('recurrence') !== 'none')
+                                        ->nullable(),
+
+                                    DateTimePicker::make('due_date')
+                                        ->label('Due Date & Time')
+                                        ->native(false)
+                                        ->seconds(false)
+                                        ->time(true)
+                                        ->displayFormat('d/m/Y H:i')
+                                        ->format('Y-m-d H:i')
+                                        ->hoursStep(1)
+                                        ->minutesStep(1)
+                                        ->dehydrated(true)
+                                        ->required(),
+
+                                    Grid::make(2)
+                                        ->schema([
+                                            TextInput::make('reminderTime')
+                                                ->label('Reminder Before')
+                                                ->numeric()
+                                                ->integer()
+                                                ->minValue(1)
+                                                ->placeholder('Enter time')
+                                                ->dehydrated(true)
+                                                ->nullable(),
+
+                                            Select::make('reminderUnit')
+                                                ->label('Reminder Unit')
+                                                ->options([
+                                                    'minutes' => 'Minutes',
+                                                    'hours' => 'Hours',
+                                                    'days' => 'Days',
+                                                ])
+                                                ->native(false)
+                                                ->placeholder('Select Option')
+                                                ->dehydrated(true)
+                                                ->nullable(),
+                                        ]),
+                                ];
+                            })
+                            ->action(function (Task $task, array $data): void {
+                                $this->updateTaskStatusFromTable($task, $data['status'], null, $data);
+                            })
+                    )
+                    ->extraAttributes(['class' => 'text-xs py-1 px-1 whitespace-nowrap cursor-pointer']),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -411,7 +567,7 @@ class TaskTable extends Component implements HasForms, HasTable
 
                 SelectFilter::make('category')
                     ->relationship('category', 'name')
-                    ->label($this->getDbFieldLabel('category', 'Category')),
+                    ->label($this->getDbFieldLabel('category_name', 'Category')),
 
                 SelectFilter::make('assigned_to')
                     ->relationship('assignedUsers', 'first_name')
@@ -443,67 +599,17 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->label($this->getDbFieldLabel('overdue_tasks', 'Overdue Tasks')),
             ], layout: FiltersLayout::AboveContentCollapsible)
             ->actions([
-                Action::make('task_verification')
-                    ->label(function (Task $task): string {
-                        /** @var object{status?: string, approval_status?: string, previous_status?: string}|null $existing */
-                        $existing = DB::table('task_verifications')
-                            ->where('task_id', $task->id)
-                            ->latest('id')
-                            ->first();
-
-                        if (! $existing) {
-                            return 'Pending';
-                        }
-
-                        if (isset($existing->approval_status) && $existing->approval_status === 'rejected') {
-                            return ucfirst($existing->status ?? 'Pending');
-                        }
-
-                        if (isset($existing->approval_status) && $existing->approval_status === 'pending') {
-                            return 'Approval Pending (' . ucfirst($existing->status) . ')';
-                        }
-
-                        return ucfirst($existing->status ?? 'Pending');
-                    })
+                // --- VERIFY BUTTON ---
+                Action::make('verify_task')
+                    ->label('Review Task')
                     ->button()
                     ->size(ActionSize::ExtraSmall)
-                    ->color(function (Task $task): string {
-                        $existing = DB::table('task_verifications')
-                            ->where('task_id', $task->id)
-                            ->latest('id')
-                            ->first();
-
-                        $status = $existing?->status ?? 'pending';
-
-                        return match ($status) {
-                            'verified' => 'success',
-                            'cancel'   => 'danger',
-                            'hold'     => 'warning',
-                            default    => 'warning',
-                        };
-                    })
-                    ->extraAttributes(function (Task $task): array {
-                        $existing = DB::table('task_verifications')
-                            ->where('task_id', $task->id)
-                            ->latest('id')
-                            ->first();
-
-                        $status = $existing?->status ?? 'pending';
-
-                        // Force inline CSS for accurate color rendering
-                        return match ($status) {
-                            'verified' => ['style' => 'background-color: #10b981 !important; color: #ffffff !important; border-color: #059669 !important; font-size: 11px !important; padding: 2px 6px !important;'],
-                            'cancel'   => ['style' => 'background-color: #ef4444 !important; color: #ffffff !important; border-color: #dc2626 !important; font-size: 11px !important; padding: 2px 6px !important;'],
-                            'hold'     => ['style' => 'background-color: #f59e0b !important; color: #ffffff !important; border-color: #d97706 !important; font-size: 11px !important; padding: 2px 6px !important;'],
-                            default    => ['style' => 'background-color: #f59e0b !important; color: #ffffff !important; border-color: #d97706 !important; font-size: 11px !important; padding: 2px 6px !important;'],
-                        };
-                    })
+                    ->color('warning')
                     ->icon('heroicon-o-shield-check')
                     ->modalHeading(fn(Task $task) => 'Task Verification Request - ' . $task->title)
                     ->modalWidth('lg')
                     ->modalSubmitActionLabel('Save Verification')
                     ->fillForm(function (Task $task): array {
-                        /** @var object{change_user_reason?: string, status?: string, approval_status?: string}|null $existing */
                         $existing = DB::table('task_verifications')
                             ->where('task_id', $task->id)
                             ->latest('id')
@@ -511,17 +617,16 @@ class TaskTable extends Component implements HasForms, HasTable
 
                         return [
                             'change_user_reason' => $existing?->change_user_reason ?? '',
-                            'status' => $existing?->status ?? 'pending',
+                            // Fallback status updated to 'verified' since 'pending' is removed
+                            'status' => ($existing?->status && $existing->status !== 'pending') ? $existing->status : 'verified',
                             'approval_decision' => ($existing && isset($existing->approval_status) && $existing->approval_status === 'pending') ? 'approve' : 'approve',
                         ];
                     })
                     ->form(function (Task $task): array {
                         $userId = Auth::id();
-                        /** @var \App\Models\User|null $creator */
                         $creator = $task->creator;
                         $isCreator = ($creator?->id === $userId) || ((int) $task->user_id === $userId);
 
-                        /** @var object{approval_status?: string}|null $existing */
                         $existing = DB::table('task_verifications')
                             ->where('task_id', $task->id)
                             ->latest('id')
@@ -540,11 +645,10 @@ class TaskTable extends Component implements HasForms, HasTable
                             Select::make('status')
                                 ->label('Select Verification Option')
                                 ->options([
-                                    'pending' => 'Pending',
                                     'verified' => 'Verified',
-                                    'hold' => 'Hold',
-                                    'cancel' => 'Cancel',
-                                ])
+                                    'hold'     => 'Hold',
+                                    'cancel'   => 'Cancel',
+                                ]) // Strictly only Verified, Hold, and Cancel options
                                 ->required()
                                 ->native(false),
                         ];
@@ -556,7 +660,7 @@ class TaskTable extends Component implements HasForms, HasTable
                                     ->label('Approval Action')
                                     ->options([
                                         'approve' => 'Approve Requested Status',
-                                        'reject' => 'Reject Requested Status',
+                                        'reject'  => 'Reject Requested Status',
                                     ])
                                     ->default('approve')
                                     ->required()
@@ -568,28 +672,24 @@ class TaskTable extends Component implements HasForms, HasTable
                     })
                     ->action(function (Task $task, array $data): void {
                         $userId = Auth::id();
-                        /** @var \App\Models\User|null $creator */
                         $creator = $task->creator;
                         $isCreator = ($creator?->id === $userId) || ((int) $task->user_id === $userId);
 
                         DB::transaction(function () use ($task, $data, $isCreator, $userId) {
-                            /** @var object{id?: int, status?: string, previous_status?: string, approval_status?: string}|null $existingVerification */
                             $existingVerification = DB::table('task_verifications')
                                 ->where('task_id', $task->id)
                                 ->latest('id')
                                 ->first();
 
                             if ($isCreator && isset($data['approval_decision'])) {
-                                // CASE 1: Creator Decision (Approve / Reject)
                                 if ($data['approval_decision'] === 'reject') {
-                                    // Rejection: previous_status me stored value fetch karke status me wapis restore karein
-                                    $restoredStatus = $existingVerification?->previous_status ?? 'pending';
+                                    $restoredStatus = $existingVerification?->previous_status ?? 'verified';
 
                                     DB::table('task_verifications')
                                         ->where('task_id', $task->id)
                                         ->update([
                                             'change_user_reason' => trim($data['change_user_reason']),
-                                            'status' => $restoredStatus, // Restored back to previous status
+                                            'status' => $restoredStatus,
                                             'approval_status' => 'rejected',
                                             'updated_at' => now(),
                                         ]);
@@ -608,7 +708,6 @@ class TaskTable extends Component implements HasForms, HasTable
                                         ->warning()
                                         ->send();
                                 } else {
-                                    // Approval: Requested status officially accept hoga
                                     DB::table('task_verifications')->updateOrInsert(
                                         ['task_id' => $task->id],
                                         [
@@ -624,8 +723,6 @@ class TaskTable extends Component implements HasForms, HasTable
 
                                     if ($data['status'] === 'cancel') {
                                         $task->update(['status' => 'canceled']);
-                                    } elseif ($data['status'] === 'pending' && $task->status === 'canceled') {
-                                        $task->update(['status' => 'pending']);
                                     }
 
                                     DB::table('task_conversations')->insert([
@@ -643,16 +740,14 @@ class TaskTable extends Component implements HasForms, HasTable
                                         ->send();
                                 }
                             } else {
-                                // CASE 2: Assigned User Submit Request (Save Verification Click)
-                                // Pehle se jo active status tha use previous_status me store karein
-                                $activePreviousStatus = $existingVerification?->status ?? 'pending';
+                                $activePreviousStatus = $existingVerification?->status ?? 'verified';
 
                                 DB::table('task_verifications')->updateOrInsert(
                                     ['task_id' => $task->id],
                                     [
                                         'change_user_reason' => trim($data['change_user_reason']),
-                                        'previous_status' => $activePreviousStatus, // Stored previous status before update
-                                        'status' => $data['status'], // New requested status
+                                        'previous_status' => $activePreviousStatus,
+                                        'status' => $data['status'],
                                         'approval_status' => 'pending',
                                         'requested_by' => $userId,
                                         'created_by' => $userId,
@@ -678,220 +773,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         });
 
                         $this->dispatch('$refresh');
-                    })
-                    ->visible(function (Task $task) {
-                        $userId = Auth::id();
-                        /** @var \App\Models\User|null $creator */
-                        $creator = $task->creator;
-                        $isCreator = ($creator?->id === $userId) || ((int) $task->user_id === (int) $userId);
-                        $isAssigned = DB::table('task_assignments')->where('task_id', $task->id)->where('user_id', $userId)->exists();
-                        /** @var \App\Models\User $authUser */
-                        $authUser = Auth::user();
-                        return $isCreator || $isAssigned || ($authUser->role === 'super-admin');
                     }),
-
-                Action::make('approve')
-                    ->action(fn(Task $task) => $this->approveCompletionRequest($task))
-                    ->label($this->getDbFieldLabel('btn_approve', 'Approve'))
-                    ->button()
-                    ->size(ActionSize::ExtraSmall)
-                    ->color('success')
-                    ->icon('heroicon-o-check-circle')
-                    ->requiresConfirmation()
-                    ->modalHeading('Approve completion request')
-                    ->modalDescription('Are you sure you want to approve this task completion request?')
-                    ->modalSubmitActionLabel('Yes, approve')
-                    ->visible(function (Task $task) {
-                        /** @var \App\Models\User|null $creator */
-                        $creator = $task->creator;
-                        return $this->taskView === 'assigned_to_others'
-                            && $creator?->id === Auth::id()
-                            && TaskCompletionRequest::query()->where('task_id', $task->id)
-                            ->where('request_status', 'pending')
-                            ->exists();
-                    }),
-
-                Action::make('approve_reassignment')
-                    ->action(fn(Task $task, array $data) => $this->approveReassignmentRequest($task, $data))
-                    ->label($this->getDbFieldLabel('btn_approve_reassignment', 'Approve Re-assignment'))
-                    ->button()
-                    ->size(ActionSize::ExtraSmall)
-                    ->color('success')
-                    ->icon('heroicon-o-user-plus')
-                    ->requiresConfirmation()
-                    ->modalHeading('Approve Task Re-assignment')
-                    ->modalDescription('Approve passing this task to the requested user? Conversation continuity will be maintained.')
-                    ->modalSubmitActionLabel('Yes, Approve Re-assignment')
-                    ->form([
-                        Textarea::make('approval_comment')
-                            ->label('Comment (Optional)')
-                            ->placeholder('Add a note regarding re-assignment approval...')
-                            ->rows(2)
-                    ])
-                    ->visible(function (Task $task) {
-                        /** @var \App\Models\User|null $creator */
-                        $creator = $task->creator;
-                        return $this->taskView === 'assigned_to_others'
-                            && $creator?->id === Auth::id()
-                            && $task->status === 'reassignment_pending';
-                    }),
-
-                Action::make('reject_reassignment')
-                    ->action(fn(Task $task) => $this->rejectReassignmentRequest($task))
-                    ->label($this->getDbFieldLabel('btn_reject_reassignment', 'Reject Re-assignment'))
-                    ->button()
-                    ->size(ActionSize::ExtraSmall)
-                    ->color('danger')
-                    ->icon('heroicon-o-user-minus')
-                    ->requiresConfirmation()
-                    ->modalHeading('Reject Task Re-assignment')
-                    ->modalDescription('Are you sure you want to reject this re-assignment request?')
-                    ->modalSubmitActionLabel('Yes, Reject')
-                    ->visible(function (Task $task) {
-                        /** @var \App\Models\User|null $creator */
-                        $creator = $task->creator;
-                        return $this->taskView === 'assigned_to_others'
-                            && $creator?->id === Auth::id()
-                            && $task->status === 'reassignment_pending';
-                    }),
-
-                Action::make('reject')
-                    ->action(fn(Task $task) => $this->rejectCompletionRequest($task))
-                    ->label($this->getDbFieldLabel('btn_reject', 'Reject'))
-                    ->button()
-                    ->size(ActionSize::ExtraSmall)
-                    ->color('danger')
-                    ->icon('heroicon-o-x-circle')
-                    ->requiresConfirmation()
-                    ->modalHeading('Reject completion request')
-                    ->modalDescription('Are you sure you want to reject this completion request? Task will go back to In Progress.')
-                    ->modalSubmitActionLabel('Yes, reject')
-                    ->visible(function (Task $task) {
-                        /** @var \App\Models\User|null $creator */
-                        $creator = $task->creator;
-                        return $this->taskView === 'assigned_to_others'
-                            && $creator?->id === Auth::id()
-                            && TaskCompletionRequest::query()->where('task_id', $task->id)
-                            ->where('request_status', 'pending')
-                            ->exists();
-                    }),
-
-                Action::make('status_update')
-                    ->label(fn(Task $task) => $this->getStatusActionLabel($task))
-                    ->button()
-                    ->size(ActionSize::ExtraSmall)
-                    ->color(fn(Task $task) => $this->getStatusActionColor($task))
-                    ->icon('heroicon-o-arrow-path-rounded-square')
-                    ->modalHeading(fn(Task $task) => 'Update Status & Conversation - ' . $task->title)
-                    ->modalWidth('2xl')
-                    ->modalSubmitActionLabel('Update')
-                    ->modalCloseButton(true)
-                    ->closeModalByClickingAway(true)
-                    ->closeModalByEscaping(true)
-                    ->fillForm(function (Task $task): array {
-                        $reminder = Reminder::where('task_id', $task->id)
-                            ->whereIn('reminder_unit', ['minutes', 'hours', 'days'])
-                            ->latest('id')
-                            ->first();
-
-                        return [
-                            'status' => $task->status ?? 'pending',
-                            'repeat' => ($task->recurrence && $task->recurrence !== 'none'),
-                            'recurrence' => $task->recurrence ?: 'none',
-                            'recurrence_end_date' => $task->recurrence_end_date ? Carbon::parse($task->recurrence_end_date)->format('Y-m-d') : null,
-                            'due_date' => $task->due_date ? Carbon::parse($task->due_date)->format('Y-m-d H:i') : null,
-                            'reminderTime' => $reminder ? $reminder->reminder_value : $task->reminderTime,
-                            'reminderUnit' => $reminder ? $reminder->reminder_unit : $task->reminderUnit,
-                        ];
-                    })
-                    ->form(function (): array {
-                        return [
-                            Select::make('status')
-                                ->label('Select Option')
-                                ->options([
-                                    'pending' => 'Pending',
-                                    'in_progress' => 'In Progress',
-                                    'completed' => 'Completed',
-                                ])
-                                ->required()
-                                ->dehydrated(true)
-                                ->native(true),
-
-                            Toggle::make('repeat')
-                                ->label('Repeat')
-                                ->live()
-                                ->dehydrated(true)
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    if (! $state) {
-                                        $set('recurrence', 'none');
-                                        $set('recurrence_end_date', null);
-                                    } else {
-                                        $set('recurrence', 'daily');
-                                    }
-                                }),
-
-                            Select::make('recurrence')
-                                ->label('Frequency')
-                                ->options([
-                                    'none' => 'No Repeat',
-                                    'daily' => 'Daily',
-                                    'weekly' => 'Weekly',
-                                    'monthly' => 'Monthly',
-                                ])
-                                ->native(false)
-                                ->live()
-                                ->dehydrated(true)
-                                ->visible(fn(Get $get) => (bool) $get('repeat')),
-
-                            DatePicker::make('recurrence_end_date')
-                                ->label('Recurrence End Date')
-                                ->native(false)
-                                ->displayFormat('d/m/Y')
-                                ->dehydrated(true)
-                                ->visible(fn(Get $get) => (bool) $get('repeat') && $get('recurrence') !== 'none')
-                                ->nullable(),
-
-                            DateTimePicker::make('due_date')
-                                ->label('Due Date & Time')
-                                ->native(false)
-                                ->seconds(false)
-                                ->time(true)
-                                ->displayFormat('d/m/Y H:i')
-                                ->format('Y-m-d H:i')
-                                ->hoursStep(1)
-                                ->minutesStep(1)
-                                ->dehydrated(true)
-                                ->required(),
-
-                            Grid::make(2)
-                                ->schema([
-                                    TextInput::make('reminderTime')
-                                        ->label('Reminder Before')
-                                        ->numeric()
-                                        ->integer()
-                                        ->minValue(1)
-                                        ->placeholder('Enter time')
-                                        ->dehydrated(true)
-                                        ->nullable(),
-
-                                    Select::make('reminderUnit')
-                                        ->label('Reminder Unit')
-                                        ->options([
-                                            'minutes' => 'Minutes',
-                                            'hours' => 'Hours',
-                                            'days' => 'Days',
-                                        ])
-                                        ->native(false)
-                                        ->placeholder('Select Option')
-                                        ->dehydrated(true)
-                                        ->nullable(),
-                                ]),
-                        ];
-                    })
-                    ->action(function (Task $task, array $data): void {
-                        $this->updateTaskStatusFromTable($task, $data['status'], null, $data);
-                    })
-                    ->visible(fn(Task $task) => $this->canUpdateTaskStatusFromTable($task)),
 
                 Action::make('task_chat')
                     ->label($this->getDbFieldLabel('btn_comment', 'Comment'))
@@ -936,7 +818,6 @@ class TaskTable extends Component implements HasForms, HasTable
                         $this->dispatch('openTaskDetailsModal', taskId: $task->id);
                     })
                     ->visible(function (Task $task) {
-                        /** @var \App\Models\User|null $authUser */
                         $authUser = Auth::user();
                         return in_array($authUser?->role, ['admin', 'super-admin'], true);
                     }),
@@ -955,7 +836,6 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->modalSubmitActionLabel('Yes, delete it')
                     ->modalAlignment(Alignment::Center)
                     ->visible(function (Task $task) {
-                        /** @var \App\Models\User|null $authUser */
                         $authUser = Auth::user();
                         return in_array($authUser?->role, ['admin', 'super-admin'], true);
                     }),
@@ -969,13 +849,12 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->modalIcon('heroicon-o-trash')
                     ->modalIconColor('danger')
                     ->modalHeading('Delete selected tasks')
-                    ->modalDescription('Are you sure you want to delete the selected tasks? This will also delete related task updates, completion requests, chats, reminders, and assignments. This cannot be undone.')
+                    ->modalDescription('Are you sure you want to delete the selected tasks? This cannot be undone.')
                     ->modalSubmitActionLabel('Yes, delete')
                     ->modalAlignment(Alignment::Center)
                     ->action(fn(Collection $records) => $this->deleteSelectedTasks($records))
                     ->deselectRecordsAfterCompletion(),
             ])
-            ->defaultSort('id', 'desc')
             ->emptyStateHeading('No Tasks Found')
             ->emptyStateDescription('There are no tasks matching your selected date or timeline filter.')
             ->emptyStateIcon('heroicon-o-clipboard-document-check')
