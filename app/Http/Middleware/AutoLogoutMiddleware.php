@@ -17,12 +17,25 @@ class AutoLogoutMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check()) {
+            /** @var \App\Models\User|null $authUser */
+            $authUser = Auth::user();
+
+            // Agar user status = 0 (Inactive) ho gaya hai, toh turant logout kar do
+            if ($authUser && (int) $authUser->status === 0) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('login')->withErrors([
+                    'credentials' => 'Invalid credentials!',
+                ]);
+            }
+
             $lastActivity = session('last_activity_time');
             // 2 Days in seconds (2 * 24 * 60 * 60)
             $timeout = 172800;
 
             if ($lastActivity && (time() - $lastActivity > $timeout)) {
-                $authUser = Auth::user();
                 $role = $authUser?->role ?? 'user';
 
                 Auth::logout();

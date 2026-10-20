@@ -283,6 +283,7 @@ class Dashboard extends Component
                         : 0,
                 ];
             })
+            ->sortByDesc('pending') // Max pending tasks category sabse pehle aayegi
             ->values()
             ->toArray();
     }
@@ -353,15 +354,11 @@ class Dashboard extends Component
                 ];
             });
 
-        $authUserCard = $allMembers->firstWhere('id', $authUserId);
-        $otherCards = $allMembers->reject(fn($member) => $member['id'] === $authUserId)->values();
-
-        $sortedTeam = collect();
-        if ($authUserCard) {
-            $sortedTeam->push($authUserCard);
-        }
-
-        $this->team = $sortedTeam->concat($otherCards)->toArray();
+        // Subhi members ko pending count ke descending order (highest pending first) me sort kiya gaya hai
+        $this->team = $allMembers
+            ->sortByDesc('pending')
+            ->values()
+            ->toArray();
     }
 
     private function setGroups(string $role, int $authUserId): void
@@ -409,6 +406,7 @@ class Dashboard extends Component
                     : 0,
             ];
         })
+            ->sortByDesc('pending') // Jis group me sabse jyada pending tasks honge wo pehle dikhega
             ->values()
             ->toArray();
     }

@@ -3,7 +3,7 @@
         'name' => 'laravel/laravel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '976e6949f8e55841557c9a485a54f12cc113b3b3',
+        'reference' => 'e8beabbac6201726e7ead5abb3b218a7c74708bb',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -568,7 +568,7 @@
         'laravel/laravel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '976e6949f8e55841557c9a485a54f12cc113b3b3',
+            'reference' => 'e8beabbac6201726e7ead5abb3b218a7c74708bb',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -1363,6 +1363,15 @@
             'install_path' => __DIR__ . '/../sebastian/version',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'shuchkin/simplexlsx' => array(
+            'pretty_version' => '1.1.19',
+            'version' => '1.1.19.0',
+            'reference' => 'aa94c940c46ec5ee545ed1808c2aefeb26767cf8',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../shuchkin/simplexlsx',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'spatie/color' => array(
             'pretty_version' => '1.8.0',

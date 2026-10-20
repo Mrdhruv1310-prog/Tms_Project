@@ -14,30 +14,81 @@
             </a>
         </div>
 
-        {{-- Users Header with Icon --}}
+        {{-- Users Header with Icon & Import Employee Button --}}
         <div
             class="mb-5 sm:mb-8 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-300/80 bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-200/50 p-4 sm:p-6 lg:p-8 relative">
-            <div class="flex items-center gap-3 sm:gap-4 relative z-10">
-                <div
-                    class="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-xs">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
-                        stroke="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" />
-                    </svg>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 relative z-10">
+
+                <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div
+                        class="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
+                            stroke="currentColor" class="w-5 h-5 sm:w-6 sm:h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" />
+                        </svg>
+                    </div>
+                    <div class="space-y-0.5 sm:space-y-1 min-w-0">
+                        <h1 class="text-base sm:text-xl font-bold tracking-tight text-slate-900 truncate">
+                            Employee List
+                        </h1>
+                    </div>
                 </div>
-                <div class="space-y-0.5 sm:space-y-1 min-w-0">
-                    <h1 class="text-base sm:text-xl font-bold tracking-tight text-slate-900 truncate">
-                        Employee List
-                    </h1>
+
+                <!-- Hidden Excel Input -->
+                <input type="file" id="excelFileInput" wire:model="excelFile" accept=".xlsx,.xls,.csv"
+                    class="hidden" />
+
+                <!-- Import Actions Wrapper -->
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
+
+                    <!-- Import Button -->
+                    <button type="button" onclick="document.getElementById('excelFileInput').click()"
+                        class="inline-flex items-center justify-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-bold text-white bg-[rgb(7,139,221)] hover:bg-[rgb(5,115,185)] rounded-xl sm:rounded-2xl transition-all shadow-md shadow-[rgb(7,139,221)]/20 active:scale-95 shrink-0 w-full sm:w-auto cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="w-4 h-4 sm:w-4.5 sm:h-4.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                        <span>Import Employee</span>
+                    </button>
+
+                    <!-- Selected File Name & Small Add Button -->
+                    @if ($excelFile)
+                        <div
+                            class="inline-flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 animate-fadeIn">
+                            <span class="max-w-[120px] sm:max-w-[180px] truncate text-blue-600 font-medium">
+                                {{ $excelFile->getClientOriginalName() }}
+                            </span>
+
+                            <!-- Remove File Cross Icon -->
+                            <button type="button" wire:click="removeSelectedFile"
+                                class="text-slate-400 hover:text-red-500">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+
+                            <!-- Small Add Button -->
+                            <button type="button" wire:click="saveUser" wire:loading.attr="disabled"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-all shadow-xs cursor-pointer">
+                                <span wire:loading.remove wire:target="saveUser">Add</span>
+                                <span wire:loading wire:target="saveUser" class="flex items-center gap-1">
+                                    Adding...
+                                </span>
+                            </button>
+                        </div>
+                    @endif
+
                 </div>
+
             </div>
         </div>
 
         <!-- User Cards Grid -->
-        <div x-data="{ userDeleteModalOpen: false, userId: null }" @userdeleted.window="userDeleteModalOpen = false"
-            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
 
             <!-- User Cards -->
             @foreach ($users as $user)
@@ -45,10 +96,11 @@
                     $initials =
                         strtoupper(substr($user->first_name ?? '', 0, 1)) .
                         strtoupper(substr($user->last_name ?? '', 0, 1));
-                    $isAuthUser = (int) $user->id === (int) auth()->id();
+                    $isAuthUser = (int)$user->id === (int) auth()->id();
+                    $userStatus = (int)$user->status;
                 @endphp
 
-                <div wire:key="{{ $user->id }}"
+                <div wire:key="user-card-{{ $user->id }}-{{$userStatus }}"
                     class="relative w-full bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group">
 
                     {{-- Auth User "You" Badge --}}
@@ -83,10 +135,10 @@
                     {{-- Action Buttons --}}
                     <div
                         class="px-4 pb-4 sm:px-6 sm:pb-6 pt-3 flex items-center justify-center gap-2 w-full border-t border-slate-100">
-                        <!-- Edit Button (Sabhi users ke liye) -->
-                        <button wire:click="$dispatch('edituser', { id: {{ $user->id }} })"
-                            class="flex-1 inline-flex items-center justify-center px-3 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24"
+                        <!-- Direct Dispatch Edit Button -->
+                        <button type="button" wire:click="$dispatch('edituser', { id: {{$user->id }} })"
+                            class="w-full inline-flex items-center justify-center px-3 py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 mr-1.5" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
                                 <path d="M12 20h9" />
@@ -94,27 +146,13 @@
                             </svg>
                             Edit
                         </button>
-
-                        <!-- Delete Button (Auth user ke liye remove kar diya gaya hai) -->
-                        @if (!$isAuthUser)
-                            <button @click="userDeleteModalOpen=true; userId={{ $user->id }}"
-                                class="flex-1 py-2 px-3 text-red-600 inline-flex items-center justify-center hover:text-white border border-red-200 hover:bg-red-600 hover:border-red-600 font-bold text-[11px] sm:text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer">
-                                <svg class="mr-1 w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd"
-                                        d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                        clip-rule="evenodd"></path>
-                                </svg>
-                                Delete
-                            </button>
-                        @endif
                     </div>
 
                 </div>
             @endforeach
 
             <!-- User Info Details Modal -->
-            @if ($userDetailsModalOpen && $selectedUser)
+            @if ($userDetailsModalOpen &&$selectedUser)
                 <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
                     aria-modal="true">
                     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
@@ -126,7 +164,8 @@
 
                             <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                                 <h3 class="text-base sm:text-lg font-bold text-slate-900">Employee Info Details</h3>
-                                <button wire:click="closeUserDetailsModal" class="text-slate-400 hover:text-slate-600">
+                                <button wire:click="closeUserDetailsModal"
+                                    class="text-slate-400 hover:text-slate-600">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M6 18L18 6M6 6l12 12"></path>
@@ -139,7 +178,7 @@
                                     <span
                                         class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Name</span>
                                     <p class="text-sm sm:text-base font-semibold text-slate-800">
-                                        {{ $selectedUser->first_name . ' ' . $selectedUser->last_name }}
+                                        {{ $selectedUser->first_name . ' ' .$selectedUser->last_name }}
                                     </p>
                                 </div>
 
@@ -152,7 +191,8 @@
                                 </div>
 
                                 <div>
-                                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Category
+                                    <span
+                                        class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Category
                                         Name</span>
                                     <div class="flex flex-wrap gap-1 mt-1">
                                         @forelse ($selectedUser->categories ?? [] as $category)
@@ -194,73 +234,6 @@
                 </div>
             @endif
 
-            <!-- Modern Delete Dialog Modal -->
-            <div x-show="userDeleteModalOpen" x-cloak x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
-                x-transition:leave-end="opacity-0" class="relative z-50" aria-labelledby="modal-title"
-                role="dialog" aria-modal="true">
-
-                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
-                    @click="userDeleteModalOpen = false" inert></div>
-
-                <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-                    <div class="flex min-h-full items-center justify-center p-3 text-center sm:p-0">
-                        <div x-transition:enter="transition ease-out duration-300"
-                            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-                            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                            x-transition:leave="transition ease-in duration-200"
-                            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                            x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                            class="relative transform overflow-hidden rounded-2xl sm:rounded-3xl bg-white text-left shadow-2xl border border-slate-100 transition-all sm:my-8 w-full max-w-md p-4 sm:p-6 lg:p-8">
-
-                            <div class="sm:flex sm:items-start gap-3">
-                                <div
-                                    class="mx-auto flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600 sm:mx-0">
-                                    <svg class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24"
-                                        stroke-width="1.5" stroke="currentColor" inert>
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                                    </svg>
-                                </div>
-                                <div class="mt-2 text-center sm:ml-2 sm:mt-0 sm:text-left">
-                                    <h3 class="text-sm sm:text-lg font-bold text-gray-900" id="modal-title">
-                                        Delete User
-                                    </h3>
-                                    <div class="mt-1">
-                                        <p class="text-xs sm:text-sm font-medium text-gray-500">
-                                            Are you sure you want to delete user? This action cannot be undone.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div
-                                class="mt-5 sm:mt-6 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 border-t border-slate-100">
-                                <button @click="userDeleteModalOpen = false" type="button"
-                                    class="inline-flex w-full sm:w-auto justify-center rounded-xl bg-slate-100 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 border border-slate-200 hover:bg-slate-200 transition cursor-pointer">
-                                    Cancel
-                                </button>
-
-                                <button type="button" @click="$wire.delete(userId)" wire:loading.attr="disabled"
-                                    class="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-red-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-red-700 cursor-pointer">
-                                    <span wire:loading.remove>Delete User</span>
-                                    <span wire:loading class="flex items-center gap-2">
-                                        Deleting User...
-                                        <svg class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24"
-                                            fill="none">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10"
-                                                stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z">
-                                            </path>
-                                        </svg>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 </div>

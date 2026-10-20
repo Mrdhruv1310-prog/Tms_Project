@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Locked;
 use App\Mail\RegisterUserMail;
 use Illuminate\Contracts\View\View;
@@ -34,7 +35,12 @@ class UserDetailsModal extends Component
     public string $plainPassword = '';
 
     /** @var array<string, string> */
-    protected $listeners = ['openModal' => 'open', 'closeModal' => 'close', 'edituser' => 'loadUser'];
+    protected $listeners = [
+        'openModal' => 'open',
+        'closeModal' => 'close',
+        'edituser' => 'loadUser',
+        'confirmDeleteUser' => 'executeDeleteUser'
+    ];
 
     public function open(): void
     {
@@ -60,7 +66,22 @@ class UserDetailsModal extends Component
 
         /** @var User $currentUser */
         $currentUser = Auth::user();
-        $isSuperAdmin = strtolower($currentUser->role ?? '') === 'super-admin';
+        $authUserId = (int) $currentUser->id;
+        $editingUserId = (int) ($this->user_id ?? 0);
+
+        $isSelfProfile = $editingUserId > 0 && $editingUserId === $authUserId;
+        $statusInput = (string) $this->status;
+
+        // Check if Status = Delete (-1), trigger confirmation pop-up
+        if ($this->user_id && $statusInput === '-1') {
+            if ($isSelfProfile) {
+                $this->dispatch('notify', ['message' => 'Aap khud ko delete nahi kar sakte.', 'type' => 'error']);
+                return null;
+            }
+
+            $this->dispatch('showDeleteConfirmationPrompt');
+            return null;
+        }
 
         // Validation Rules
         $rules = [
@@ -92,9 +113,10 @@ class UserDetailsModal extends Component
                 : ['required', 'string', 'min:8', 'max:255', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%!]).+$/'],
         ];
 
-        if ($isSuperAdmin || !$this->user_id) {
+        // Role & Status validation
+        if (!$isSelfProfile) {
             $rules['role'] = 'required|in:admin,manager,employee,hr,super-admin';
-            $rules['status'] = 'required|in:1,0';
+            $rules['status'] = 'required|in:1,0,-1';
         }
 
         $messages = [
@@ -130,9 +152,8 @@ class UserDetailsModal extends Component
             /** @var User $targetUser */
             $targetUser = User::query()->findOrFail($this->user_id);
 
-            // If NOT super-admin, preserve target user's existing role and status
-            $roleValue = $isSuperAdmin ? $this->role : (string)$targetUser->role;
-            $statusValue = $isSuperAdmin ? $this->status : (string)$targetUser->status;
+            $roleValue = !$isSelfProfile ? $this->role : (string)$targetUser->role;
+            $statusValue = !$isSelfProfile ? (string)$this->status : (string)$targetUser->status;
 
             $updateData = [
                 'first_name' => trim($this->first_name),
@@ -150,15 +171,26 @@ class UserDetailsModal extends Component
 
             $targetUser->update($updateData);
 
+            if ($statusValue === '0') {
+                try {
+                    DB::table('sessions')->where('user_id', $targetUser->id)->delete();
+                } catch (\Throwable $e) {
+                    // Ignore session table errors
+                }
+            }
+
             if (!empty($this->password)) {
                 $targetUser->refresh();
-                Mail::to($targetUser->email)->send(new RegisterUserMail($targetUser, $plainPassword));
+                try {
+                    Mail::to($targetUser->email)->send(new RegisterUserMail($targetUser, $plainPassword));
+                } catch (\Throwable $e) {
+                    // Ignore mail errors
+                }
             }
 
             $message = 'Employee updated successfully.';
         } else {
             $plainPassword = $this->password;
-            $statusValue = '1';
 
             /** @var User $user */
             $user = User::query()->create([
@@ -167,11 +199,15 @@ class UserDetailsModal extends Component
                 'email' => trim($this->email),
                 'phone_number' => trim($this->phone_number),
                 'role' => $this->role,
-                'status' => $statusValue,
+                'status' => '1',
                 'password' => Hash::make($plainPassword),
             ]);
 
-            Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
+            try {
+                Mail::to($user->email)->send(new RegisterUserMail($user, $plainPassword));
+            } catch (\Throwable $e) {
+                // Ignore mail errors
+            }
 
             $message = 'Employee added successfully.';
         }
@@ -189,6 +225,40 @@ class UserDetailsModal extends Component
 
         return null;
     }
+
+    public function executeDeleteUser(): void
+{
+    if ($this->user_id) {
+        $userId = $this->user_id;
+
+        // 1. Delete reminders linked to this user
+        \App\Models\Reminder::query()->where('user_id', $userId)->delete();
+
+        // 2. Delete task assignments linked to this user
+        DB::table('task_assignments')->where('user_id', $userId)->delete();
+
+        // 3. Delete task updates / conversations linked to this user (if applicable)
+        DB::table('task_updates')->where('user_id', $userId)->delete();
+        DB::table('task_conversations')->where('user_id', $userId)->delete();
+
+        // 4. Delete user active sessions
+        try {
+            DB::table('sessions')->where('user_id', $userId)->delete();
+        } catch (\Throwable $e) {
+            // Ignore session table error
+        }
+
+        // 5. Now safely delete the target user
+        $targetUser = User::query()->findOrFail($userId);
+        $targetUser->delete();
+
+        $this->resetForm();
+        $this->close();
+        $this->dispatch('usercreated');
+        $this->dispatch('userdeleted');
+        $this->dispatch('notify', ['message' => 'User successfully deleted.', 'type' => 'success']);
+    }
+}
 
     public function loadUser(int|string $id): void
     {
