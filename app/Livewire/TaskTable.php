@@ -604,7 +604,7 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->label('Review Task')
                     ->button()
                     ->size(ActionSize::ExtraSmall)
-                    ->color('warning')
+                    ->color('info')
                     ->icon('heroicon-o-shield-check')
                     ->modalHeading(fn(Task $task) => 'Task Verification Request - ' . $task->title)
                     ->modalWidth('lg')
