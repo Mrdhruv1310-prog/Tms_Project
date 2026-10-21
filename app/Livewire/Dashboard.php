@@ -55,6 +55,26 @@ class Dashboard extends Component
         $this->refreshDashboardData();
     }
 
+    public function getActiveFilterCountProperty(): int
+    {
+        $count = 0;
+
+        if ($this->selectedTimeRange !== 'all') {
+            $count++;
+        }
+        if (filled($this->selectedYear)) {
+            $count++;
+        }
+        if (filled($this->selectedMonth)) {
+            $count++;
+        }
+        if (filled($this->selectedDate)) {
+            $count++;
+        }
+
+        return $count;
+    }
+
     public function updated($propertyName): void
     {
         if (in_array($propertyName, ['selectedYear', 'selectedMonth', 'selectedDate', 'selectedTimeRange', 'selectedStatusFilter'])) {
@@ -283,7 +303,7 @@ class Dashboard extends Component
                         : 0,
                 ];
             })
-            ->sortByDesc('pending') // Max pending tasks category sabse pehle aayegi
+            ->sortByDesc('pending')
             ->values()
             ->toArray();
     }
@@ -354,7 +374,6 @@ class Dashboard extends Component
                 ];
             });
 
-        // Subhi members ko pending count ke descending order (highest pending first) me sort kiya gaya hai
         $this->team = $allMembers
             ->sortByDesc('pending')
             ->values()
@@ -369,7 +388,6 @@ class Dashboard extends Component
             $groupIdStr = (string) $group->id;
             $groupLabel = $group->label ?? $group->name ?? '';
 
-            // Strictly count tasks directly linked to this group via label_id
             $taskBaseQuery = Task::query()
                 ->whereHas('creator')
                 ->where(function (Builder $q) use ($group, $groupIdStr, $groupLabel) {
@@ -378,10 +396,8 @@ class Dashboard extends Component
                         ->orWhere('tasks.label_id', $groupLabel);
                 });
 
-            // Apply Dashboard Timeline/Date Filters
             $this->applyDateFilters($taskBaseQuery);
 
-            // Access Role Restriction (Non Super-Admin)
             if ($role !== 'super-admin') {
                 $taskBaseQuery->where(function ($sub) use ($authUserId) {
                     $sub->where('tasks.user_id', $authUserId)
@@ -406,7 +422,7 @@ class Dashboard extends Component
                     : 0,
             ];
         })
-            ->sortByDesc('pending') // Jis group me sabse jyada pending tasks honge wo pehle dikhega
+            ->sortByDesc('pending')
             ->values()
             ->toArray();
     }

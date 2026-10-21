@@ -30,6 +30,8 @@
         $visibleCategories = collect($categories ?? []);
         $visibleTeam = collect($team ?? []);
         $visibleGroups = collect($groups ?? []);
+
+        $activeFilterCount = $this->activeFilterCount;
     @endphp
 
     <div
@@ -64,14 +66,27 @@
                         </h1>
                     </div>
 
+                    {{-- Dynamic Filter Button --}}
                     <button type="button" @click="showFilter = !showFilter"
-                        class="flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-50 text-[rgb(7,139,221)] border border-sky-100/80 shadow-xs hover:bg-[rgb(7,139,221)] hover:text-white transition-all duration-300 active:scale-95 shrink-0"
+                        class="relative flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-300 active:scale-95 shrink-0 border shadow-xs
+                        {{ $activeFilterCount > 0
+                            ? 'bg-rose-500 hover:bg-rose-600 text-white border-rose-600 ring-2 ring-rose-200'
+                            : 'bg-sky-50 text-[rgb(7,139,221)] border-sky-100/80 hover:bg-[rgb(7,139,221)] hover:text-white' }}"
                         title="Toggle Timeline Filter">
+
                         <svg class="h-4 w-4 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"
                             stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.447.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
                         </svg>
+
+                        {{-- Top Right Active Counter Badge --}}
+                        @if ($activeFilterCount > 0)
+                            <span
+                                class="absolute -top-1.5 -right-1.5 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-white text-rose-600 text-[10px] sm:text-xs font-black shadow-md border border-rose-200">
+                                {{ $activeFilterCount }}
+                            </span>
+                        @endif
                     </button>
                 </div>
             </div>
