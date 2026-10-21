@@ -1,4 +1,4 @@
-<div x-data="{ show: @entangle('taskUpdateModalOpen'), remark: '', 
+<div x-data="{ show: @entangle('taskUpdateModalOpen'), remark: '',
     resetForm() {
         this.remark = '';
     } }" x-cloak x-show="show" class="fixed inset-0 flex items-center justify-center z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -22,7 +22,7 @@
                 <div class="mb-4">
                     <label for="remark" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Remark</label>
                     <textarea id="remark" wire:model="remark" x-model="remark" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Enter Remark" rows="4"></textarea>
-                    @error('remark') 
+                    @error('remark')
                         <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
@@ -31,7 +31,7 @@
                         class="relative flex w-full justify-center rounded-md bg-primary-700 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                         wire:loading.attr="disabled">
                         <span wire:loading.remove>Save Remark & Status</span>
-                        <span wire:loading class="block inset-0 flex items-center justify-center">Updating Remark & Status... 
+                        <span wire:loading class="block inset-0 flex items-center justify-center">Updating Remark & Status...
                             <svg class="inline-block animate-spin h-5 w-5 text-gray-500" viewBox="0 0 24 24">
                                 <path fill="white"
                                     d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z"

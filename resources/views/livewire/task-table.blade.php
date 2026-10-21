@@ -49,7 +49,7 @@
     </style>
 
     <div
-        class="relative min-h-screen bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)] overflow-x-hidden">
+        class="relative min-h-screen bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)]">
         <div
             class="absolute -top-32 -left-32 w-64 sm:w-96 h-64 sm:h-96 bg-[rgb(114,204,74)]/15 rounded-full blur-3xl pointer-events-none">
         </div>
@@ -58,7 +58,7 @@
         </div>
 
         <main
-            class="scrollcontainer md:ml-16 px-2 sm:px-6 lg:px-8 py-3 sm:py-6 pt-14 sm:pt-20 pb-12 sm:pb-16 max-w-full overflow-x-hidden">
+            class="scrollcontainer md:ml-16 px-2 sm:px-6 lg:px-8 py-3 sm:py-6 pt-14 sm:pt-20 pb-12 sm:pb-16 max-w-full">
             @php
                 $titles = [
                     'my_tasks' => 'My Task List',
