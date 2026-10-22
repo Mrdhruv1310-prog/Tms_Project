@@ -50,16 +50,8 @@
 
                 <div class="flex flex-row items-center justify-between gap-2.5 relative z-10">
                     <div class="space-y-1 min-w-0">
-                        {{-- <div
-                            class="flex items-center gap-2 text-[9px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-600 overflow-x-auto py-0.5">
-                            <span
-                                class="text-gray-800 font-bold bg-white/90 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-xl border border-gray-200/80 shadow-xs shrink-0 truncate">
-                                Dashboard
-                            </span>
-                        </div> --}}
-
                         <h1 class="text-base sm:text-3xl font-bold tracking-tight text-gray-900 truncate">
-                            <span>Welcome<span>,</span> {{ $userName }}</span>
+                            <span>Hi<span>,</span> {{ $userName }}</span>
                         </h1>
                     </div>
 
@@ -123,7 +115,6 @@
                                 </div>
                             </div>
 
-                            {{-- Manual Close Cross Icon --}}
                             <button type="button" @click="showFilter = false"
                                 class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -149,7 +140,6 @@
                                         maxDate: 'today',
                                         onChange: (selectedDates, dateStr) => {
                                             $wire.set('selectedDate', dateStr);
-                                            // Date select hone ke baad Modal automatic close hoga
                                             showFilter = false;
                                         }
                                     });
@@ -170,7 +160,6 @@
                             </div>
                         </div>
 
-                        {{-- Conditional Reset Filter Button --}}
                         @if (filled($selectedDate))
                             <div class="pt-1">
                                 <button type="button" wire:click="clearDateFilters" @click="showFilter = false"
@@ -267,42 +256,53 @@
                                     {{ $label['count'] }}
                                 </h2>
 
-                                <div
+                                {{-- <div
                                     class="inline-flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[11px] rounded-full border backdrop-blur-md shadow-xs transition-transform group-hover:scale-105 {{ $badgeStyle }}">
                                     <svg class="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 opacity-90" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
-                                    <span>Compared to last week</span>
-                                </div>
+                                    <span>{{ $label['comparison'] }}</span>
+                                </div> --}}
                             </div>
 
                             <div
                                 class="flex h-9 w-9 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-lg sm:rounded-2xl {{ $iconBg }} backdrop-blur-xl transition-all duration-300 group-hover:rotate-6 group-hover:scale-105">
                                 @if ($title === 'pending')
+                                    <!-- Pending Clock Icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-6 sm:w-6"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="9" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
                                     </svg>
                                 @elseif ($title === 'in progress')
+                                    <!-- In Progress Refresh Arrow Icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-6 sm:w-6"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="9" />
+                                        <path d="M10 8.5 16 12l-6 3.5v-7Z" fill="currentColor" stroke="none" />
                                     </svg>
                                 @elseif ($title === 'completed')
+                                    <!-- Completed Check Badge Icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-6 sm:w-6"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 @else
+                                    <!-- Total Task Clipboard Icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-6 sm:w-6"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 022 2h2a2 2 0 022-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M8 6h13" />
+                                        <path d="M8 12h13" />
+                                        <path d="M8 18h13" />
+                                        <path d="m3 6 1.5 1.5L6.5 5" />
+                                        <path d="m3 12 1.5 1.5L6.5 11" />
+                                        <path d="m3 18 1.5 1.5L6.5 17" />
                                     </svg>
                                 @endif
                             </div>
@@ -470,17 +470,19 @@
                     class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-5 p-3.5 sm:p-8">
                     @forelse ($visibleTeam as $index => $member)
                         @php
-                            $percentage =
-                                isset($member['percentage']) && is_numeric($member['percentage'])
-                                    ? (float) $member['percentage']
-                                    : 0;
+                            $pending = (int) ($member['pending'] ?? 0);
+                            $total = (int) ($member['total'] ?? 0);
+
+                            // Dynamic Pending Ratio Calculation
+                            $percentage = $total > 0 ? round(($pending / $total) * 100) : 0;
+
                             $circumference = 251.2;
                             $offset = $circumference - ($circumference * $percentage) / 100;
 
                             $strokeColor = match (true) {
-                                $percentage >= 71 => '#10B981',
-                                $percentage >= 31 => '#F59E0B',
-                                default => '#EF4444',
+                                $percentage >= 70 => '#EF4444', // High Pending Load = Red
+                                $percentage >= 30 => '#F59E0B', // Medium = Amber
+                                default => '#10B981', // Low Pending = Green
                             };
                         @endphp
 
@@ -508,6 +510,7 @@
                             </div>
 
                             <div class="flex flex-row items-center gap-3 sm:gap-6">
+                                <!-- Circular Chart Dynamic Progress -->
                                 <div
                                     class="relative flex h-14 w-14 sm:h-20 sm:w-20 shrink-0 items-center justify-center">
                                     <svg class="h-full w-full -rotate-90 drop-shadow-xs" viewBox="0 0 100 100">

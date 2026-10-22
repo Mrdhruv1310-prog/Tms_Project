@@ -145,7 +145,7 @@
 
             <!-- Modal Content Box -->
             <div
-                class="relative p-4 xs:p-5 sm:p-6 lg:p-8 bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200/80 dark:border-gray-700 modal-scrollbar max-h-[90vh] overflow-y-auto">
+                class="relative p-4 xs:p-5 sm:p-6 lg:p-8 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200/80 dark:border-gray-500 modal-scrollbar max-h-[90vh] overflow-y-auto">
 
                 <!-- Modal Header -->
                 <div
