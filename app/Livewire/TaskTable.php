@@ -42,6 +42,7 @@ use Filament\Forms\Components\Grid;
 use Illuminate\Contracts\View\View;
 use Illuminate\Contracts\View\Factory;
 use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\Cache;
 
 #[Layout('components.layouts.app')]
 class TaskTable extends Component implements HasForms, HasTable
@@ -157,7 +158,7 @@ class TaskTable extends Component implements HasForms, HasTable
         $authId = (int) $user->id;
         $userRole = strtolower($user->role ?? 'employee');
 
-        $query = Task::query()->whereHas('creator');
+        $query = Task::query()->with(['creator', 'category', 'assignedUsers'])->whereHas('creator');
 
         $this->applyDateFiltersToTaskQuery($query);
 

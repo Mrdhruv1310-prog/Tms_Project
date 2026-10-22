@@ -162,11 +162,53 @@ class Dashboard extends Component
     {
         $baseQuery = fn() => $this->roleBasedTaskQuery($role, $authUserId);
 
+        // Calculate Weekly Comparison
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
+        $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
+        $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
+
+        $calculateWeeklyDiff = function ($status = null) use ($role, $authUserId, $startOfWeek, $endOfWeek, $startOfLastWeek, $endOfLastWeek) {
+            $queryThisWeek = Task::query()->whereHas('creator');
+            $queryLastWeek = Task::query()->whereHas('creator');
+
+            if ($role !== 'super-admin') {
+                $applyRole = function ($q) use ($authUserId) {
+                    $q->where(function (Builder $sub) use ($authUserId) {
+                        $sub->where('tasks.user_id', $authUserId)
+                            ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
+                    });
+                };
+                $applyRole($queryThisWeek);
+                $applyRole($queryLastWeek);
+            }
+
+            if ($status) {
+                $queryThisWeek->where('status', $status);
+                $queryLastWeek->where('status', $status);
+            }
+
+            $countThisWeek = $queryThisWeek->whereBetween('created_at', [$startOfWeek, $endOfWeek])->count();
+            $countLastWeek = $queryLastWeek->whereBetween('created_at', [$startOfLastWeek, $endOfLastWeek])->count();
+
+            $diff = $countThisWeek - $countLastWeek;
+
+            if ($diff > 0) {
+                return '+' . $diff . ' vs last week';
+            } elseif ($diff < 0) {
+                return $diff . ' vs last week';
+            }
+
+            return 'Same as last week';
+        };
+
         $this->labels = [
             [
                 'title' => 'Pending',
                 'count' => $baseQuery()->where('status', 'pending')->count(),
                 'status' => 'pending',
+                'comparison' => $calculateWeeklyDiff('pending'),
                 'bg' => '#fce2c7',
                 'border' => '#f9d6b3',
             ],
@@ -174,6 +216,7 @@ class Dashboard extends Component
                 'title' => 'In Progress',
                 'count' => $baseQuery()->where('status', 'in_progress')->count(),
                 'status' => 'in_progress',
+                'comparison' => $calculateWeeklyDiff('in_progress'),
                 'bg' => '#cbe6fc',
                 'border' => '#afd7f9',
             ],
@@ -181,6 +224,7 @@ class Dashboard extends Component
                 'title' => 'Completed',
                 'count' => $baseQuery()->where('status', 'completed')->count(),
                 'status' => 'completed',
+                'comparison' => $calculateWeeklyDiff('completed'),
                 'bg' => '#caf5de',
                 'border' => '#9ffac9',
             ],
@@ -188,6 +232,7 @@ class Dashboard extends Component
                 'title' => 'Total',
                 'count' => $baseQuery()->count(),
                 'status' => 'total',
+                'comparison' => $calculateWeeklyDiff(),
                 'bg' => '#f5f3fa',
                 'border' => '#d6d0e4',
             ],
@@ -296,6 +341,9 @@ class Dashboard extends Component
                     $fullName = $user->name ?? 'User';
                 }
 
+                // PENDING RATIO CALCULATION (Pending Tasks / Total Tasks)
+                $pendingPercentage = $total > 0 ? round(($pending / $total) * 100) : 0;
+
                 return [
                     'id' => $user->id,
                     'user_id' => $user->id,
@@ -304,9 +352,7 @@ class Dashboard extends Component
                     'in_progress' => $inProgress,
                     'completed' => $completed,
                     'total' => $total,
-                    'percentage' => $total > 0
-                        ? round(($completed / $total) * 100)
-                        : 0,
+                    'percentage' => $pendingPercentage,
                 ];
             });
 
