@@ -31,12 +31,9 @@ class Dashboard extends Component
     /** @var array<int, array<string, mixed>> */
     public array $groups = [];
 
-    // Filters with Persistence
+    // Specific Date Filter Persistent Variable
     public string $selectedStatusFilter = 'total';
-    public ?string $selectedYear = null;
-    public ?string $selectedMonth = null;
     public ?string $selectedDate = null;
-    public string $selectedTimeRange = 'all';
 
     protected $listeners = [
         'taskCreated' => 'refreshDashboardData',
@@ -47,44 +44,19 @@ class Dashboard extends Component
 
     public function mount(): void
     {
-        $this->selectedTimeRange = session('dashboard_time_range', 'all');
-        $this->selectedYear = session('dashboard_year', null);
-        $this->selectedMonth = session('dashboard_month', null);
         $this->selectedDate = session('dashboard_date', null);
-
         $this->refreshDashboardData();
     }
 
     public function getActiveFilterCountProperty(): int
     {
-        $count = 0;
-
-        if ($this->selectedTimeRange !== 'all') {
-            $count++;
-        }
-        if (filled($this->selectedYear)) {
-            $count++;
-        }
-        if (filled($this->selectedMonth)) {
-            $count++;
-        }
-        if (filled($this->selectedDate)) {
-            $count++;
-        }
-
-        return $count;
+        return filled($this->selectedDate) ? 1 : 0;
     }
 
     public function updated($propertyName): void
     {
-        if (in_array($propertyName, ['selectedYear', 'selectedMonth', 'selectedDate', 'selectedTimeRange', 'selectedStatusFilter'])) {
-            session([
-                'dashboard_time_range' => $this->selectedTimeRange,
-                'dashboard_year' => $this->selectedYear,
-                'dashboard_month' => $this->selectedMonth,
-                'dashboard_date' => $this->selectedDate,
-            ]);
-
+        if ($propertyName === 'selectedDate') {
+            session(['dashboard_date' => $this->selectedDate]);
             $this->refreshDashboardData();
         }
     }
@@ -127,12 +99,8 @@ class Dashboard extends Component
 
     public function clearDateFilters(): void
     {
-        $this->selectedYear = null;
-        $this->selectedMonth = null;
         $this->selectedDate = null;
-        $this->selectedTimeRange = 'all';
-
-        session()->forget(['dashboard_time_range', 'dashboard_year', 'dashboard_month', 'dashboard_date']);
+        session()->forget(['dashboard_date']);
 
         $this->refreshDashboardData();
     }
@@ -142,15 +110,6 @@ class Dashboard extends Component
         $params = [];
         if (filled($this->selectedDate)) {
             $params['date'] = $this->selectedDate;
-        } elseif ($this->selectedTimeRange !== 'all') {
-            $params['time_range'] = $this->selectedTimeRange;
-        } else {
-            if (filled($this->selectedYear)) {
-                $params['year'] = $this->selectedYear;
-            }
-            if (filled($this->selectedMonth)) {
-                $params['month'] = $this->selectedMonth;
-            }
         }
 
         return $params;
@@ -176,31 +135,8 @@ class Dashboard extends Component
     private function applyDateFilters(Builder $query): void
     {
         if (filled($this->selectedDate)) {
-            $query->whereDate('created_at', Carbon::parse($this->selectedDate)->format('Y-m-d'));
-            return;
-        }
-
-        if ($this->selectedTimeRange === 'today') {
-            $query->whereDate('created_at', Carbon::today());
-            return;
-        } elseif ($this->selectedTimeRange === 'this_week') {
-            $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-            return;
-        } elseif ($this->selectedTimeRange === 'this_month') {
-            $query->whereYear('created_at', Carbon::now()->year)
-                ->whereMonth('created_at', Carbon::now()->month);
-            return;
-        } elseif ($this->selectedTimeRange === 'this_year') {
-            $query->whereYear('created_at', Carbon::now()->year);
-            return;
-        }
-
-        if (filled($this->selectedYear)) {
-            $query->whereYear('created_at', $this->selectedYear);
-        }
-
-        if (filled($this->selectedMonth)) {
-            $query->whereMonth('created_at', $this->selectedMonth);
+            $formattedDate = Carbon::parse($this->selectedDate)->format('Y-m-d');
+            $query->whereDate('created_at', $formattedDate);
         }
     }
 

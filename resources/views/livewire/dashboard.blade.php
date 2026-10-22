@@ -13,10 +13,7 @@
 
         $hasFullView = $isSuperAdmin || $isAdmin || $isHr || $isManager;
 
-        $userName = $authUser
-            ? (trim(($authUser->first_name ?? '') . ' ' . ($authUser->last_name ?? '')) ?:
-            $authUser->name ?? 'User')
-            : 'User';
+        $userName = $authUser ? (trim($authUser->first_name ?? '') ?: $authUser->name ?? 'User') : 'User';
 
         $roleLabel = match ($role) {
             'super-admin' => 'Super Admin',
@@ -53,16 +50,16 @@
 
                 <div class="flex flex-row items-center justify-between gap-2.5 relative z-10">
                     <div class="space-y-1 min-w-0">
-                        <div
+                        {{-- <div
                             class="flex items-center gap-2 text-[9px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-600 overflow-x-auto py-0.5">
                             <span
                                 class="text-gray-800 font-bold bg-white/90 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-xl border border-gray-200/80 shadow-xs shrink-0 truncate">
                                 Dashboard
                             </span>
-                        </div>
+                        </div> --}}
 
                         <h1 class="text-base sm:text-3xl font-bold tracking-tight text-gray-900 truncate">
-                            <span>Welcome back, {{ $userName }}</span>
+                            <span>Welcome<span>,</span> {{ $userName }}</span>
                         </h1>
                     </div>
 
@@ -91,77 +88,56 @@
                 </div>
             </div>
 
-            {{-- Timeline Filter Drawer --}}
+            {{-- Timeline Filter Modal Popup --}}
             <div x-show="showFilter" x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
-                class="mb-4 sm:mb-8 rounded-xl sm:rounded-3xl border border-white/80 bg-white/95 backdrop-blur-2xl shadow-[0_10px_25px_rgba(0,0,0,0.08)] ring-1 ring-black/5 p-3.5 sm:p-6 transition-all"
-                style="display: none;">
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+                @click.self="showFilter = false" style="display: none;">
 
-                <div class="flex flex-col gap-3.5 max-w-xl mx-auto sm:max-w-none">
-                    <div class="flex items-center gap-2.5">
-                        <div
-                            class="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-50 text-[rgb(7,139,221)] border border-sky-100/80 shrink-0">
-                            <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                                stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.447.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-800">TASK
-                                TIMELINE FILTER</h2>
-                            <p class="text-[10px] sm:text-[11px] font-medium text-gray-500">Filter records by creation
-                                timeline</p>
-                        </div>
-                    </div>
+                <div class="relative w-full max-w-sm rounded-2xl border border-white/80 bg-white/95 backdrop-blur-2xl shadow-2xl p-5 ring-1 ring-black/5"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 scale-95 -translate-y-2"
+                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 scale-95 -translate-y-2">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-                        <div class="space-y-0.5">
-                            <label
-                                class="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1">RANGE</label>
-                            <select wire:model.live="selectedTimeRange"
-                                class="w-full text-xs font-semibold text-gray-700 bg-gray-50/90 hover:bg-white border border-gray-200 rounded-lg sm:rounded-xl py-2 px-2.5 sm:px-3 focus:border-[rgb(7,139,221)] focus:ring-2 focus:ring-[rgb(7,139,221)]/20 transition-all cursor-pointer">
-                                <option value="all">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="this_week">This Week</option>
-                                <option value="this_month">This Month</option>
-                                <option value="this_year">This Year</option>
-                            </select>
-                        </div>
+                    <div class="flex flex-col gap-3">
+                        {{-- Header with Close Button --}}
+                        <div class="flex items-center justify-between pb-1 border-b border-gray-100">
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-[rgb(7,139,221)] border border-sky-100/80 shrink-0">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                        stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.447.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h2 class="text-xs font-bold uppercase tracking-wider text-gray-800">Task Data
+                                        Filter</h2>
+                                    <p class="text-[10px] font-medium text-gray-500">Filter records by specific date</p>
+                                </div>
+                            </div>
 
-                        <div class="space-y-0.5">
-                            <label
-                                class="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1">YEAR</label>
-                            <select wire:model.live="selectedYear"
-                                class="w-full text-xs font-semibold text-gray-700 bg-gray-50/90 hover:bg-white border border-gray-200 rounded-lg sm:rounded-xl py-2 px-2.5 sm:px-3 focus:border-[rgb(7,139,221)] focus:ring-2 focus:ring-[rgb(7,139,221)]/20 transition-all cursor-pointer">
-                                <option value="">Select Year</option>
-                                @foreach (range(date('Y'), 2020) as $year)
-                                    <option value="{{ $year }}">{{ $year }}</option>
-                                @endforeach
-                            </select>
+                            {{-- Manual Close Cross Icon --}}
+                            <button type="button" @click="showFilter = false"
+                                class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
 
-                        <div class="space-y-0.5">
-                            <label
-                                class="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1">MONTH</label>
-                            <select wire:model.live="selectedMonth"
-                                class="w-full text-xs font-semibold text-gray-700 bg-gray-50/90 hover:bg-white border border-gray-200 rounded-lg sm:rounded-xl py-2 px-2.5 sm:px-3 focus:border-[rgb(7,139,221)] focus:ring-2 focus:ring-[rgb(7,139,221)]/20 transition-all cursor-pointer">
-                                <option value="">Select Month</option>
-                                @foreach (range(1, 12) as $m)
-                                    <option value="{{ sprintf('%02d', $m) }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
+                        {{-- Date Input Section --}}
                         <div class="space-y-0.5" wire:ignore>
-                            <label
-                                class="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1">SPECIFIC
-                                DATE</label>
+                            <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-400 px-1">
+                                SPECIFIC DATE
+                            </label>
                             <div class="relative" x-data="{
                                 picker: null,
                                 init() {
@@ -170,18 +146,21 @@
                                         disableMobile: 'true',
                                         allowInput: true,
                                         clickOpens: true,
+                                        maxDate: 'today',
                                         onChange: (selectedDates, dateStr) => {
                                             $wire.set('selectedDate', dateStr);
+                                            // Date select hone ke baad Modal automatic close hoga
+                                            showFilter = false;
                                         }
                                     });
                                 }
                             }">
                                 <input x-ref="dateInput" type="text" wire:model.live="selectedDate"
                                     placeholder="dd-mm-yyyy"
-                                    class="w-full text-xs font-semibold text-gray-700 bg-gray-50/90 hover:bg-white border border-gray-200 rounded-lg sm:rounded-xl py-2 pr-7 pl-2.5 sm:px-3 focus:border-[rgb(7,139,221)] focus:ring-2 focus:ring-[rgb(7,139,221)]/20 transition-all cursor-pointer"
+                                    class="w-full text-xs font-semibold text-gray-700 bg-gray-50/90 hover:bg-white border border-gray-200 rounded-xl py-2 pr-7 pl-3 focus:border-[rgb(7,139,221)] focus:ring-2 focus:ring-[rgb(7,139,221)]/20 transition-all cursor-pointer"
                                     @click="picker && picker.open()" @focus="picker && picker.open()">
 
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer text-gray-400"
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 cursor-pointer text-gray-400"
                                     @click="picker && picker.open()">
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -190,17 +169,20 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="pt-1">
-                        <button type="button" wire:click="clearDateFilters"
-                            class="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-gray-600 hover:text-rose-600 bg-gray-100 hover:bg-rose-50 rounded-lg sm:rounded-xl transition-all border border-gray-200 hover:border-rose-200 active:scale-98">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            <span>Reset Filters</span>
-                        </button>
+                        {{-- Conditional Reset Filter Button --}}
+                        @if (filled($selectedDate))
+                            <div class="pt-1">
+                                <button type="button" wire:click="clearDateFilters" @click="showFilter = false"
+                                    class="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 text-xs font-bold text-gray-600 hover:text-rose-600 bg-gray-100 hover:bg-rose-50 rounded-xl transition-all border border-gray-200 hover:border-rose-200 active:scale-98">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span>Reset Filter</span>
+                                </button>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
