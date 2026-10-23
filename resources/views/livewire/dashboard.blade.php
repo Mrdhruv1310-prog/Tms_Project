@@ -255,16 +255,6 @@
                                     class="text-xl sm:text-4xl font-extrabold tracking-tight font-mono {{ $countColor }}">
                                     {{ $label['count'] }}
                                 </h2>
-
-                                {{-- <div
-                                    class="inline-flex items-center gap-1 px-2 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[11px] rounded-full border backdrop-blur-md shadow-xs transition-transform group-hover:scale-105 {{ $badgeStyle }}">
-                                    <svg class="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 opacity-90" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                    <span>{{ $label['comparison'] }}</span>
-                                </div> --}}
                             </div>
 
                             <div
@@ -662,4 +652,7 @@
             </section>
         </main>
     </div>
+
+    {{-- Floating Livewire Chatbot Component Included Here --}}
+    <livewire:task-chatbot />
 </div>
