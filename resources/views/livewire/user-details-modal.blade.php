@@ -72,7 +72,7 @@
                             class="block mb-1.5 sm:mb-2 text-[10px] xs:text-xs lg:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             First Name <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="first_name" wire:model.defer="first_name" maxlength="255"
+                        <input type="text" id="first_name" wire:model="first_name" maxlength="255"
                             onkeypress="return /^[a-zA-Z\s]$/.test(event.key)"
                             oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm lg:text-base rounded-xl sm:rounded-2xl block w-full p-2.5 xs:p-3 sm:p-3.5 focus:ring-2 transition-all shadow-2xs font-medium
@@ -90,7 +90,7 @@
                             class="block mb-1.5 sm:mb-2 text-[10px] xs:text-xs lg:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             Last Name <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="last_name" wire:model.defer="last_name" maxlength="255"
+                        <input type="text" id="last_name" wire:model="last_name" maxlength="255"
                             onkeypress="return /^[a-zA-Z\s]$/.test(event.key)"
                             oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')"
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm lg:text-base rounded-xl sm:rounded-2xl block w-full p-2.5 xs:p-3 sm:p-3.5 focus:ring-2 transition-all shadow-2xs font-medium
@@ -108,7 +108,7 @@
                             class="block mb-1.5 sm:mb-2 text-[10px] xs:text-xs lg:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             Email <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="email" wire:model.defer="email" maxlength="255"
+                        <input type="text" id="email" wire:model="email" maxlength="255"
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm lg:text-base rounded-xl sm:rounded-2xl block w-full p-2.5 xs:p-3 sm:p-3.5 focus:ring-2 transition-all shadow-2xs font-medium
                         @error('email') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror"
                             placeholder="Enter Email Id">
@@ -124,7 +124,7 @@
                             class="block mb-1.5 sm:mb-2 text-[10px] xs:text-xs lg:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             Phone Number <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" id="phone_number" wire:model.defer="phone_number" maxlength="10"
+                        <input type="text" id="phone_number" wire:model="phone_number" maxlength="10"
                             onkeypress="return /^[0-9]$/.test(event.key)"
                             oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm lg:text-base rounded-xl sm:rounded-2xl block w-full p-2.5 xs:p-3 sm:p-3.5 focus:ring-2 transition-all shadow-2xs font-medium
@@ -142,7 +142,7 @@
                             class="block mb-1.5 sm:mb-2 text-[10px] xs:text-xs lg:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             Role <span class="text-rose-500">*</span>
                         </label>
-                        <select id="role" wire:model.defer="role" @if ($disableRoleAndStatus) disabled @endif
+                        <select id="role" wire:model="role" @if ($disableRoleAndStatus) disabled @endif
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm lg:text-base rounded-xl sm:rounded-2xl block w-full p-2.5 xs:p-3 sm:p-3.5 focus:ring-2 transition-all shadow-2xs font-medium disabled:opacity-60 disabled:cursor-not-allowed
                         @error('role') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror">
                             <option value="" disabled>Select Role</option>
@@ -156,13 +156,13 @@
                         @enderror
                     </div>
 
-                    <!-- Status -->
+                    <!-- Status (FIXED: added wire:change to trigger saveUser/delete immediately) -->
                     <div>
                         <label for="status"
                             class="block mb-1.5 sm:mb-2 text-[10px] xs:text-xs lg:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                             Status <span class="text-rose-500">*</span>
                         </label>
-                        <select id="status" wire:model.defer="status"
+                        <select id="status" wire:model.live="status" wire:change="saveUser"
                             @if ($disableRoleAndStatus) disabled @endif
                             class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm lg:text-base rounded-xl sm:rounded-2xl block w-full p-2.5 xs:p-3 sm:p-3.5 focus:ring-2 transition-all shadow-2xs font-medium disabled:opacity-60 disabled:cursor-not-allowed
                             @error('status') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror">
@@ -185,7 +185,7 @@
                             Password <template x-if="!$wire.user_id"><span class="text-rose-500">*</span></template>
                         </label>
                         <div class="relative">
-                            <input type="password" name="password" id="password" wire:model.defer="password"
+                            <input type="password" name="password" id="password" wire:model="password"
                                 class="bg-slate-50/70 dark:bg-slate-950/50 border text-slate-900 dark:text-white text-xs sm:text-sm lg:text-base rounded-xl sm:rounded-2xl block w-full p-2.5 xs:p-3 sm:p-3.5 pr-10 focus:ring-2 transition-all shadow-2xs font-medium
                         @error('password') border-rose-500 focus:ring-rose-500 focus:border-rose-500 bg-rose-50/20 @else border-slate-200 dark:border-slate-800 focus:ring-blue-600 focus:border-blue-600 dark:focus:ring-blue-500 @enderror"
                                 placeholder="Enter Password">
