@@ -227,38 +227,46 @@ class UserDetailsModal extends Component
     }
 
     public function executeDeleteUser(): void
-{
-    if ($this->user_id) {
-        $userId = $this->user_id;
+    {
+        if ($this->user_id) {
+            $userId = $this->user_id;
 
-        // 1. Delete reminders linked to this user
-        \App\Models\Reminder::query()->where('user_id', $userId)->delete();
+            DB::transaction(function () use ($userId) {
+                // Disable Foreign Key checks temporarily if required
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        // 2. Delete task assignments linked to this user
-        DB::table('task_assignments')->where('user_id', $userId)->delete();
+                // 1. Delete reminders linked to this user
+                \App\Models\Reminder::query()->where('user_id', $userId)->delete();
 
-        // 3. Delete task updates / conversations linked to this user (if applicable)
-        DB::table('task_updates')->where('user_id', $userId)->delete();
-        DB::table('task_conversations')->where('user_id', $userId)->delete();
+                // 2. Delete task assignments linked to this user
+                DB::table('task_assignments')->where('user_id', $userId)->delete();
 
-        // 4. Delete user active sessions
-        try {
-            DB::table('sessions')->where('user_id', $userId)->delete();
-        } catch (\Throwable $e) {
-            // Ignore session table error
+                // 3. Delete task updates / conversations linked to this user
+                DB::table('task_updates')->where('user_id', $userId)->delete();
+                DB::table('task_conversations')->where('user_id', $userId)->delete();
+
+                // 4. Delete user active sessions
+                try {
+                    DB::table('sessions')->where('user_id', $userId)->delete();
+                } catch (\Throwable $e) {
+                    // Ignore session table error
+                }
+
+                // 5. Safely delete the target user
+                $targetUser = User::query()->findOrFail($userId);
+                $targetUser->delete();
+
+                // Re-enable Foreign Key checks
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            });
+
+            $this->resetForm();
+            $this->close();
+            $this->dispatch('usercreated');
+            $this->dispatch('userdeleted');
+            $this->dispatch('notify', ['message' => 'User successfully deleted.', 'type' => 'success']);
         }
-
-        // 5. Now safely delete the target user
-        $targetUser = User::query()->findOrFail($userId);
-        $targetUser->delete();
-
-        $this->resetForm();
-        $this->close();
-        $this->dispatch('usercreated');
-        $this->dispatch('userdeleted');
-        $this->dispatch('notify', ['message' => 'User successfully deleted.', 'type' => 'success']);
     }
-}
 
     public function loadUser(int|string $id): void
     {
