@@ -115,7 +115,6 @@
                     @livewire('user-details-modal')
                     @livewire('task-details-modal')
                     @livewire('notifications')
-                    @livewire('task-chatbot')
         </div>
     </div>
     {{-- </div> --}}

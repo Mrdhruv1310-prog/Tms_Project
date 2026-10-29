@@ -653,6 +653,4 @@
         </main>
     </div>
 
-    {{-- Floating Livewire Chatbot Component Included Here --}}
-    <livewire:task-chatbot />
 </div>
