@@ -86,3 +86,10 @@ Route::get('clear', function () {
 
     return 'Caches cleared and rebuilt successfully.';
 });
+
+
+use App\Http\Controllers\ChatbotController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/chatbot/ask', [ChatbotController::class, 'ask'])->name('chatbot.ask');
+});
