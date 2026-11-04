@@ -27,7 +27,7 @@ class ChatbotController
                 ], 200);
             }
 
-            $aiServiceUrl = env('AI_SERVICE_URL', 'http://127.0.0.1:8001');
+            $aiServiceUrl = env('AI_SERVICE_URL', 'http://127.0.0.1:8005');
 
             $response = Http::timeout(15)->post($aiServiceUrl . '/api/chat', [
                 'user_id' => $user->id,
