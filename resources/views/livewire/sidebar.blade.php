@@ -2,37 +2,30 @@
 
     {{-- Sidebar custom design: Nexo style --}}
     <style>
-        /* Sidebar design matched with Category Management page colors */
         [data-tms-sidebar-shell] {
             --tms-primary: #2563eb;
-            /* bg-blue-600 */
             --tms-primary-hover: #1d4ed8;
-            /* hover:bg-blue-700 */
             --tms-primary-soft: #dbeafe;
-            /* blue-100 */
             --tms-primary-light: #eff6ff;
-            /* blue-50 */
             --tms-indigo: #4f46e5;
             --tms-danger: #ef4444;
             --tms-danger-dark: #e11d48;
             --tms-bg: #f9fafb;
-            /* bg-gray-50 */
             --tms-card: #ffffff;
             --tms-card-dark: #111827;
-            /* dark:bg-gray-900 */
             --tms-card-dark-2: #1f2937;
-            /* dark:bg-gray-800 */
             --tms-text: #374151;
-            /* text-gray-700 */
             --tms-muted: #6b7280;
-            /* text-gray-500 */
             --tms-heading: #111827;
-            /* text-gray-900 */
             --tms-border: #e5e7eb;
-            /* ring/border gray-200 */
             --tms-border-dark: #374151;
-            /* dark border gray-700 */
             --tms-shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 28px rgba(15, 23, 42, .08);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        /* Livewire navigation progress bar custom color based on your logo theme */
+        [data-navigate-progress-bar] {
+            background-color: var(--tms-primary) !important;
         }
 
         [data-tms-sidebar-shell] .tms-sidebar-brand,
@@ -145,17 +138,6 @@
 
         .dark [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
             background: var(--tms-border-dark);
-        }
-
-        [data-tms-sidebar-shell] .tms-nav-heading {
-            background: transparent !important;
-            color: var(--tms-muted) !important;
-            font-size: 13px;
-            font-weight: 800;
-            letter-spacing: .06em;
-            padding: 20px 22px 10px 22px;
-            text-transform: uppercase;
-            border-bottom: 0 !important;
         }
 
         [data-tms-sidebar-shell] .tms-menu-block {
@@ -281,703 +263,157 @@
             stroke: currentColor !important;
         }
 
-        [data-tms-sidebar-shell] .tms-mobile-bottom {
-            background: rgba(255, 255, 255, .96) !important;
+        {{-- Highly Responsive Bottom Navbar Styling (320px x 568px & below support) --}} [data-tms-sidebar-shell] .tms-mobile-bottom {
+            background: rgba(255, 255, 255, .98) !important;
             backdrop-filter: blur(16px);
             border: 1px solid var(--tms-border) !important;
-            box-shadow: 0 14px 34px rgba(15, 23, 42, .16) !important;
+            box-shadow: 0 14px 34px rgba(15, 23, 42, .18) !important;
+            width: calc(100% - 16px) !important;
+            max-width: 440px !important;
+            height: 58px !important;
+            bottom: 6px !important;
+            border-radius: 999px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
         }
 
         .dark [data-tms-sidebar-shell] .tms-mobile-bottom {
-            background: rgba(17, 24, 39, .96) !important;
+            background: rgba(17, 24, 39, .98) !important;
             border-color: var(--tms-border-dark) !important;
         }
 
+        /* Perfectly sized grid for 5 items on ultra-small screens like 320x568px */
+        [data-tms-sidebar-shell] .tms-mobile-grid {
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            align-items: center !important;
+            justify-items: center !important;
+            height: 100% !important;
+            width: 100% !important;
+            padding: 0 4px !important;
+        }
+
         [data-tms-sidebar-shell] .tms-mobile-bottom a,
         [data-tms-sidebar-shell] .tms-mobile-bottom button {
             color: var(--tms-muted) !important;
-            transition: all .22s ease !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mobile-bottom a:hover,
-        [data-tms-sidebar-shell] .tms-mobile-bottom button:hover {
-            background: var(--tms-primary-light) !important;
-            color: var(--tms-primary) !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mobile-bottom a:hover svg,
-        [data-tms-sidebar-shell] .tms-mobile-bottom button:hover svg {
-            color: var(--tms-primary) !important;
-            fill: currentColor !important;
-            stroke: currentColor !important;
-        }
-
-        @media (max-width: 767px) {
-            [data-tms-sidebar-shell] .tms-mobile-bottom {
-                max-width: calc(100% - 24px) !important;
-                height: 64px !important;
-                bottom: 14px !important;
-                border-radius: 999px !important;
-            }
-        }
-
-
-        /* Final responsive sidebar polish - matched with Category Management UI */
-        [data-tms-sidebar-shell] {
-            --tms-primary: #2563eb;
-            --tms-primary-hover: #1d4ed8;
-            --tms-primary-soft: #dbeafe;
-            --tms-primary-light: #eff6ff;
-            --tms-indigo: #4f46e5;
-            --tms-card: #ffffff;
-            --tms-bg: #f9fafb;
-            --tms-heading: #111827;
-            --tms-text: #374151;
-            --tms-muted: #6b7280;
-            --tms-border: #e5e7eb;
-            --tms-shadow-soft: 0 1px 2px rgba(15, 23, 42, .06), 0 12px 28px rgba(15, 23, 42, .08);
-            --tms-shadow-blue: 0 12px 24px rgba(37, 99, 235, .28);
-            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        }
-
-        [data-tms-sidebar-shell] .fixed.inset-y-0.z-10.w-16 {
-            background: var(--tms-card) !important;
-            border-right: 1px solid var(--tms-border) !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mini-sidebar {
-            width: 64px !important;
-            background: var(--tms-card) !important;
-            border-right: 1px solid var(--tms-border) !important;
-            box-shadow: var(--tms-shadow-soft) !important;
-            border-radius: 0 22px 22px 0 !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mini-sidebar::before {
-            background: linear-gradient(180deg, var(--tms-primary), var(--tms-indigo)) !important;
-            width: 4px !important;
-            top: 18px !important;
-            bottom: 18px !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mini-sidebar button {
-            position: relative !important;
-            overflow: hidden !important;
-            width: 44px !important;
-            height: 44px !important;
-            border-radius: 14px !important;
-            background: #ffffff !important;
-            color: var(--tms-muted) !important;
-            border: 1px solid var(--tms-border) !important;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, .06) !important;
-            transition: all .25s ease !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mini-sidebar button::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, .10);
-            opacity: 0;
-            transition: opacity .3s ease;
-            pointer-events: none;
-        }
-
-        [data-tms-sidebar-shell] .tms-mini-sidebar button:hover::after {
-            opacity: 1;
-        }
-
-        [data-tms-sidebar-shell] .tms-mini-sidebar button:hover,
-        [data-tms-sidebar-shell] .tms-mini-sidebar button.bg-blue-600,
-        [data-tms-sidebar-shell] .tms-mini-sidebar button[class*='bg-blue-600'] {
-            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
-            color: #ffffff !important;
-            border-color: transparent !important;
-            transform: translateY(-2px) scale(1.04) !important;
-            box-shadow: var(--tms-shadow-blue) !important;
-            outline: none !important;
-            --tw-ring-shadow: 0 0 #0000 !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mini-sidebar button svg {
-            position: relative !important;
-            z-index: 10 !important;
-            width: 20px !important;
-            height: 20px !important;
-            color: currentColor !important;
-            fill: currentColor !important;
-            stroke: currentColor !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-expanded-sidebar {
-            width: 276px !important;
-            background: var(--tms-card) !important;
-            border-right: 1px solid var(--tms-border) !important;
-            box-shadow: var(--tms-shadow-soft) !important;
-            border-radius: 0 24px 24px 0 !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-expanded-sidebar::before {
-            content: 'MENU';
-            color: var(--tms-muted) !important;
-            font-size: 13px !important;
-            font-weight: 800 !important;
-            letter-spacing: .06em !important;
-            padding: 28px 22px 12px 22px !important;
-            text-transform: uppercase !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-expanded-sidebar::after {
-            top: 54px !important;
-            left: 22px !important;
-            right: 22px !important;
-            height: 1px !important;
-            background: var(--tms-border) !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block {
-            margin-top: 0 !important;
-            padding: 12px 14px 22px 14px !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block a {
-            min-height: 52px !important;
-            padding: 12px 14px !important;
-            margin: 6px 0 !important;
-            border-radius: 14px !important;
-            color: var(--tms-text) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
             background: transparent !important;
-            border: 1px solid transparent !important;
+            border: none !important;
             box-shadow: none !important;
-            font-size: 15px !important;
-            font-weight: 650 !important;
-            letter-spacing: 0 !important;
-            transition: all .25s ease !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block a:hover {
-            transform: translateX(3px) !important;
-            background: var(--tms-primary-light) !important;
-            color: var(--tms-primary) !important;
-            border-color: var(--tms-primary-soft) !important;
-            box-shadow: 0 8px 18px rgba(37, 99, 235, .10) !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600,
-        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] {
-            background: var(--tms-primary-light) !important;
-            color: var(--tms-primary) !important;
-            border-color: var(--tms-primary-soft) !important;
-            box-shadow: 0 10px 22px rgba(37, 99, 235, .12) !important;
-            font-weight: 800 !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block a::after {
-            display: none !important;
-            content: none !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600::before,
-        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600']::before {
-            width: 4px !important;
-            height: 28px !important;
-            left: -14px !important;
-            border-radius: 0 999px 999px 0 !important;
-            background: var(--tms-primary) !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block a span[aria-hidden="true"] {
-            width: 36px !important;
-            min-width: 36px !important;
-            height: 36px !important;
-            padding: 0 !important;
-            border-radius: 12px !important;
-            background: #f3f4f6 !important;
-            color: var(--tms-muted) !important;
-            box-shadow: inset 0 0 0 1px var(--tms-border) !important;
-            transition: all .25s ease !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block a:hover span[aria-hidden="true"],
-        [data-tms-sidebar-shell] .tms-menu-block a.bg-blue-600 span[aria-hidden="true"],
-        [data-tms-sidebar-shell] .tms-menu-block a[class*='bg-blue-600'] span[aria-hidden="true"] {
-            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo)) !important;
-            color: #ffffff !important;
-            box-shadow: var(--tms-shadow-blue) !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-menu-block svg {
-            width: 18px !important;
-            height: 18px !important;
-            color: currentColor !important;
-            fill: currentColor !important;
-            stroke: currentColor !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mobile-bottom {
-            max-width: calc(100% - 24px) !important;
-            height: 64px !important;
-            bottom: 14px !important;
-            background: rgba(255, 255, 255, .96) !important;
-            backdrop-filter: blur(16px) !important;
-            border: 1px solid var(--tms-border) !important;
-            box-shadow: 0 14px 34px rgba(15, 23, 42, .16) !important;
-            border-radius: 999px !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mobile-bottom a,
-        [data-tms-sidebar-shell] .tms-mobile-bottom button {
-            color: var(--tms-muted) !important;
-            transition: all .25s ease !important;
-        }
-
-        [data-tms-sidebar-shell] .tms-mobile-bottom a:hover,
-        [data-tms-sidebar-shell] .tms-mobile-bottom button:hover {
-            background: var(--tms-primary-light) !important;
-            color: var(--tms-primary) !important;
+            transition: all .2s ease !important;
         }
 
         [data-tms-sidebar-shell] .tms-mobile-bottom svg {
-            color: currentColor !important;
-            fill: currentColor !important;
-            stroke: currentColor !important;
+            width: 22px !important;
+            height: 22px !important;
+            max-width: 22px !important;
+            max-height: 22px !important;
         }
 
-        @media (max-width: 767px) {
+        @media (max-width: 360px) {
             [data-tms-sidebar-shell] .tms-mobile-bottom {
-                left: 50% !important;
-                width: calc(100% - 24px) !important;
-                max-width: 520px !important;
+                height: 54px !important;
+                bottom: 4px !important;
+                width: calc(100% - 10px) !important;
+            }
+
+            [data-tms-sidebar-shell] .tms-mobile-bottom svg {
+                width: 19px !important;
+                height: 19px !important;
             }
         }
 
-
-        /* Mobile off-canvas sidebar: visible below 768px only */
-        [data-tms-mobile-toggle] {
-            position: fixed;
-            top: 14px;
-            left: 14px;
-            z-index: 100000;
-            width: 44px;
-            height: 44px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            border-radius: 14px;
-            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo));
-            color: #ffffff;
-            box-shadow: 0 12px 24px rgba(37, 99, 235, .28);
-            border: 0;
-            transition: all .25s ease;
+        /* Bottom Nav Popups / Dropdowns Proper Positioning & Responsiveness */
+        [data-tms-sidebar-shell] [id*="menuContent"],
+        [data-tms-sidebar-shell] [id*="dropdown-square"] {
+            position: absolute !important;
+            bottom: calc(100% + 10px) !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: max-content !important;
+            min-width: 170px !important;
+            max-width: calc(100vw - 24px) !important;
+            background: var(--tms-card) !important;
+            border: 1px solid var(--tms-border) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 16px 36px rgba(15, 23, 42, .22) !important;
+            padding: 6px !important;
+            z-index: 100050 !important;
         }
 
-        [data-tms-mobile-toggle]:active {
-            transform: scale(.96);
+        .dark [data-tms-sidebar-shell] [id*="menuContent"],
+        .dark [data-tms-sidebar-shell] [id*="dropdown-square"] {
+            background: var(--tms-card-dark-2) !important;
+            border-color: var(--tms-border-dark) !important;
         }
 
-        [data-tms-mobile-overlay] {
-            position: fixed;
-            inset: 0;
-            z-index: 99990;
-            background: rgba(15, 23, 42, .42);
-            backdrop-filter: blur(5px);
+        [data-tms-sidebar-shell] [id*="menuContent"] ul,
+        [data-tms-sidebar-shell] [id*="dropdown-square"] ul {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 2px !important;
+            width: 100% !important;
         }
 
-        [data-tms-mobile-drawer] {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 99999;
-            width: min(82vw, 310px);
-            height: 100vh;
-            background: var(--tms-card);
-            border-right: 1px solid var(--tms-border);
-            box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
-            border-radius: 0 24px 24px 0;
-            overflow-y: auto;
-            padding: 18px 14px 22px;
+        [data-tms-sidebar-shell] [id*="menuContent"] li a,
+        [data-tms-sidebar-shell] [id*="dropdown-square"] li a {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
+            padding: 8px 12px !important;
+            border-radius: 10px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            color: var(--tms-text) !important;
+            white-space: nowrap !important;
+            height: auto !important;
+            border-bottom: none !important;
+            transition: all .18s ease !important;
         }
 
-        .dark [data-tms-mobile-drawer] {
-            background: var(--tms-card-dark);
-            border-right-color: var(--tms-border-dark);
+        .dark [data-tms-sidebar-shell] [id*="menuContent"] li a,
+        .dark [data-tms-sidebar-shell] [id*="dropdown-square"] li a {
+            color: #d1d5db !important;
         }
 
-        [data-tms-mobile-header] {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 4px 4px 16px;
-            border-bottom: 1px solid var(--tms-border);
-            margin-bottom: 14px;
+        [data-tms-sidebar-shell] [id*="menuContent"] li a:hover,
+        [data-tms-sidebar-shell] [id*="dropdown-square"] li a:hover {
+            background: var(--tms-primary-light) !important;
+            color: var(--tms-primary) !important;
         }
 
-        .dark [data-tms-mobile-header] {
-            border-bottom-color: var(--tms-border-dark);
+        .dark [data-tms-sidebar-shell] [id*="menuContent"] li a:hover,
+        .dark [data-tms-sidebar-shell] [id*="dropdown-square"] li a:hover {
+            background: rgba(37, 99, 235, .2) !important;
+            color: #93c5fd !important;
         }
 
-        [data-tms-mobile-title] {
-            font-size: 13px;
-            font-weight: 800;
-            color: var(--tms-muted);
-            letter-spacing: .06em;
-            text-transform: uppercase;
-        }
-
-        [data-tms-mobile-close] {
-            width: 38px;
-            height: 38px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: #f3f4f6;
-            color: var(--tms-text);
-            border: 1px solid var(--tms-border);
-            transition: all .22s ease;
-        }
-
-        [data-tms-mobile-close]:hover {
-            background: var(--tms-primary-light);
-            color: var(--tms-primary);
-            border-color: var(--tms-primary-soft);
-        }
-
-        [data-tms-mobile-menu] {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        [data-tms-mobile-menu] a,
-        [data-tms-mobile-menu] button {
-            position: relative;
-            width: 100%;
-            min-height: 52px;
-            display: flex;
-            align-items: center;
-            gap: 13px;
-            padding: 12px 14px;
-            border-radius: 14px;
-            color: var(--tms-text);
-            background: transparent;
-            border: 1px solid transparent;
-            font-size: 15px;
-            font-weight: 500;
-            text-align: left;
-            transition: all .22s ease;
-        }
-
-        [data-tms-mobile-menu] a:hover,
-        [data-tms-mobile-menu] button:hover {
-            background: var(--tms-primary-light);
-            color: var(--tms-primary);
-            border-color: var(--tms-primary-soft);
-        }
-
-        [data-tms-mobile-menu] .tms-mobile-active {
-            background: var(--tms-primary-light);
-            color: var(--tms-primary);
-            border-color: var(--tms-primary-soft);
-        }
-
-        [data-tms-mobile-menu] .tms-mobile-active::before {
-            content: '';
-            position: absolute;
-            left: -14px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 28px;
-            border-radius: 0 999px 999px 0;
-            background: var(--tms-primary);
-        }
-
-        [data-tms-mobile-icon] {
-            width: 36px;
-            min-width: 36px;
-            height: 36px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: #f3f4f6;
-            color: var(--tms-muted);
-            box-shadow: inset 0 0 0 1px var(--tms-border);
-            transition: all .22s ease;
-        }
-
-        [data-tms-mobile-menu] a:hover [data-tms-mobile-icon],
-        [data-tms-mobile-menu] button:hover [data-tms-mobile-icon],
-        [data-tms-mobile-menu] .tms-mobile-active [data-tms-mobile-icon] {
-            background: linear-gradient(135deg, var(--tms-primary), var(--tms-indigo));
-            color: #ffffff;
-            box-shadow: 0 10px 20px rgba(37, 99, 235, .25);
-        }
-
-        [data-tms-mobile-menu] svg {
-            width: 18px;
-            height: 18px;
-            color: currentColor;
-            fill: currentColor;
-            stroke: currentColor;
-        }
-
-        @media (max-width: 767px) {
-            [data-tms-mobile-toggle] {
-                display: inline-flex;
+        /* Large Display & 4K Optimization */
+        @media (min-width: 1920px) {
+            [data-tms-sidebar-shell] .tms-mini-sidebar {
+                width: 74px !important;
             }
 
-            [data-tms-sidebar-shell] .tms-mobile-bottom {
-                display: none !important;
-            }
-        }
-
-        @media (min-width: 768px) {
-
-            [data-tms-mobile-toggle],
-            [data-tms-mobile-overlay],
-            [data-tms-mobile-drawer] {
-                display: none !important;
-            }
-        }
-
-
-
-
-        /* Mobile hamburger: TMS logo ke just right side, logo par overlap nahi hoga */
-        /* Mobile hamburger placement fix */
-        @media (max-width: 767px) {
-
-            /* 1. Pure Header Container ko responsive aur clean banane ke liye */
-            /* Agar aapke header class ka naam alag hai, toh toggle ke wrapper ko handles karein */
-            .header-container,
-            header,
-            .tms-navbar {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                padding: 10px 16px !important;
-                position: relative !important;
+            [data-tms-sidebar-shell] .tms-expanded-sidebar {
+                width: 304px !important;
             }
 
-            /* Logo wrapper layout fix */
-            .logo-class,
-            [data-tms-logo] {
-                display: flex !important;
-                align-items: center !important;
-                gap: 12px !important;
-                /* Logo aur button ke beech space */
-            }
-
-            /* 2. Toggle Button ko proper positioning dena bina crash kiye */
-            [data-tms-mobile-toggle] {
-                position: static !important;
-                /* Fixed/Absolute ko delete karega taaki overlapping na ho */
-                order: -1 !important;
-                /* Yeh line toggle button ko LOGO SE PEHLE (Left side) shift kar degi */
-
-                /* Button Styles */
-                width: 42px !important;
-                height: 42px !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                border-radius: 12px !important;
-                background: #eff6ff !important;
-                color: #2563eb !important;
-                border: 1px solid #dbeafe !important;
-                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08) !important;
-                transition: all 0.2s ease !important;
-                cursor: pointer !important;
-                margin-right: 12px !important;
-                /* Logo se specific distance */
-            }
-
-            /* Hover & Active States */
-            [data-tms-mobile-toggle]:hover,
-            [data-tms-mobile-toggle]:focus {
-                background: #2563eb !important;
-                color: #ffffff !important;
-                border-color: #2563eb !important;
-                outline: none !important;
-            }
-        }
-
-        /* Chhote mobile screens (iPhone SE, etc.) ke liye minor adjustments */
-        @media (max-width: 380px) {
-            [data-tms-mobile-toggle] {
-                width: 38px !important;
-                height: 38px !important;
-                margin-right: 8px !important;
-            }
-
-            /* Install app button text ko thoda chhota karne ke liye agar screen bohot chhoti ho */
-            .install-btn-class,
-            button:contains("Install") {
-                padding: 6px 12px !important;
-                font-size: 13px !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            [data-tms-mobile-toggle] {
-                right: 14px !important;
-                top: 14px !important;
-                width: 42px !important;
-                height: 42px !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            [data-tms-mobile-toggle] {
-                left: 156px !important;
-                top: 22px !important;
-                width: 42px !important;
-                height: 42px !important;
-            }
-        }
-
-        @media (max-width: 390px) {
-            [data-tms-mobile-toggle] {
-                left: 144px !important;
-            }
-        }
-
-        @media (min-width: 768px) {
-            [data-tms-mobile-toggle] {
-                display: none !important;
+            [data-tms-sidebar-shell] .tms-mini-sidebar button {
+                width: 52px !important;
+                height: 52px !important;
             }
         }
     </style>
 
-    {{-- Mobile sidebar button and drawer --}}
-    <button type="button" data-tms-mobile-toggle @click="mobileSidebarOpen = true" aria-label="Open sidebar">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-    </button>
-
-    <div x-show="mobileSidebarOpen" x-cloak data-tms-mobile-overlay x-transition.opacity
-        @click="mobileSidebarOpen = false"></div>
-
-    <aside x-show="mobileSidebarOpen" x-cloak data-tms-mobile-drawer
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full opacity-0"
-        x-transition:enter-end="translate-x-0 opacity-100" x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="translate-x-0 opacity-100" x-transition:leave-end="-translate-x-full opacity-0">
-        <div data-tms-mobile-header>
-            <div data-tms-mobile-title>Menu</div>
-            <button type="button" data-tms-mobile-close @click="mobileSidebarOpen = false" aria-label="Close sidebar">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2.2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-
-        <nav data-tms-mobile-menu aria-label="Mobile sidebar">
-            <a href="{{ route('dashboard') }}" wire:navigate @click="mobileSidebarOpen = false"
-                :class="{ 'tms-mobile-active': $wire.activeMenu === 'dashboard' }">
-                <span data-tms-mobile-icon>
-                    <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path>
-                        <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path>
-                    </svg>
-                </span>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('tasks', ['task_view' => 'my_tasks']) }}"
-                @click="mobileSidebarOpen = false; window.location.href = $el.getAttribute('href')"
-                :class="{ 'tms-mobile-active': $wire.activeMenu === 'my_tasks' }">
-                <span data-tms-mobile-icon>
-                    <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                </span>
-                <span>My Tasks</span>
-            </a>
-
-            <a href="{{ route('tasks', ['task_view' => 'assigned_to_others']) }}"
-                @click="mobileSidebarOpen = false; window.location.href = $el.getAttribute('href')"
-                :class="{ 'tms-mobile-active': $wire.activeMenu === 'assigned_to_others' }">
-                <span data-tms-mobile-icon>
-                    <svg fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                    </svg>
-                </span>
-                <span>Assigned Task</span>
-            </a>
-
-            <a href="{{ route('tasks', ['task_view' => 'tasks']) }}"
-                @click="mobileSidebarOpen = false; window.location.href = $el.getAttribute('href')"
-                :class="{ 'tms-mobile-active': $wire.activeMenu === 'tasks' }">
-                <span data-tms-mobile-icon>
-                    <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm1 5a1 1 0 100 2h12a1 1 0 100-2H4z" />
-                    </svg>
-                </span>
-                <span>All Tasks</span>
-            </a>
-
-            @auth
-                @if (in_array(auth()->user()->role, ['super-admin','admin', 'hr', 'manager']))
-                    <a href="{{ route('categories') }}" wire:navigate @click="mobileSidebarOpen = false"
-                        :class="{ 'tms-mobile-active': $wire.activeMenu === 'categories' }">
-                        <span data-tms-mobile-icon>
-                            <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2L2 7l10 5 10-5-10-5zm0 7.8L6.47 7 12 4.2 17.53 7 12 9.8zM2 17l10 5 10-5v-2.2l-10 5-10-5V17zm0-5l10 5 10-5V9.8l-10 5-10-5V12z" />
-                            </svg>
-                        </span>
-                        <span>Categories</span>
-                    </a>
-
-                    <a href="{{ route('users') }}" wire:navigate @click="mobileSidebarOpen = false"
-                        :class="{ 'tms-mobile-active': $wire.activeMenu === 'users' }">
-                        <span data-tms-mobile-icon>
-                            <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                            </svg>
-                        </span>
-                        <span>Manage Users</span>
-                    </a>
-
-                    <a href="{{ route('manageusergroup') }}" wire:navigate @click="mobileSidebarOpen = false"
-                        :class="{ 'tms-mobile-active': $wire.activeMenu === 'manageusergroup' }">
-                        <span data-tms-mobile-icon>
-                            <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM8 11c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm8 0c-.31 0-.65.02-1 .06 1.24.9 2 2.05 2 3.44V19h7v-2c0-2.66-5.33-4-8-4z" />
-                            </svg>
-                        </span>
-                        <span>User Groups</span>
-                    </a>
-                @endif
-            @endauth
-
-            <button type="button" wire:click="$dispatch('openExportModal', { component: 'export-task-modal' })"
-                @click="mobileSidebarOpen = false" :class="{ 'tms-mobile-active': $wire.activeMenu === 'export' }">
-                <span data-tms-mobile-icon>
-                    <svg fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z" />
-                    </svg>
-                </span>
-                <span>Export Report</span>
-            </button>
-        </nav>
-    </aside>
-
-    <div data-tms-sidebar-shell x-data="{ hoveredTab: null, activeTab: null, hoverTimeout: null, contentVisible: false, isFadingOut: false, isTransitioning: false, isHoveringSidebar: false }"
-        class="hidden md:flex fixed top-0 left-0 z-20 flex flex-shrink-0 transition-all h-screen antialiased text-gray-900 dark:bg-dark dark:text-light">
+    <div data-tms-sidebar-shell x-data="{ hoveredTab: null, activeTab: null, hoverTimeout: null, contentVisible: false, isHoveringSidebar: false }"
+        class="hidden md:flex fixed top-0 left-0 z-20 flex-shrink-0 transition-all h-screen antialiased text-gray-900 dark:bg-dark dark:text-light">
 
         <div class="fixed inset-y-0 z-10 w-16 bg-white"></div>
 
@@ -1095,8 +531,7 @@
                             }"
                             title="Users">
                             <span class="sr-only">Users</span>
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg"
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"
                                 :class="{
                                     'text-white': ['users', 'manageusergroup'].includes($wire
                                         .activeMenu),
@@ -1167,24 +602,21 @@
                                         C257.45,38.454,253.196,34.2,247.95,34.2z" />
                                 </g>
                             </g>
-                        </g>
+                    </svg>
                     </svg>
                 </button>
             </div>
         </nav>
 
         <!-- Sidebar content for links -->
-        {{-- <div > --}}
-
-        <!-- Links section -->
         <nav x-show="contentVisible" x-transition:enter="transition-transform duration-500"
             x-transition:enter-start="transform -translate-x-full" x-transition:enter-end="transform translate-x-0"
             x-transition:leave="transition-transform duration-250" x-transition:leave-start="transform translate-x-0"
             x-transition:leave-end="transform -translate-x-full" x-show="hoveredTab !== null"
-            class="tms-expanded-sidebar fixed inset-y-0 left-0 z-10 flex-shrink-0 w-64 bg-white border-r-2 border-blue-100 shadow-lg sm:left-16 rounded-tr-3xl rounded-br-3xl sm:w-72 lg:static lg:w-64"
+            class="tms-expanded-sidebar fixed inset-y-0 left-0 z-10 flex-shrink-0 w-64 bg-white border-r-2 border-blue-100 shadow-lg sm:left-16 rounded-tr-3xl rounded-br-3xl sm:w-72 lg:static lg:w-64 flex flex-col h-full"
             @mouseenter="isHoveringSidebar = true"
             @mouseleave="setTimeout(() => {isHoveringSidebar = false; if (!isHoveringSidebar) { hoveredTab = null; contentVisible = false } }, 500)"
-            aria-label="Main" class="flex flex-col h-full">
+            aria-label="Main">
 
             <div class="tms-sidebar-brand">
                 TMS
@@ -1563,7 +995,6 @@
             </div>
 
         </nav>
-        {{-- </div> --}}
     </div>
     <div x-data="{}" @click.away="contentVisible = false"></div>
 
@@ -1658,179 +1089,113 @@
         </button>
     </div>
 
-    {{-- Bottom navbar for mobile --}}
-    <div
-        class="tms-mobile-bottom fixed z-30 w-full h-16 max-w-lg -translate-x-1/2 bg-white border border-gray-200 rounded-full bottom-4 left-1/2 dark:bg-gray-700 dark:border-gray-600 md:hidden">
-        <div class="grid h-full max-w-lg grid-cols-5 mx-auto">
-            <a data-tooltip-target="tooltip-home" type="button" href="{{ route('dashboard') }}" wire:navigate
-                class="inline-flex flex-col items-center justify-center px-5 rounded-s-full hover:bg-gray-50 dark:hover:bg-gray-800 group">
-                <svg class="w-6 h-6 mb-1 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500"
-                    inert xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+    {{-- Bottom navbar for mobile (Fully Synchronized Alpine.js State & Corporate Layout) --}}
+    <div class="tms-mobile-bottom fixed z-30 max-w-lg bg-white border border-gray-200 rounded-full dark:bg-gray-700 dark:border-gray-600 md:hidden"
+        x-data="{ activePopup: null }" @click.away="activePopup = null">
+        <div class="tms-mobile-grid">
+
+            {{-- Dashboard Link --}}
+            <a type="button" href="{{ route('dashboard') }}" wire:navigate @click="activePopup = null"
+                x-data="{ isLoading: false }" x-on:click="isLoading = true"
+                x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }" wire:loading.attr="disabled"
+                wire:loading.class="opacity-50 cursor-not-allowed"
+                class="inline-flex flex-col items-center justify-center px-2 rounded-s-full hover:bg-gray-50 dark:hover:bg-gray-800 group">
+
+                <svg x-show="!isLoading" inert
+                    class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500"
+                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                     <path
                         d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
                 </svg>
+
+                <!-- Logo theme colored loading spinner -->
+                <svg x-show="isLoading" inert class="animate-spin w-5 h-5 text-gray-500 dark:text-gray-400"
+                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" style="color: var(--tms-primary);">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"
+                        stroke-width="4"></circle>
+                    <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
+                </svg>
+
                 <span class="sr-only">Dashboard</span>
             </a>
-            <div id="tooltip-home" role="tooltip"
-                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
-                Home
-                <div class="tooltip-arrow" data-popper-arrow></div>
-            </div>
 
-            <div data-dial-init id="tooltip-taskList" class="group relative">
-                <!-- Menu content that appears above the button -->
-                <div id="tooltip-taskListmenuContent"
-                    class="absolute bottom-full mb-2 flex flex-col py-1 space-y-2 bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:border-gray-600 hidden"
-                    style="right: initial;">
-                    <ul class="text-sm text-gray-500 dark:text-gray-300">
+            {{-- Task List Dropdown --}}
+            <div class="group relative flex items-center justify-center w-full h-full">
+                <div x-show="activePopup === 'task'"
+                    class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 flex flex-col py-1.5 min-w-[170px] bg-white border border-gray-100 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700"
+                    style="z-index: 100050;" x-cloak>
+                    <ul class="text-sm text-gray-600 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                         <li>
-                            <a href="{{ route('tasks', ['task_view' => 'my_tasks']) }}"
-                                class="flex items-center whitespace-nowrap px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-                                <svg class="w-3.5 h-3.5 mr-2" fill="currentColor" version="1.1" id="Capa_1"
-                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                    viewBox="0 0 47 47" xml:space="preserve">
-                                    <g>
-                                        <g id="Layer_1_22_">
-                                            <g>
-                                                <path d="M6.12,38.52V5.136h26.962v28.037l5.137-4.243V2.568C38.219,1.15,37.07,0,35.652,0h-32.1C2.134,0,0.985,1.15,0.985,2.568
-                                        v38.519c0,1.418,1.149,2.568,2.567,2.568h22.408L22.33,38.52H6.12z" />
-                                                <path
-                                                    d="M45.613,27.609c-0.473-0.446-1.2-0.467-1.698-0.057l-11.778,9.734l-7.849-4.709c-0.521-0.312-1.188-0.219-1.603,0.229
-                                        c-0.412,0.444-0.457,1.117-0.106,1.613l8.506,12.037c0.238,0.337,0.625,0.539,1.037,0.543c0.004,0,0.008,0,0.012,0
-                                        c0.408,0,0.793-0.193,1.035-0.525l12.6-17.173C46.149,28.78,46.084,28.055,45.613,27.609z" />
-                                                <path d="M27.306,8.988H11.897c-1.418,0-2.567,1.15-2.567,2.568s1.149,2.568,2.567,2.568h15.408c1.418,0,2.566-1.15,2.566-2.568
-                                        S28.724,8.988,27.306,8.988z" />
-                                                <path d="M27.306,16.691H11.897c-1.418,0-2.567,1.15-2.567,2.568s1.149,2.568,2.567,2.568h15.408c1.418,0,2.566-1.149,2.566-2.568
-                                        C29.874,17.841,28.724,16.691,27.306,16.691z" />
-                                                <path d="M27.306,24.395H11.897c-1.418,0-2.567,1.15-2.567,2.568s1.149,2.568,2.567,2.568h15.408c1.418,0,2.566-1.15,2.566-2.568
-                                        C29.874,25.545,28.724,24.395,27.306,24.395z" />
-                                            </g>
-                                        </g>
-                                    </g>
+                            <a href="{{ route('tasks', ['task_view' => 'my_tasks']) }}" @click="activePopup = null"
+                                class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-2 14l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
                                 </svg>
-                                <span class="text-sm font-medium">My Tasks</span>
+                                <span class="font-medium text-xs tracking-wide">My Tasks</span>
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('tasks', ['task_view' => 'assigned_to_others']) }}"
-                                class="flex items-center whitespace-nowrap px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-
-                                <svg inert class="w-3.5 h-3.5 mr-2 text-gray-500 dark:text-gray-400"
-                                    fill="currentColor" viewBox="0 0 297 297" xmlns="http://www.w3.org/2000/svg"
-                                    xmlns:xlink="http://www.w3.org/1999/xlink">
-                                    <g>
-                                        <g>
-                                            <path
-                                                d="M276.354,215.56h-25.516l-22.562-22.562c2.91-4.938,4.163-10.739,3.466-16.518c-1.564-12.969-2.813-22.582-3.71-28.573
-                                                c-2.718-18.133-16.647-32.894-35.485-37.604l-14.834-3.708c-1.96-1.904-2.289-8.161-1.751-11.493
-                                                c2.381-2.294,4.691-4.876,6.752-7.754c8.026-11.21,12.628-25.494,12.628-39.187c0-27.51-19.214-46.724-46.724-46.724
-                                                s-46.724,19.214-46.724,46.724c0,13.693,4.603,27.977,12.628,39.187c2.06,2.875,4.371,5.456,6.75,7.75
-                                                c0.54,3.33,0.213,9.591-1.749,11.496l-14.835,3.708c-18.837,4.71-32.766,19.471-35.484,37.604
-                                                c-0.901,6.013-2.15,15.626-3.711,28.573c-0.69,5.721,0.53,11.465,3.378,16.371l-22.709,22.709H20.646
-                                                C9.262,215.559,0,224.82,0,236.206v23.196c0,11.385,9.262,20.646,20.646,20.646h54.23c11.385,0,20.646-9.262,20.646-20.646
-                                                v-23.196c0-11.385-9.262-20.646-20.646-20.646h-0.524l10.496-10.496c2.192,0.585,4.47,0.892,6.781,0.892h47.022v25.12h-17.266
-                                                c-11.385,0-20.646,9.262-20.646,20.646v23.196c0,11.385,9.262,20.646,20.646,20.646h54.23c11.385,0,20.646-9.262,20.646-20.646
-                                                v-23.196c0-11.385-9.262-20.646-20.646-20.646h-17.031v-25.12h47.022c2.245,0,4.457-0.293,6.592-0.846l10.45,10.45h-0.524
-                                                c-11.385,0-20.646,9.262-20.646,20.646v23.196c0,11.385,9.262,20.646,20.646,20.646h54.23c11.385,0,20.646-9.262,20.646-20.646
-                                                v-23.196C297,224.82,287.738,215.56,276.354,215.56z M74.876,233.498c1.492,0,2.707,1.215,2.707,2.707v23.196
-                                                c0,1.492-1.215,2.707-2.707,2.707h-54.23c-1.492,0-2.707-1.215-2.707-2.707v-23.196c0-1.492,1.215-2.707,2.707-2.707H74.876z
-                                                M148.618,21.367c12.952,0,26.791,7.038,26.791,26.791c0,19.339-13.521,39.043-26.791,39.043
-                                                c-13.27,0-26.791-19.704-26.791-39.043C121.827,28.406,135.666,21.367,148.618,21.367z M161.256,117.952
-                                                c-0.661,6.39-6.076,11.389-12.638,11.389c-6.562,0-11.977-5-12.638-11.389c2.684-3.671,4.106-7.842,4.818-11.749
-                                                c2.578,0.605,5.192,0.932,7.82,0.932c2.627,0,5.242-0.328,7.82-0.932C157.15,110.109,158.571,114.281,161.256,117.952z
-                                                M175.614,249.015c1.493,0,2.707,1.215,2.707,2.707v23.196c0,1.492-1.215,2.707-2.707,2.707h-54.23
-                                                c-1.492,0-2.707-1.215-2.707-2.707v-23.196c0-1.492,1.215-2.707,2.707-2.707H175.614z M210.389,183.872
-                                                c-0.712,0.803-2.281,2.151-4.784,2.151H91.629c-2.503,0-4.072-1.348-4.785-2.151c-0.712-0.804-1.862-2.522-1.563-5.007
-                                                c1.517-12.578,2.775-22.262,3.635-28.004c1.497-9.986,9.778-18.514,20.605-21.222l8.342-2.085
-                                                c4.502,12.643,16.586,21.72,30.754,21.72c14.168,0,26.252-9.078,30.754-21.72l8.341,2.085
-                                                c10.829,2.708,19.109,11.236,20.606,21.222c0.857,5.721,2.114,15.404,3.634,28.004
-                                                C212.251,181.349,211.101,183.068,210.389,183.872z M279.06,259.401c0,1.492-1.215,2.707-2.707,2.707h-54.23
-                                                c-1.492,0-2.707-1.215-2.707-2.707v-23.196c0-1.492,1.215-2.707,2.707-2.707h54.23c1.492,0,2.707,1.215,2.707,2.707V259.401z" />
-                                        </g>
-                                    </g>
+                                @click="activePopup = null"
+                                class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="currentColor"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                                 </svg>
-                                <span class="text-sm font-medium">Assigned Tasks</span>
+                                <span class="font-medium text-xs tracking-wide">Assigned Tasks</span>
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('tasks', ['task_view' => 'tasks']) }}"
-                                class="flex items-center whitespace-nowrap px-5 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white">
-                                <svg class="w-3.5 h-3.5 mr-2" fill="currentColor" version="1.1" id="Layer_1"
-                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                    viewBox="0 0 308.847 308.847" xml:space="preserve">
-                                    <g>
-                                        <g>
-                                            <g>
-                                                <path
-                                                    d="M61.423,0c-22.607,0-41,18.393-41,41s18.393,41,41,41c22.607,0,41-18.393,41-41S84.031,0,61.423,0z M61.423,64
-                                        c-12.683,0-23-10.318-23-23s10.317-23,23-23c12.683,0,23,10.318,23,23S74.107,64,61.423,64z" />
-                                                <path d="M279.424,48.983h-152c-4.971,0-9,4.029-9,9c0,4.971,4.029,9,9,9h152c4.971,0,9-4.029,9-9
-                                        C288.424,53.012,284.395,48.983,279.424,48.983z" />
-                                                <path d="M127.423,33.017h152c4.971,0,9-4.029,9-9c0-4.971-4.029-9-9-9h-152c-4.971,0-9,4.029-9,9
-                                        C118.424,28.988,122.453,33.017,127.423,33.017z" />
-                                                <path d="M61.423,113.423c-22.607,0-41,18.393-41,41c0,22.607,18.393,41,41,41c22.607,0,41-18.393,41-41
-                                        S84.031,113.423,61.423,113.423z M61.423,177.423c-12.683,0-23-10.318-23-23s10.317-23,23-23c12.683,0,23,10.318,23,23
-                                        S74.107,177.423,61.423,177.423z" />
-                                                <path
-                                                    d="M279.424,162.406h-152c-4.971,0-9,4.029-9,9s4.029,9,9,9h152c4.971,0,9-4.029,9-9S284.395,162.406,279.424,162.406z" />
-                                                <path
-                                                    d="M279.424,128.44h-152c-4.971,0-9,4.029-9,9s4.029,9,9,9h152c4.971,0,9-4.029,9-9S284.395,128.44,279.424,128.44z" />
-                                                <path
-                                                    d="M61.423,226.847c-22.607,0-41,18.393-41,41s18.393,41,41,41c22.607,0,41-18.393,41-41S84.031,226.847,61.423,226.847z
-                                            M61.423,290.847c-12.683,0-23-10.318-23-23s10.317-23,23-23c12.683,0,23,10.318,23,23S74.107,290.847,61.423,290.847z" />
-                                                <path
-                                                    d="M279.424,275.83h-152c-4.971,0-9,4.029-9,9s4.029,9,9,9h152c4.971,0,9-4.029,9-9S284.395,275.83,279.424,275.83z" />
-                                                <path d="M279.424,241.863h-152c-4.971,0-9,4.029-9,9c0,4.971,4.029,9,9,9h152c4.971,0,9-4.029,9-9
-                                        C288.424,245.892,284.395,241.863,279.424,241.863z" />
-                                                <circle cx="61.423" cy="41" r="8.122" />
-                                                <circle cx="61.423" cy="154.423" r="8.122" />
-                                            </g>
-                                        </g>
-                                    </g>
+                            <a href="{{ route('tasks', ['task_view' => 'tasks']) }}" @click="activePopup = null"
+                                class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="none"
+                                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path>
                                 </svg>
-                                <span class="text-sm font-medium">All Tasks</span>
+                                <span class="font-medium text-xs tracking-wide">All Tasks</span>
                             </a>
                         </li>
                     </ul>
                 </div>
 
-                <!-- Speed dial toggle button -->
-                <button type="button" id="tooltip-taskListBtn" data-dial-toggle="tooltip-taskListmenuContent"
-                    aria-controls="tooltip-taskListmenuContent" aria-expanded="false"
-                    class="flex items-center justify-center text-black w-14 h-14">
-                    <svg class="w-7 h-7 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500"
-                        viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M7.25 2C5.45507 2 4 3.45508 4 5.25V22.7497C4 24.5446 5.45507 25.9997 7.25 25.9997H16.8177L14.661 23.8429C13.7823 22.9643 13.7823 21.5396 14.661 20.661C15.5396 19.7823 16.9643 19.7823 17.8429 20.661L19.25 22.068L23.659 17.659C23.7653 17.5527 23.8796 17.4592 24 17.3787V5.25C24 3.45507 22.5449 2 20.75 2H7.25ZM10.5 8.75C10.5 9.44036 9.94036 10 9.25 10C8.55964 10 8 9.44036 8 8.75C8 8.05964 8.55964 7.5 9.25 7.5C9.94036 7.5 10.5 8.05964 10.5 8.75ZM9.25 15.2498C8.55964 15.2498 8 14.6902 8 13.9998C8 13.3095 8.55964 12.7498 9.25 12.7498C9.94036 12.7498 10.5 13.3095 10.5 13.9998C10.5 14.6902 9.94036 15.2498 9.25 15.2498ZM9.25 20.5C8.55964 20.5 8 19.9404 8 19.25C8 18.5596 8.55964 18 9.25 18C9.94036 18 10.5 18.5596 10.5 19.25C10.5 19.9404 9.94036 20.5 9.25 20.5ZM12.75 8H19.25C19.6642 8 20 8.33579 20 8.75C20 9.16421 19.6642 9.5 19.25 9.5H12.75C12.3358 9.5 12 9.16421 12 8.75C12 8.33579 12.3358 8 12.75 8ZM12 13.9998C12 13.5856 12.3358 13.2498 12.75 13.2498H19.25C19.6642 13.2498 20 13.5856 20 13.9998C20 14.414 19.6642 14.7498 19.25 14.7498H12.75C12.3358 14.7498 12 14.414 12 13.9998ZM12.75 18.5H19.25C19.6642 18.5 20 18.8358 20 19.25C20 19.6642 19.6642 20 19.25 20H12.75C12.3358 20 12 19.6642 12 19.25C12 18.8358 12.3358 18.5 12.75 18.5Z"
-                            fill="#6b7280" />
-                        <path
-                            d="M19.7803 25.7803L25.7803 19.7803C26.0732 19.4874 26.0732 19.0126 25.7803 18.7197C25.4874 18.4268 25.0126 18.4268 24.7197 18.7197L19.25 24.1893L16.7823 21.7216C16.4894 21.4287 16.0145 21.4287 15.7216 21.7216C15.4287 22.0145 15.4287 22.4894 15.7216 22.7823L18.7197 25.7803C18.8603 25.921 19.0511 26 19.25 26C19.4489 26 19.6397 25.921 19.7803 25.7803Z"
-                            fill="#6b7280" />
+                <button type="button" @click="activePopup = activePopup === 'task' ? null : 'task'"
+                    class="flex items-center justify-center text-black w-full h-full">
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
+                        stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                        </path>
                     </svg>
                 </button>
             </div>
 
-            <div data-dial-init class="group" id="bottomnavaddmenuParent"
-                style="display: flex;flex-direction: row;justify-content: center;align-items: center;">
-                <div id="bottomnavaddmenuContent"
-                    class="absolute flex flex-col justify-end hidden py-1 mb-2 space-y-2 bg-white bottom-full border border-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:border-gray-600">
-                    <ul class="text-sm text-gray-500 dark:text-gray-300">
+            {{-- Center Add (+) Button & Menu --}}
+            <div class="group relative flex items-center justify-center w-full h-full">
+                <div x-show="activePopup === 'add'"
+                    class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 flex flex-col py-1.5 min-w-[180px] bg-white border border-gray-100 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700"
+                    style="z-index: 100050;" x-cloak>
+                    <ul class="text-sm text-gray-600 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                         <li>
                             <a href="#"
                                 wire:click="$dispatch('openTaskModal', { component: 'task-details-modal' })"
                                 x-data="{ isLoading: false }" x-on:addtaskmodalopened.window="isLoading = false"
-                                x-on:click="isLoading = true"
+                                x-on:click="isLoading = true; activePopup = null"
                                 x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }"
                                 wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-not-allowed"
-                                class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-                                <svg x-show="!isLoading" class="w-3.5 h-3.5 me-2" xmlns="http://www.w3.org/2000/svg"
-                                    fill="currentColor" viewBox="0 0 20 20">
+                                class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                <svg x-show="!isLoading" class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0"
+                                    xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                     <path
                                         d="M10 4a1 1 0 0 1 1 1v4h4a1 1 0 1 1 0 2h-4v4a1 1 0 1 1-2 0v-4H5a1 1 0 0 1 0-2h4V5a1 1 0 0 1 1-1z" />
                                 </svg>
-                                <!-- Round loader spinner when loading -->
-                                <svg x-show="isLoading" inert
-                                    class="animate-spin w-5 h-5 me-2 text-gray-500 transition duration-75 dark:text-gray-400"
+                                <svg x-show="isLoading" inert class="animate-spin w-4 h-4 text-gray-500 shrink-0"
                                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10" stroke="currentColor"
@@ -1838,40 +1203,36 @@
                                     <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
                                         stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
                                 </svg>
-                                <span class="text-sm font-medium">Add Tasks</span>
+                                <span class="font-medium text-xs tracking-wide">Add Tasks</span>
                             </a>
                         </li>
                         @can('view-admin-options')
                             <li>
-                                <a href="{{ route('categories') }}" wire:navigate
-                                    class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-                                    <svg class="w-3.5 h-3.5 me-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                        viewBox="0 0 20 20">
+                                <a href="{{ route('categories') }}" wire:navigate @click="activePopup = null"
+                                    class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0"
+                                        xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                         <path
                                             d="M10 4a1 1 0 0 1 1 1v4h4a1 1 0 1 1 0 2h-4v4a1 1 0 1 1-2 0v-4H5a1 1 0 0 1 0-2h4V5a1 1 0 0 1 1-1z" />
-                                        <path
-                                            d="M17 2H3a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM3 16V4h14v12H3z" />
                                     </svg>
-                                    <span class="text-sm font-medium">Add Category</span>
+                                    <span class="font-medium text-xs tracking-wide">Add Category</span>
                                 </a>
                             </li>
                             <li>
                                 <a href="#" wire:click="$dispatch('openModal', { component: 'user-details-modal' })"
                                     x-data="{ isLoading: false }" x-on:addusermodalopened.window="isLoading = false"
-                                    x-on:click="isLoading = true"
+                                    x-on:click="isLoading = true; activePopup = null"
                                     x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }"
                                     wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-not-allowed"
-                                    class="flex items-center px-5 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white">
-                                    <svg x-show="!isLoading" inert class="w-5 h-5 me-2" viewBox="0 0 24 24"
+                                    class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                    <svg x-show="!isLoading" inert
+                                        class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" viewBox="0 0 24 24"
                                         xmlns="http://www.w3.org/2000/svg">
                                         <circle cx="12" cy="7" fill="currentColor" r="5" />
                                         <path d="M20,19v1a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V19a6,6,0,0,1,6-6h4A6,6,0,0,1,20,19Z"
                                             fill="currentColor" />
                                     </svg>
-
-                                    <!-- Round loader spinner when loading -->
-                                    <svg x-show="isLoading" inert
-                                        class="animate-spin w-5 h-5 me-2 text-gray-500 transition duration-75 dark:text-gray-400"
+                                    <svg x-show="isLoading" inert class="animate-spin w-4 h-4 text-gray-500 shrink-0"
                                         xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10" stroke="currentColor"
@@ -1879,18 +1240,18 @@
                                         <path d="M4 12a8 8 0 0 1 16 0" stroke="currentColor" stroke-linecap="round"
                                             stroke-linejoin="round" stroke-width="4" class="opacity-75"></path>
                                     </svg>
-                                    <span class="text-sm font-medium">Add Employee</span>
+                                    <span class="font-medium text-xs tracking-wide">Add Employee</span>
                                 </a>
                             </li>
                         @endcan
                     </ul>
                 </div>
-                <!-- Speed dial toggle button -->
-                <button type="button" id="bottomnavaddmenuBtn" data-dial-toggle="bottomnavaddmenuContent"
-                    aria-controls="bottomnavaddmenuContent" aria-expanded="false"
-                    class="flex items-center justify-center text-white bg-blue-700 rounded-full w-14 h-14 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:focus:ring-blue-800">
-                    <svg class="w-5 h-5 transition-transform group-hover:rotate-45" inert
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+
+                <button type="button" @click="activePopup = activePopup === 'add' ? null : 'add'"
+                    class="flex items-center justify-center text-white bg-blue-700 rounded-full w-11 h-11 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 shadow-md">
+                    <svg class="w-5 h-5 transition-transform duration-200"
+                        :class="{ 'rotate-45': activePopup === 'add' }" inert xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 18 18">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 1v16M1 9h16" />
                     </svg>
@@ -1898,31 +1259,22 @@
                 </button>
             </div>
 
-            {{-- <a href="{{ route('users') }}" wire:navigate data-tooltip-target="tooltip-settings" type="button"
-                <svg class="w-8 h-8 mb-1 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500"
-                    viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="8" r="4" fill="currentColor" /> <!-- Head -->
-                    <path fill="currentColor" d="M4 20c0-4 4-6 8-6s8 2 8 6v1H4v-1z" /> <!-- Shoulders -->
-                </svg>
-
-                <span class=>Users</span>
-            </a> --}}
+            {{-- Export Button --}}
             <a href="#" wire:click="$dispatch('openExportModal', { component: 'export-task-modal' })"
-                x-data="{ isLoading: false }" x-on:taskexportmodalopened.window="isLoading = false"
-                x-on:click="isLoading = true" x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }"
-                wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-not-allowed"
-                class="inline-flex flex-col items-center justify-center px-5 hover:bg-gray-50 dark:hover:bg-gray-800 group">
+                @click="activePopup = null" x-data="{ isLoading: false }"
+                x-on:taskexportmodalopened.window="isLoading = false" x-on:click="isLoading = true"
+                x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }" wire:loading.attr="disabled"
+                wire:loading.class="opacity-50 cursor-not-allowed"
+                class="inline-flex flex-col items-center justify-center px-2 hover:bg-gray-50 dark:hover:bg-gray-800 group">
                 <svg x-show="!isLoading" inert
-                    class="w-8 h-8 mb-1 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500"
+                    class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500"
                     viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path fill="currentColor"
-                        d="M12 16a1 1 0 0 1-.707-.293l-5-5a1 1 0 0 1 1.414-1.414L11 12.586V3a1 1 0 1 1 2 0v9.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-5 5A1 1 0 0 1 12 16z" />
+                        d="M12 16a1 1 0 0 1-.707-.293l-5-5a1 1 0 1 1 1.414-1.414L11 12.586V3a1 1 0 1 1 2 0v9.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-5 5A1 1 0 0 1 12 16z" />
                     <path fill="currentColor" d="M5 20a1 1 0 1 1 0-2h14a1 1 0 1 1 0 2H5z" />
                 </svg>
-
-                <!-- Round loader spinner when loading -->
                 <svg x-show="isLoading" inert
-                    class="animate-spin w-8 h-8 text-gray-500 transition duration-75 dark:text-gray-400"
+                    class="animate-spin w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400"
                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2">
                     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25"
@@ -1933,113 +1285,49 @@
                 <span class="sr-only">Export Report</span>
             </a>
 
-            <div id="tooltip-settings" role="tooltip"
-                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
-                Users
-                <div class="tooltip-arrow" data-popper-arrow></div>
-            </div>
-
-            <!-- "More" Button -->
-            <div data-dial-init id="bottomnavmoremenuParent" class="group"
-                class="flex flex-row justify-center items-center">
+            {{-- More Menu Dropdown (Fixed Overlap via Left/Right Alignment shift) --}}
+            <div class="group relative flex items-center justify-center w-full h-full">
                 @can('view-admin-options')
-                    <div id="bottomnavmoremenuContent"
-                        class="absolute right-1 flex flex-col justify-end hidden py-1 mb-2 space-y-2 bg-white bottom-full border border-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:border-gray-600">
-                        <ul class="text-sm text-gray-500 dark:text-gray-300">
-
+                    <div x-show="activePopup === 'more'"
+                        class="absolute bottom-full mb-3 right-0 flex flex-col py-1.5 min-w-[170px] bg-white border border-gray-100 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700"
+                        style="z-index: 100050;" x-cloak>
+                        <ul class="text-sm text-gray-600 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                             <li>
-                                <a href="{{ route('categories') }}" wire:navigate
-                                    class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-                                    <svg class="w-3.5 h-3.5 me-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                        viewBox="0 0 20 20">
+                                <a href="{{ route('users') }}" wire:navigate @click="activePopup = null"
+                                    class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="currentColor"
+                                        viewBox="0 0 24 24">
                                         <path
-                                            d="M10 4a1 1 0 0 1 1 1v4h4a1 1 0 1 1 0 2h-4v4a1 1 0 1 1-2 0v-4H5a1 1 0 0 1 0-2h4V5a1 1 0 0 1 1-1z" />
-                                        <path
-                                            d="M17 2H3a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM3 16V4h14v12H3z" />
+                                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                                     </svg>
-                                    <span class="text-sm font-medium" style="white-space: nowrap;">Categories</span>
+                                    <span class="font-medium text-xs tracking-wide">Users</span>
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('users') }}" wire:navigate
-                                    class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 me-2" fill="currentColor"
-                                        viewBox="0 0 24 24" stroke="none">
+                                <a href="{{ route('manageusergroup') }}" wire:navigate @click="activePopup = null"
+                                    class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" fill="currentColor"
+                                        viewBox="0 0 24 24">
                                         <path
-                                            d="M1.5 6.5C1.5 3.46243 3.96243 1 7 1C10.0376 1 12.5 3.46243 12.5 6.5C12.5 9.53757 10.0376 12 7 12C3.96243 12 1.5 9.53757 1.5 6.5Z"
-                                            fill="currentColor" />
-                                        <path
-                                            d="M14.4999 6.5C14.4999 8.00034 14.0593 9.39779 13.3005 10.57C14.2774 11.4585 15.5754 12 16.9999 12C20.0375 12 22.4999 9.53757 22.4999 6.5C22.4999 3.46243 20.0375 1 16.9999 1C15.5754 1 14.2774 1.54153 13.3005 2.42996C14.0593 3.60221 14.4999 4.99966 14.4999 6.5Z"
-                                            fill="currentColor" />
-                                        <path
-                                            d="M0 18C0 15.7909 1.79086 14 4 14H10C12.2091 14 14 15.7909 14 18V22C14 22.5523 13.5523 23 13 23H1C0.447716 23 0 22.5523 0 22V18Z"
-                                            fill="currentColor" />
-                                        <path
-                                            d="M16 18V23H23C23.5522 23 24 22.5523 24 22V18C24 15.7909 22.2091 14 20 14H14.4722C15.4222 15.0615 16 16.4633 16 18Z"
-                                            fill="currentColor" />
+                                            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                                     </svg>
-                                    <span class="text-sm font-medium">Users</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('manageusergroup') }}" wire:navigate
-                                    class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 me-2" fill="currentColor"
-                                        viewBox="0 0 512 512" stroke="none">
-                                        <g>
-                                            <g>
-                                                <g>
-                                                    <path
-                                                        d="M330.691,85.346h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                                    c-29.419,0-53.333,23.936-53.333,53.333v138.667h-53.333c-5.888,0-10.667,4.779-10.667,10.667s4.779,10.667,10.667,10.667h53.333
-                                                                                                                    v138.667c0,29.397,23.915,53.333,53.333,53.333h42.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-42.667
-                                                                                                                    c-17.643,0-32-14.357-32-32V277.346h74.667c5.888,0,10.667-4.779,10.667-10.667s-4.779-10.667-10.667-10.667h-74.667V117.346
-                                                                                                                    C298.691,99.703,313.049,85.346,330.691,85.346z"
-                                                        fill="currentColor" />
-                                                    <path
-                                                        d="M177.646,179.831c-3.349-29.525-26.752-51.819-54.4-51.819H68.782c-27.648,0-51.051,22.272-54.4,51.819L0.238,303.735
-                                                                                                                    c-1.173,10.368,2.027,20.651,8.768,28.224c5.803,6.528,13.547,10.304,21.909,10.773l11.776,159.403
-                                                                                                                    c0.427,5.568,5.056,9.877,10.645,9.877h85.333c5.589,0,10.219-4.309,10.645-9.877l11.776-159.403
-                                                                                                                    c8.384-0.469,16.107-4.267,21.909-10.773c6.741-7.552,9.941-17.856,8.768-28.224L177.646,179.831z"
-                                                        fill="currentColor" />
-                                                    <path
-                                                        d="M96.025,106.679c29.461,0,53.333-23.872,53.333-53.333c0-29.461-23.872-53.333-53.333-53.333
-                                                                                                                    c-29.461,0-53.333,23.872-53.333,53.333C42.691,82.807,66.563,106.679,96.025,106.679z"
-                                                        fill="currentColor" />
-                                                    <path
-                                                        d="M480.025,405.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                                    v-42.667C512.025,419.703,497.667,405.346,480.025,405.346z"
-                                                        fill="currentColor" />
-                                                    <path
-                                                        d="M480.025,213.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                                    v-42.667C512.025,227.703,497.667,213.346,480.025,213.346z"
-                                                        fill="currentColor" />
-                                                    <path
-                                                        d="M480.025,21.346h-42.667c-17.643,0-32,14.357-32,32v42.667c0,17.643,14.357,32,32,32h42.667c17.643,0,32-14.357,32-32
-                                                                                                                    V53.346C512.025,35.703,497.667,21.346,480.025,21.346z"
-                                                        fill="currentColor" />
-                                                </g>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                    <span class="text-sm font-medium">User Groups</span>
+                                    <span class="font-medium text-xs tracking-wide">User Groups</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 @endcan
-                <!-- Speed dial toggle button -->
-                <button type="button" id="bottomnavmoremenuBtn" data-dial-toggle="bottomnavmoremenuContent"
-                    aria-controls="bottomnavmoremenuContent" aria-expanded="false"
-                    class="flex items-center justify-center text-black w-14 h-14">
-                    <svg width="40px" height="40px" viewBox="0 0 24 24" fill="none"
+
+                <button type="button" @click="activePopup = activePopup === 'more' ? null : 'more'"
+                    class="flex items-center justify-center text-black w-full h-full">
+                    <svg width="22px" height="22px" viewBox="0 0 24 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg">
-                        <rect width="24" height="24" fill="white" />
                         <path fill-rule="evenodd" clip-rule="evenodd"
                             d="M11.0049 8.005C11.0049 8.55728 11.4526 9.005 12.0049 9.005C12.5572 9.005 13.0049 8.55728 13.0049 8.005V7.995C13.0049 7.44271 12.5572 6.995 12.0049 6.995C11.4526 6.995 11.0049 7.44271 11.0049 7.995V8.005ZM12.0049 13.005C11.4526 13.005 11.0049 12.5573 11.0049 12.005V11.995C11.0049 11.4427 11.4526 10.995 12.0049 10.995C12.5572 10.995 13.0049 11.4427 13.0049 11.995V12.005C13.0049 12.5573 12.5572 13.005 12.0049 13.005ZM12.0049 17.005C11.4526 17.005 11.0049 16.5573 11.0049 16.005V15.995C11.0049 15.4427 11.4526 14.995 12.0049 14.995C12.5572 14.995 13.0049 15.4427 13.0049 15.995V16.005C13.0049 16.5573 12.5572 17.005 12.0049 17.005ZM2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12Z"
                             fill="#6b7280" />
                     </svg>
-
                     <span class="sr-only">More options...</span>
                 </button>
             </div>
