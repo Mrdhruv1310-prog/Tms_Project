@@ -56,7 +56,7 @@ class TaskViewModal extends Component
             $this->taskList = Task::query()
                 ->with([
                     'assignedUsers',
-                    'assignedBy',
+                    'creator', // Using 'creator' relationship mapped to user_id in tasks table
                     'category',
                     'updates.user',
                     'reminders.user',
