@@ -1,136 +1,105 @@
-<nav x-data="{ open: false }" x-cloak
-    class="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700/80 shadow-xs transition-colors duration-150">
+<nav
+    class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 fixed left-0 right-0 top-0 z-40 transition-all duration-300 h-12 xs:h-14 sm:h-16 flex items-center shadow-xs">
+    <div
+        class="flex items-center justify-between w-full max-w-[1750px] 3xl:max-w-[1920px] mx-auto px-3 xs:px-4 sm:px-6 lg:px-8">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+        {{-- Left Side: Brand Logo --}}
+        <div class="flex items-center shrink-0">
+            <a href="/" class="flex items-center group transition-transform duration-200 active:scale-95">
+                <img src="{{ asset('icons/tms.png') }}"
+                    class="h-6 xs:h-7 sm:h-8 w-auto object-contain transition-opacity group-hover:opacity-90"
+                    alt="NS TMS Logo" />
+            </a>
+        </div>
 
-            <!-- LEFT SECTION -->
-            <div class="flex items-center gap-3">
+        {{-- Right Side: Actions & Profile Dropdown --}}
+        <div class="flex items-center space-x-2 sm:space-x-4">
 
-                <!-- Mobile Toggle Button -->
-                <button @click="open = !open" type="button"
-                    class="sm:hidden inline-flex items-center justify-center p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-hidden transition-colors duration-150">
+            @auth
+                <div class="relative flex items-center" x-data="{ openDropdown: false }">
+                    {{-- User Avatar Button --}}
+                    <button type="button" id="user-menu-button" aria-expanded="false"
+                        data-dropdown-toggle="nav-user-dropdown" @click="openDropdown = !openDropdown"
+                        class="flex items-center gap-2 p-1 rounded-full sm:rounded-xl transition-all duration-200 hover:bg-slate-50 hover:ring-2 hover:ring-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer">
 
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16" />
+                        <span class="sr-only">Open user menu</span>
 
-                        <path x-show="open" x-cloak stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                        {{-- Avatar Initials --}}
+                        <div class="w-7 h-7 xs:w-8 xs:h-8 rounded-lg flex items-center justify-center text-white font-black text-[11px] xs:text-xs tracking-wider shadow-sm uppercase font-mono shrink-0"
+                            style="background-color: {{ $randomColor ?? '#078bdd' }};">
+                            {{ strtoupper(substr(auth()->user()->first_name ?? '', 0, 1)) }}{{ strtoupper(substr(auth()->user()->last_name ?? '', 0, 1)) }}
+                        </div>
 
-                <!-- Logo -->
-                <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2.5 group">
+                        {{-- User Name --}}
+                        <div class="hidden md:flex flex-col text-left pr-1 min-w-0">
+                            <span class="text-xs font-bold text-slate-800 tracking-tight leading-tight truncate">
+                                {{ Str::ucfirst(auth()->user()->first_name ?? '') }}
+                            </span>
+                        </div>
 
-                    <x-application-logo
-                        class="h-9 w-auto text-indigo-600 dark:text-indigo-400 group-hover:scale-105 transition-transform duration-150" />
+                        {{-- Dropdown Chevron --}}
+                        <svg class="hidden md:block w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0"
+                            fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
 
-                    <span class="hidden sm:block text-lg font-bold text-gray-800 dark:text-white tracking-tight">
-                        Task Manager
-                    </span>
+                    {{-- User Dropdown Menu --}}
+                    <div id="nav-user-dropdown"
+                        class="hidden md:block absolute right-0 top-full mt-2 z-50 w-56 xs:w-60 text-base list-none bg-white rounded-2xl divide-y divide-slate-100 shadow-xl border border-slate-200/70 ring-1 ring-slate-100/50 overflow-hidden"
+                        style="display: none;" x-show="openDropdown" @click.outside="openDropdown = false">
+
+                        {{-- User Details Section --}}
+                        <div class="py-3 px-4 bg-slate-50/70">
+                            <span class="block text-xs xs:text-sm font-bold text-[#001b4d] tracking-tight truncate">
+                                {{ Str::ucfirst(auth()->user()->first_name ?? '') }}
+                                {{ Str::ucfirst(auth()->user()->last_name ?? '') }}
+                            </span>
+                            <span class="block text-[11px] xs:text-xs font-medium text-slate-400 truncate mt-0.5">
+                                {{ auth()->user()->email ?? '' }}
+                            </span>
+                        </div>
+
+                        {{-- Actions Section --}}
+                        <ul class="py-1 text-slate-700" aria-labelledby="nav-user-dropdown">
+                            <li>
+                                <a href="#" wire:click.prevent="logout"
+                                    class="flex justify-between items-center py-2.5 px-4 text-xs font-bold text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors group">
+
+                                    <span wire:loading.remove class="flex items-center gap-2.5">
+                                        <svg class="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors shrink-0"
+                                            fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75">
+                                            </path>
+                                        </svg>
+                                        Sign Out
+                                    </span>
+
+                                    <span wire:loading class="flex items-center gap-2 text-slate-400">
+                                        <svg class="animate-spin h-4 w-4 text-blue-600 shrink-0" viewBox="0 0 24 24"
+                                            fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                        Signing Out...
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            @else
+                <a href="{{ route('login') }}"
+                    class="text-[11px] xs:text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors px-3 py-1.5 rounded-lg border border-slate-200">
+                    Sign In
                 </a>
+            @endauth
 
-                <!-- Desktop Navigation Links -->
-                <div class="hidden sm:flex items-center gap-2 ml-6">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate
-                        class="rounded-xl px-4 py-2 font-medium text-sm transition-all duration-150">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                </div>
-            </div>
-
-            <!-- RIGHT SECTION -->
-            <div class="hidden sm:flex items-center gap-4">
-                <x-dropdown align="right" width="56">
-                    <x-slot name="trigger">
-                        <button type="button"
-                            class="flex items-center gap-3 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/60 focus:outline-hidden transition-all duration-150 shadow-2xs">
-
-                            <div
-                                class="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-bold uppercase shadow-inner">
-                                {{ substr(auth()->user()->name, 0, 1) }}
-                            </div>
-
-                            <div class="text-left hidden md:block leading-tight">
-                                <div class="text-xs font-bold text-gray-800 dark:text-white">
-                                    {{ auth()->user()->name }}
-                                </div>
-                                <div class="text-[11px] text-gray-500 dark:text-gray-400">
-                                    {{ auth()->user()->email }}
-                                </div>
-                            </div>
-
-                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-150" fill="currentColor"
-                                viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile')" wire:navigate>
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <button wire:click="logout" type="button" class="w-full text-left">
-                            <x-dropdown-link>
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </button>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile Menu Container -->
-    <div x-cloak x-show="open" @click.outside="open = false"
-        x-transition:enter="transition ease-out duration-150 transform"
-        x-transition:enter-start="opacity-0 -translate-y-2 scale-98"
-        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition ease-in duration-100 transform"
-        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 -translate-y-2 scale-98"
-        class="sm:hidden border-t border-gray-200 dark:border-gray-700/80 bg-white/98 dark:bg-gray-900/98 backdrop-blur-md">
-
-        <div class="px-4 py-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-        </div>
-
-        <!-- User Information & Actions -->
-        <div class="border-t border-gray-200 dark:border-gray-700/80 px-4 py-4">
-            <div class="flex items-center gap-3 mb-3">
-                <div
-                    class="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm uppercase shadow-inner">
-                    {{ substr(auth()->user()->name, 0, 1) }}
-                </div>
-
-                <div class="leading-tight">
-                    <div class="text-sm font-bold text-gray-800 dark:text-white">
-                        {{ auth()->user()->name }}
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ auth()->user()->email }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="space-y-1">
-                <x-responsive-nav-link :href="route('profile')" wire:navigate>
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <button wire:click="logout" type="button" class="w-full text-left">
-                    <x-responsive-nav-link>
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </button>
-            </div>
         </div>
     </div>
 </nav>

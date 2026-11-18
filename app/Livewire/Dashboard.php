@@ -135,8 +135,13 @@ class Dashboard extends Component
     private function applyDateFilters(Builder $query): void
     {
         if (filled($this->selectedDate)) {
-            $formattedDate = Carbon::parse($this->selectedDate)->format('Y-m-d');
-            $query->whereDate('created_at', $formattedDate);
+            try {
+                $formattedDate = Carbon::parse($this->selectedDate)->format('Y-m-d');
+                $query->whereDate('created_at', $formattedDate);
+            } catch (\Throwable $e) {
+                $this->selectedDate = null;
+                session()->forget(['dashboard_date']);
+            }
         }
     }
 

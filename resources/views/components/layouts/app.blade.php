@@ -14,7 +14,11 @@
     <link rel="manifest" href="{{ asset('/1manifest.json') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <title>{{ $title ?? 'TMS Dashboard' }}</title>
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
     <!-- Scripts & Styles -->
     <script src="{{ asset('/sw.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -105,15 +109,26 @@
     </div>
 
     <!-- ELEKTRO AI ASSISTANT WIDGET -->
+<<<<<<< HEAD
+    <div x-data="elektroAssistant()"
+=======
     <div x-data="elektroAssistant()" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
          wire:ignore
          id="elektro-chat-root"
          class="fixed bottom-24 right-6 z-50 select-none font-sans"
          @keydown.escape.window="isOpen = false">
+<<<<<<< HEAD
+
+        <!-- Floating Launcher Button: Automatically HIDES when chat is open -->
+        <button x-show="!isOpen"
+                @click="toggleChat()"
+=======
         
         <!-- Floating Launcher Button: Automatically HIDES when chat is open -->
         <button x-show="!isOpen"
                 @click="toggleChat()" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                 type="button"
                 aria-label="Open Elektro Assistant"
                 class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-blue-600 text-white shadow-xl shadow-indigo-950/25 transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 focus:outline-none border border-white/20">
@@ -127,7 +142,11 @@
         </button>
 
         <!-- Chat Window: Anchored above bottom bar with single close button -->
+<<<<<<< HEAD
+        <div x-show="isOpen"
+=======
         <div x-show="isOpen" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 translate-y-4 scale-95"
              x-transition:enter-end="opacity-100 translate-y-0 scale-100"
@@ -136,7 +155,11 @@
              x-transition:leave-end="opacity-0 translate-y-4 scale-95"
              style="display: none;"
              class="w-[360px] sm:w-[420px] flex flex-col h-[580px] max-h-[80vh] rounded-3xl bg-white dark:bg-slate-900 shadow-2xl shadow-indigo-950/30 border border-slate-200/90 dark:border-slate-800 overflow-hidden">
+<<<<<<< HEAD
+
+=======
             
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
             <!-- Modern Header -->
             <div class="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex items-center justify-between border-b border-white/10">
                 <div class="flex items-center space-x-3">
@@ -146,19 +169,33 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <h4 class="font-bold text-sm tracking-wide text-white">Elektro</h4>
+<<<<<<< HEAD
+
+=======
  
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                         </div>
                     </div>
                 </div>
                 <div class="flex items-center space-x-1">
+<<<<<<< HEAD
+                    <button @click="clearMessages()"
+                            type="button"
+                            title="Reset Chat"
+=======
                     <button @click="clearMessages()" 
                             type="button"
                             title="Reset Chat" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                             class="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                         Clear
                     </button>
                     <!-- Single Canonical Close Button -->
+<<<<<<< HEAD
+                    <button @click="isOpen = false"
+=======
                     <button @click="isOpen = false" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                             type="button"
                             title="Close Window"
                             class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 text-xl transition">
@@ -171,15 +208,26 @@
             <div x-ref="chatBody" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/70 dark:bg-slate-950/40 text-xs sm:text-sm">
                 <template x-for="(msg, index) in messages" :key="index">
                     <div class="chat-msg-item flex items-start gap-2.5" :class="msg.sender === 'user' ? 'justify-end' : 'justify-start'">
+<<<<<<< HEAD
+                        <div x-show="msg.sender === 'bot'"
+=======
                         <div x-show="msg.sender === 'bot'" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                              class="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex-shrink-0 flex items-center justify-center text-xs shadow-sm mt-0.5">
                             ⚡
                         </div>
                         <div class="max-w-[88%] px-3.5 py-2.5 rounded-2xl leading-relaxed text-xs sm:text-sm transition-all"
+<<<<<<< HEAD
+                             :class="msg.sender === 'user'
+                                ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-br-none shadow-sm'
+                                : (msg.isError
+                                    ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 rounded-bl-none shadow-sm'
+=======
                              :class="msg.sender === 'user' 
                                 ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-br-none shadow-sm' 
                                 : (msg.isError 
                                     ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 rounded-bl-none shadow-sm' 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                                     : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80 rounded-bl-none shadow-sm')">
                             <div class="space-y-1" x-html="renderFormatted(msg.text)"></div>
                         </div>
@@ -204,25 +252,41 @@
 
             <!-- Quick Action Prompt Chips -->
             <div class="px-3 py-2 bg-white dark:bg-slate-900 border-t border-slate-200/70 dark:border-slate-800 flex gap-1.5 overflow-x-auto no-scrollbar">
+<<<<<<< HEAD
+                <button type="button"
+=======
                 <button type="button" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                         @click="sendMessage('Show high priority pending tasks')"
                         :disabled="isLoading"
                         class="text-[11px] whitespace-nowrap bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-200/80 dark:border-rose-900/60 px-2.5 py-1 rounded-lg font-medium transition disabled:opacity-50">
                     🚩 High Priority
                 </button>
+<<<<<<< HEAD
+                <button type="button"
+=======
                 <button type="button" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                         @click="sendMessage('Show in-progress tasks')"
                         :disabled="isLoading"
                         class="text-[11px] whitespace-nowrap bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60 px-2.5 py-1 rounded-lg font-medium transition disabled:opacity-50">
                     ⚡ In Progress
                 </button>
+<<<<<<< HEAD
+                <button type="button"
+=======
                 <button type="button" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                         @click="sendMessage('What tasks are assigned to me?')"
                         :disabled="isLoading"
                         class="text-[11px] whitespace-nowrap bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60 px-2.5 py-1 rounded-lg font-medium transition disabled:opacity-50">
                     📋 My Tasks
                 </button>
+<<<<<<< HEAD
+                <button type="button"
+=======
                 <button type="button" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                         @click="sendMessage('Summarize all pending tasks')"
                         :disabled="isLoading"
                         class="text-[11px] whitespace-nowrap bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg font-medium transition disabled:opacity-50">
@@ -232,6 +296,15 @@
 
             <!-- Message Input Area -->
             <form @submit.prevent="submitForm()" class="p-2.5 bg-white dark:bg-slate-900 border-t border-slate-200/70 dark:border-slate-800 flex items-center gap-2">
+<<<<<<< HEAD
+                <input x-model="userInput"
+                       x-ref="messageInput"
+                       type="text"
+                       placeholder="Ask Elektro about tasks, assignees, deadlines..."
+                       :disabled="isLoading"
+                       class="flex-1 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50 transition">
+                <button type="submit"
+=======
                 <input x-model="userInput" 
                        x-ref="messageInput"
                        type="text" 
@@ -239,6 +312,7 @@
                        :disabled="isLoading"
                        class="flex-1 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:opacity-50 transition">
                 <button type="submit" 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                         :disabled="!userInput.trim() || isLoading"
                         class="w-9 h-9 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-95 disabled:opacity-40 disabled:scale-100 rounded-xl text-white flex items-center justify-center shadow-md shadow-indigo-600/20 transition">
                     <svg class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -417,6 +491,25 @@
                         if (response.ok && data.reply) {
                             this.messages.push({ sender: 'bot', text: data.reply, isError: false });
                         } else if (response.status === 419) {
+<<<<<<< HEAD
+                            this.messages.push({
+                                sender: 'bot',
+                                text: "Session expired. Please refresh the page to continue.",
+                                isError: true
+                            });
+                        } else {
+                            this.messages.push({
+                                sender: 'bot',
+                                text: data.reply || ("Error " + response.status + ": Check Laravel logs."),
+                                isError: true
+                            });
+                        }
+                    } catch (err) {
+                        this.messages.push({
+                            sender: 'bot',
+                            text: "Connection failed. Please ensure the backend service is running.",
+                            isError: true
+=======
                             this.messages.push({ 
                                 sender: 'bot', 
                                 text: "Session expired. Please refresh the page to continue.", 
@@ -434,6 +527,7 @@
                             sender: 'bot', 
                             text: "Connection failed. Please ensure the backend service is running.", 
                             isError: true 
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
                         });
                     } finally {
                         this.isLoading = false;
@@ -446,4 +540,8 @@
 
     @filamentScripts
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+>>>>>>> 3ba1aa50ea2eca17c500656a630f524f6bccbe77
