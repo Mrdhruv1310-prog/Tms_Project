@@ -2,18 +2,22 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\Task;
 use App\Models\Category;
 use App\Models\Group;
+use App\Models\Task;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\Features\SupportRedirects\Redirector;
 
 #[Layout('components.layouts.app')]
 #[Title('Dashboard | TMS')]
@@ -31,34 +35,25 @@ class Dashboard extends Component
     /** @var array<int, array<string, mixed>> */
     public array $groups = [];
 
-    // Specific Date Filter Persistent Variable
     public string $selectedStatusFilter = 'total';
     public ?string $selectedDate = null;
 
-    protected $listeners = [
-        'taskCreated' => 'refreshDashboardData',
-        'taskStatusUpdated' => 'refreshDashboardData',
-        'taskDeleted' => 'refreshDashboardData',
-        'userDeleted' => 'refreshDashboardData',
-    ];
-
     public function mount(): void
     {
-        $this->selectedDate = session('dashboard_date', null);
+        $this->selectedDate = session('dashboard_date');
         $this->refreshDashboardData();
     }
 
-    public function getActiveFilterCountProperty(): int
+    #[Computed]
+    public function activeFilterCount(): int
     {
         return filled($this->selectedDate) ? 1 : 0;
     }
 
-    public function updated($propertyName): void
+    public function updatedSelectedDate(): void
     {
-        if ($propertyName === 'selectedDate') {
-            session(['dashboard_date' => $this->selectedDate]);
-            $this->refreshDashboardData();
-        }
+        session(['dashboard_date' => $this->selectedDate]);
+        $this->refreshDashboardData();
     }
 
     public function filterByStatus(string $status): void
@@ -67,54 +62,57 @@ class Dashboard extends Component
         $this->refreshDashboardData();
     }
 
-    public function filterCategoryPendingTasks(string $categoryName)
+    public function filterCategoryPendingTasks(string $categoryName): RedirectResponse|Redirector
     {
-        $queryParams = $this->getDateQueryParams();
-        $queryParams['category'] = $categoryName;
-        $queryParams['status'] = 'pending';
+        $queryParams = array_merge($this->getDateQueryParams(), [
+            'category' => $categoryName,
+            'status' => 'pending',
+        ]);
 
-        return redirect()->to('/tasks?' . http_build_query($queryParams));
+        return $this->redirect('/tasks?' . http_build_query($queryParams), navigate: true);
     }
 
-    public function navigateToUserPendingTasks(int $userId)
+    public function navigateToUserPendingTasks(int $userId): RedirectResponse|Redirector
     {
-        $queryParams = $this->getDateQueryParams();
-        $queryParams['user_id'] = $userId;
+        $queryParams = array_merge($this->getDateQueryParams(), [
+            'user_id' => $userId,
+        ]);
 
-        return redirect()->to('/tasks/user/pending?' . http_build_query($queryParams));
+        return $this->redirect('/tasks/user/pending?' . http_build_query($queryParams), navigate: true);
     }
 
-    public function navigateToGroupTasks(int $groupId)
+    public function navigateToGroupTasks(int $groupId): RedirectResponse|Redirector
     {
         $group = Group::find($groupId);
         $groupName = $group ? ($group->label ?? $group->name) : '';
 
         $queryParams = $this->getDateQueryParams();
-        if (!empty($groupName)) {
+        if (filled($groupName)) {
             $queryParams['group'] = $groupName;
         }
 
-        return redirect()->to('/tasks?' . http_build_query($queryParams));
+        return $this->redirect('/tasks?' . http_build_query($queryParams), navigate: true);
     }
 
     public function clearDateFilters(): void
     {
         $this->selectedDate = null;
-        session()->forget(['dashboard_date']);
-
+        session()->forget('dashboard_date');
         $this->refreshDashboardData();
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getDateQueryParams(): array
     {
-        $params = [];
-        if (filled($this->selectedDate)) {
-            $params['date'] = $this->selectedDate;
-        }
-
-        return $params;
+        return filled($this->selectedDate) ? ['date' => (string) $this->selectedDate] : [];
     }
 
+    #[On('taskCreated')]
+    #[On('taskStatusUpdated')]
+    #[On('taskDeleted')]
+    #[On('userDeleted')]
     public function refreshDashboardData(): void
     {
         /** @var User|null $authUser */
@@ -124,7 +122,7 @@ class Dashboard extends Component
         }
 
         $authUserId = (int) $authUser->id;
-        $role = strtolower($authUser->role ?? 'employee');
+        $role = strtolower((string) ($authUser->role ?? 'employee'));
 
         $this->setLabels($role, $authUserId);
         $this->setCategories($role, $authUserId);
@@ -138,9 +136,9 @@ class Dashboard extends Component
             try {
                 $formattedDate = Carbon::parse($this->selectedDate)->format('Y-m-d');
                 $query->whereDate('created_at', $formattedDate);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 $this->selectedDate = null;
-                session()->forget(['dashboard_date']);
+                session()->forget('dashboard_date');
             }
         }
     }
@@ -148,16 +146,15 @@ class Dashboard extends Component
     private function roleBasedTaskQuery(string $role, int $authUserId): Builder
     {
         $query = Task::query()->whereHas('creator');
-
         $this->applyDateFilters($query);
 
         if ($role === 'super-admin') {
             return $query;
         }
 
-        return $query->where(function (Builder $q) use ($authUserId) {
+        return $query->where(function (Builder $q) use ($authUserId): void {
             $q->where('tasks.user_id', $authUserId)
-                ->orWhereHas('taskAssignments', function ($aq) use ($authUserId) {
+                ->orWhereHas('taskAssignments', function (Builder $aq) use ($authUserId): void {
                     $aq->where('user_id', $authUserId)->whereHas('user');
                 });
         });
@@ -165,31 +162,30 @@ class Dashboard extends Component
 
     private function setLabels(string $role, int $authUserId): void
     {
-        $baseQuery = fn() => $this->roleBasedTaskQuery($role, $authUserId);
+        $baseQuery = fn(): Builder => $this->roleBasedTaskQuery($role, $authUserId);
 
-        // Calculate Weekly Comparison
         $startOfWeek = Carbon::now()->startOfWeek();
         $endOfWeek = Carbon::now()->endOfWeek();
 
         $startOfLastWeek = Carbon::now()->subWeek()->startOfWeek();
         $endOfLastWeek = Carbon::now()->subWeek()->endOfWeek();
 
-        $calculateWeeklyDiff = function ($status = null) use ($role, $authUserId, $startOfWeek, $endOfWeek, $startOfLastWeek, $endOfLastWeek) {
+        $calculateWeeklyDiff = function (?string $status = null) use ($role, $authUserId, $startOfWeek, $endOfWeek, $startOfLastWeek, $endOfLastWeek): string {
             $queryThisWeek = Task::query()->whereHas('creator');
             $queryLastWeek = Task::query()->whereHas('creator');
 
             if ($role !== 'super-admin') {
-                $applyRole = function ($q) use ($authUserId) {
-                    $q->where(function (Builder $sub) use ($authUserId) {
+                $applyRole = function (Builder $q) use ($authUserId): void {
+                    $q->where(function (Builder $sub) use ($authUserId): void {
                         $sub->where('tasks.user_id', $authUserId)
-                            ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
+                            ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
                     });
                 };
                 $applyRole($queryThisWeek);
                 $applyRole($queryLastWeek);
             }
 
-            if ($status) {
+            if ($status !== null) {
                 $queryThisWeek->where('status', $status);
                 $queryLastWeek->where('status', $status);
             }
@@ -199,13 +195,11 @@ class Dashboard extends Component
 
             $diff = $countThisWeek - $countLastWeek;
 
-            if ($diff > 0) {
-                return '+' . $diff . ' vs last week';
-            } elseif ($diff < 0) {
-                return $diff . ' vs last week';
-            }
-
-            return 'Same as last week';
+            return match (true) {
+                $diff > 0 => "+{$diff} vs last week",
+                $diff < 0 => "{$diff} vs last week",
+                default => 'Same as last week',
+            };
         };
 
         $this->labels = [
@@ -249,34 +243,33 @@ class Dashboard extends Component
         $this->categories = Category::query()
             ->with('creator')
             ->withCount([
-                'tasks as pending_tasks_count' => function ($query) use ($role, $authUserId) {
-                    $query->where('tasks.status', 'pending')
-                        ->whereHas('creator');
+                'tasks as pending_tasks_count' => function (Builder $query) use ($role, $authUserId): void {
+                    $query->where('tasks.status', 'pending')->whereHas('creator');
                     $this->applyDateFilters($query);
 
                     if ($role !== 'super-admin') {
-                        $query->where(function ($sub) use ($authUserId) {
+                        $query->where(function (Builder $sub) use ($authUserId): void {
                             $sub->where('tasks.user_id', $authUserId)
-                                ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
+                                ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
                         });
                     }
                 },
-                'tasks as total_tasks_count' => function ($query) use ($role, $authUserId) {
+                'tasks as total_tasks_count' => function (Builder $query) use ($role, $authUserId): void {
                     $query->whereHas('creator');
                     $this->applyDateFilters($query);
 
                     if ($role !== 'super-admin') {
-                        $query->where(function ($sub) use ($authUserId) {
+                        $query->where(function (Builder $sub) use ($authUserId): void {
                             $sub->where('tasks.user_id', $authUserId)
-                                ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
+                                ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
                         });
                     }
                 },
             ])
             ->get()
-            ->map(function ($category) {
-                $pending = $category->pending_tasks_count ?? 0;
-                $total = $category->total_tasks_count ?? 0;
+            ->map(function (Category $category): array {
+                $pending = (int) ($category->pending_tasks_count ?? 0);
+                $total = (int) ($category->total_tasks_count ?? 0);
 
                 return [
                     'id' => $category->id,
@@ -284,9 +277,7 @@ class Dashboard extends Component
                     'creator_name' => $category->creator ? ($category->creator->first_name ?? $category->creator->name) : 'N/A',
                     'pending' => $pending,
                     'total' => $total,
-                    'percentage' => $total > 0
-                        ? round(($pending / $total) * 100)
-                        : 0,
+                    'percentage' => $total > 0 ? round(($pending / $total) * 100) : 0,
                 ];
             })
             ->sortByDesc('pending')
@@ -296,88 +287,77 @@ class Dashboard extends Component
 
     private function setTeam(string $role, int $authUserId): void
     {
-        /** @var Builder<User> $query */
         $query = User::query();
 
         if ($role !== 'super-admin') {
             $query->where('id', $authUserId);
         }
 
-        $allMembers = $query->get()
-            ->map(function ($user) use ($role, $authUserId) {
-                $targetUserId = (int) $user->id;
+        $allMembers = $query->get()->map(function (User $user) use ($role, $authUserId): array {
+            $targetUserId = (int) $user->id;
 
-                $assignedTaskIds = DB::table('task_assignments')
-                    ->where('user_id', $targetUserId)
-                    ->pluck('task_id');
+            $assignedTaskIds = DB::table('task_assignments')
+                ->where('user_id', $targetUserId)
+                ->pluck('task_id');
 
-                $createdTaskIds = Task::query()
-                    ->where('user_id', $targetUserId)
-                    ->pluck('id');
+            $createdTaskIds = Task::query()
+                ->where('user_id', $targetUserId)
+                ->pluck('id');
 
-                $allUniqueTaskIds = $assignedTaskIds->merge($createdTaskIds)->unique()->values()->toArray();
+            $allUniqueTaskIds = $assignedTaskIds->merge($createdTaskIds)->unique()->values()->toArray();
 
-                $taskBaseQuery = Task::query()
-                    ->whereIn('id', $allUniqueTaskIds)
-                    ->whereHas('creator');
+            $taskBaseQuery = Task::query()
+                ->whereIn('id', $allUniqueTaskIds)
+                ->whereHas('creator');
 
-                $this->applyDateFilters($taskBaseQuery);
+            $this->applyDateFilters($taskBaseQuery);
 
-                if ($role !== 'super-admin' && $targetUserId !== $authUserId) {
-                    $taskBaseQuery->where(function (Builder $q) use ($authUserId, $targetUserId) {
-                        $q->where(function (Builder $sub) use ($authUserId, $targetUserId) {
-                            $sub->where('user_id', $authUserId)
-                                ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $targetUserId));
-                        })
-                            ->orWhere(function (Builder $sub) use ($authUserId, $targetUserId) {
-                                $sub->where('user_id', $targetUserId)
-                                    ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $authUserId));
-                            });
+            if ($role !== 'super-admin' && $targetUserId !== $authUserId) {
+                $taskBaseQuery->where(function (Builder $q) use ($authUserId, $targetUserId): void {
+                    $q->where(function (Builder $sub) use ($authUserId, $targetUserId): void {
+                        $sub->where('user_id', $authUserId)
+                            ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $targetUserId));
+                    })->orWhere(function (Builder $sub) use ($authUserId, $targetUserId): void {
+                        $sub->where('user_id', $targetUserId)
+                            ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $authUserId));
                     });
-                }
+                });
+            }
 
-                $pending = (clone $taskBaseQuery)->where('status', 'pending')->count();
-                $inProgress = (clone $taskBaseQuery)->where('status', 'in_progress')->count();
-                $completed = (clone $taskBaseQuery)->where('status', 'completed')->count();
-                $total = (clone $taskBaseQuery)->count();
+            $pending = (clone $taskBaseQuery)->where('status', 'pending')->count();
+            $inProgress = (clone $taskBaseQuery)->where('status', 'in_progress')->count();
+            $completed = (clone $taskBaseQuery)->where('status', 'completed')->count();
+            $total = (clone $taskBaseQuery)->count();
 
-                $fullName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
-                if (empty($fullName)) {
-                    $fullName = $user->name ?? 'User';
-                }
+            $fullName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+            if ($fullName === '') {
+                $fullName = $user->name ?? 'User';
+            }
 
-                // PENDING RATIO CALCULATION (Pending Tasks / Total Tasks)
-                $pendingPercentage = $total > 0 ? round(($pending / $total) * 100) : 0;
+            return [
+                'id' => $user->id,
+                'user_id' => $user->id,
+                'name' => $fullName,
+                'pending' => $pending,
+                'in_progress' => $inProgress,
+                'completed' => $completed,
+                'total' => $total,
+                'percentage' => $total > 0 ? round(($pending / $total) * 100) : 0,
+            ];
+        });
 
-                return [
-                    'id' => $user->id,
-                    'user_id' => $user->id,
-                    'name' => $fullName,
-                    'pending' => $pending,
-                    'in_progress' => $inProgress,
-                    'completed' => $completed,
-                    'total' => $total,
-                    'percentage' => $pendingPercentage,
-                ];
-            });
-
-        $this->team = $allMembers
-            ->sortByDesc('pending')
-            ->values()
-            ->toArray();
+        $this->team = $allMembers->sortByDesc('pending')->values()->toArray();
     }
 
     private function setGroups(string $role, int $authUserId): void
     {
-        $allGroups = Group::query()->get();
-
-        $this->groups = $allGroups->map(function ($group) use ($role, $authUserId) {
+        $this->groups = Group::query()->get()->map(function (Group $group) use ($role, $authUserId): array {
             $groupIdStr = (string) $group->id;
             $groupLabel = $group->label ?? $group->name ?? '';
 
             $taskBaseQuery = Task::query()
                 ->whereHas('creator')
-                ->where(function (Builder $q) use ($group, $groupIdStr, $groupLabel) {
+                ->where(function (Builder $q) use ($group, $groupIdStr, $groupLabel): void {
                     $q->where('tasks.label_id', $group->id)
                         ->orWhere('tasks.label_id', $groupIdStr)
                         ->orWhere('tasks.label_id', $groupLabel);
@@ -386,9 +366,9 @@ class Dashboard extends Component
             $this->applyDateFilters($taskBaseQuery);
 
             if ($role !== 'super-admin') {
-                $taskBaseQuery->where(function ($sub) use ($authUserId) {
+                $taskBaseQuery->where(function (Builder $sub) use ($authUserId): void {
                     $sub->where('tasks.user_id', $authUserId)
-                        ->orWhereHas('taskAssignments', fn($aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
+                        ->orWhereHas('taskAssignments', fn(Builder $aq) => $aq->where('user_id', $authUserId)->whereHas('user'));
                 });
             }
 
@@ -399,19 +379,14 @@ class Dashboard extends Component
 
             return [
                 'id' => $group->id,
-                'name' => $groupLabel ?: 'No Group Name',
+                'name' => filled($groupLabel) ? $groupLabel : 'No Group Name',
                 'pending' => $pending,
                 'in_progress' => $inProgress,
                 'completed' => $completed,
                 'total' => $total,
-                'percentage' => $total > 0
-                    ? round(($completed / $total) * 100)
-                    : 0,
+                'percentage' => $total > 0 ? round(($completed / $total) * 100) : 0,
             ];
-        })
-            ->sortByDesc('pending')
-            ->values()
-            ->toArray();
+        })->sortByDesc('pending')->values()->toArray();
     }
 
     public function render(): View

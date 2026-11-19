@@ -1,16 +1,21 @@
 <div>
     <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
         /* Flatpickr Calendar Clean & 100% Responsive Fit inside Modal */
         .flatpickr-calendar {
-            width: 100% !important;
+            width: 310px !important;
             max-width: 100% !important;
             box-sizing: border-box !important;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1) !important;
             background: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 12px !important;
-            margin-top: 6px !important;
-            padding: 4px !important;
+            border: 1px solid rgba(229, 231, 235, 0.8) !important;
+            border-radius: 16px !important;
+            margin-top: 8px !important;
+            padding: 12px !important;
+            font-family: inherit !important;
         }
 
         .flatpickr-calendar.static {
@@ -21,89 +26,125 @@
         }
 
         .flatpickr-months {
-            padding: 2px 0 !important;
+            padding: 4px 0 8px 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .flatpickr-current-month {
-            font-size: 90% !important;
+            font-size: 95% !important;
             padding-top: 2px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 4px !important;
+            gap: 6px !important;
+            position: static !important;
+            width: auto !important;
+            height: auto !important;
         }
 
         .flatpickr-current-month .flatpickr-monthDropdown-months {
-            background: #f3f4f6 !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 6px !important;
-            padding: 2px 4px !important;
-            font-size: 12px !important;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            padding: 4px 8px !important;
+            font-size: 13px !important;
             font-weight: 600 !important;
-            color: #374151 !important;
+            color: #1e293b !important;
             cursor: pointer !important;
             outline: none !important;
         }
 
         .flatpickr-current-month .flatpickr-monthDropdown-months:hover {
-            background: #eff6ff !important;
-            color: rgb(0, 0, 0) !important;
-            border-color: rgba(7, 139, 221, 0.3) !important;
+            background: #f0fdf4 !important;
+            color: #0d9488 !important;
+            border-color: #99f6e4 !important;
         }
 
         .flatpickr-current-month input.cur-year {
             font-family: inherit !important;
-            font-size: 12px !important;
+            font-size: 13px !important;
             font-weight: 700 !important;
-            color: #111827 !important;
-            background: #f3f4f6 !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 6px !important;
-            padding: 2px 4px !important;
+            color: #1e293b !important;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 8px !important;
+            padding: 4px 6px !important;
             margin-left: 4px !important;
             height: auto !important;
-            width: 52px !important;
+            width: 60px !important;
             display: inline-block !important;
             box-sizing: border-box !important;
             outline: none !important;
-            transition: all 0.2s ease !important;
         }
 
-        .flatpickr-current-month input.cur-year:hover,
-        .flatpickr-current-month input.cur-year:focus {
-            background: #eff6ff !important;
-            color: rgb(7, 139, 221) !important;
-            border-color: rgba(7, 139, 221, 0.4) !important;
+        .flatpickr-innerContainer {
+            display: block !important;
+            width: 100% !important;
+        }
+
+        .flatpickr-rContainer {
+            display: block !important;
+            width: 100% !important;
         }
 
         .flatpickr-weekdays {
-            height: 24px !important;
+            width: 100% !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            height: 28px !important;
+            align-items: center !important;
+            padding: 0 !important;
         }
 
         span.flatpickr-weekday {
+            flex: 0 0 14.2857% !important;
+            text-align: center !important;
             font-size: 11px !important;
-            font-weight: 600 !important;
-            color: #6b7280 !important;
+            font-weight: 700 !important;
+            color: #64748b !important;
+            text-transform: uppercase;
         }
 
         .flatpickr-days {
             width: 100% !important;
+            display: block !important;
         }
 
         .dayContainer {
             width: 100% !important;
             min-width: 100% !important;
             max-width: 100% !important;
-            justify-content: space-around !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            justify-content: flex-start !important;
         }
 
         .flatpickr-day {
-            max-width: 30px !important;
-            height: 30px !important;
-            line-height: 30px !important;
-            margin: 1px !important;
+            flex: 0 0 14.2857% !important;
+            max-width: none !important;
+            width: 14.2857% !important;
+            height: 34px !important;
+            line-height: 34px !important;
+            margin: 0 !important;
             font-size: 12px !important;
-            border-radius: 8px !important;
+            font-weight: 500;
+            border-radius: 10px !important;
+            color: #334155 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .flatpickr-day.selected {
+            background: rgb(7, 139, 221) !important;
+            border-color: rgb(7, 139, 221) !important;
+            color: #fff !important;
+        }
+
+        .flatpickr-day:hover {
+            background: #f1f5f9 !important;
         }
     </style>
 
@@ -188,7 +229,7 @@
                 </div>
             </div>
 
-            {{-- Timeline Filter Modal Popup (Fully Responsive for 320px to 4K) --}}
+            {{-- Timeline Filter Modal Popup --}}
             <div x-show="showFilter" x-transition.opacity
                 class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-xs"
                 @click.self="showFilter = false" style="display: none;">
@@ -234,7 +275,9 @@
                                 picker: null,
                                 init() {
                                     this.picker = flatpickr(this.$refs.dateInput, {
-                                        dateFormat: 'Y-m-d',
+                                        dateFormat: 'd-m-Y',
+                                        altInput: true,
+                                        altFormat: 'd-m-Y',
                                         disableMobile: 'true',
                                         allowInput: true,
                                         clickOpens: true,
@@ -248,7 +291,7 @@
                                 }
                             }">
                                 <input x-ref="dateInput" type="text" wire:model.live="selectedDate"
-                                    placeholder="dd-mm-yyyy"
+                                    placeholder="DD-MM-YYYY"
                                     class="w-full text-sm font-semibold text-gray-700 bg-gray-50/90 hover:bg-white border border-gray-200 rounded-xl py-2.5 pr-8 pl-3 focus:border-[rgb(7,139,221)] focus:ring-2 focus:ring-[rgb(7,139,221)]/20 transition-all cursor-pointer"
                                     @click="picker && picker.open()" @focus="picker && picker.open()">
 
@@ -632,7 +675,8 @@
                     <div class="space-y-0.5 min-w-0 flex-1">
                         <div class="flex items-center gap-2 min-w-0">
                             <span class="h-2 w-2 rounded-full bg-[rgb(7,139,221)] animate-pulse shrink-0"></span>
-                            <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-700 truncate">Groups
+                            <h2 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-700 truncate">
+                                Groups
                                 Status Overview</h2>
                         </div>
                         <p class="text-[10px] sm:text-xs font-medium text-gray-500 truncate">
