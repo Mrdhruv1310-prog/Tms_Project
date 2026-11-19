@@ -1,13 +1,13 @@
 <div
     class="relative min-h-screen bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)] overflow-x-hidden">
-    <main class="scrollcontainer md:ml-16 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pt-16 sm:pt-20 pb-12 sm:pb-16 max-w-full">
+    <main class="scrollcontainer md:ml-16 px-2.5 xs:px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pt-16 sm:pt-20 pb-12 sm:pb-16 max-w-full">
 
         <!-- Back to Dashboard Link -->
-        <div class="mb-4 sm:mb-5 flex items-center justify-between">
+        <div class="mb-3.5 sm:mb-5 flex items-center justify-between">
             <a href="{{ route('dashboard') }}" wire:navigate
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 hover:text-[rgb(7,139,221)] hover:border-[rgb(7,139,221)]/30 shadow-sm transition-all duration-200">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                    stroke="currentColor" class="w-3.5 h-3.5 sm:w-4 sm:h-4">
+                    stroke="currentColor" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
                 <span>Back to Dashboard</span>
@@ -16,7 +16,7 @@
 
         {{-- Executive Header --}}
         <div
-            class="mb-5 sm:mb-8 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-300/80 bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-200/50 p-4 sm:p-6 lg:p-8 relative">
+            class="mb-4 sm:mb-8 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-300/80 bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-200/50 p-3.5 xs:p-4 sm:p-6 lg:p-8 relative">
             <div class="flex items-center gap-3 sm:gap-4 relative z-10">
                 <div
                     class="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-xs">
@@ -27,8 +27,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
                     </svg>
                 </div>
-                <div class="space-y-0.5 sm:space-y-1 min-w-0">
-                    <h1 class="text-base sm:text-xl font-bold tracking-tight text-slate-900 truncate">
+                <div class="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
+                    <h1 class="text-sm xs:text-base sm:text-xl font-bold tracking-tight text-slate-900 truncate">
                         Category Management List
                     </h1>
                     <p class="text-[11px] sm:text-sm text-slate-500 font-normal truncate">
@@ -41,9 +41,9 @@
         {{-- Add New Category Section --}}
         @if ($this->canManageCategories())
             <div
-                class="mb-5 sm:mb-8 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-300/80 bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-200/50 p-4 sm:p-6 lg:p-8">
-                <div class="mb-3 sm:mb-5 border-b border-slate-200 pb-3">
-                    <h2 class="text-xs sm:text-[14px] font-bold uppercase tracking-wider text-slate-900">
+                class="mb-4 sm:mb-8 overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-300/80 bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-200/50 p-3.5 xs:p-4 sm:p-6 lg:p-8">
+                <div class="mb-3 sm:mb-5 border-b border-slate-200 pb-2.5 sm:pb-3">
+                    <h2 class="text-[11px] xs:text-xs sm:text-[14px] font-bold uppercase tracking-wider text-slate-900">
                         Add New Category
                     </h2>
                 </div>
@@ -51,14 +51,14 @@
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
                     <div class="w-full sm:max-w-md">
                         <input wire:model.defer="newCategory" type="text" placeholder="Enter category name..."
-                            class="w-full rounded-xl sm:rounded-2xl border border-slate-300 bg-slate-50/50 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100">
+                            class="w-full rounded-xl sm:rounded-2xl border border-slate-300 bg-slate-50/50 px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 shadow-2xs">
                         @error('newCategory')
-                            <p class="mt-1 text-xs font-medium text-rose-500">{{ $message }}</p>
+                            <p class="mt-1 text-[11px] sm:text-xs font-medium text-rose-500">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <button wire:click="addCategory" wire:loading.attr="disabled" type="button"
-                        class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 sm:px-6 sm:py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md cursor-pointer hover:opacity-95 transition-all active:scale-98">
+                        class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 sm:px-6 sm:py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md cursor-pointer hover:opacity-95 transition-all active:scale-98 shrink-0">
                         <span wire:loading.remove wire:target="addCategory">+ Add Category</span>
                         <span wire:loading wire:target="addCategory">Adding...</span>
                     </button>
@@ -70,17 +70,17 @@
         <div
             class="overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-300/80 bg-white/95 backdrop-blur-xl shadow-lg shadow-slate-200/50">
             <div
-                class="border-b border-slate-200 px-4 sm:px-8 py-3.5 sm:py-5 bg-gradient-to-r from-slate-50 via-blue-50/30 to-transparent">
+                class="border-b border-slate-200 px-3.5 xs:px-4 sm:px-8 py-3 sm:py-5 bg-gradient-to-r from-slate-50 via-blue-50/30 to-transparent">
                 <h2 class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
                     Categories List
                 </h2>
             </div>
 
-            <div class="p-4 sm:p-6 lg:p-8">
+            <div class="p-3.5 xs:p-4 sm:p-6 lg:p-8">
                 @if (empty($this->categories) || $this->categories->isEmpty())
                     {{-- Empty State --}}
                     <div
-                        class="flex min-h-[220px] sm:min-h-[280px] flex-col items-center justify-center text-center p-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50">
+                        class="flex min-h-[200px] sm:min-h-[280px] flex-col items-center justify-center text-center p-4 sm:p-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50">
                         <div
                             class="mb-2.5 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -89,17 +89,17 @@
                                     d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                             </svg>
                         </div>
-                        <h3 class="text-sm sm:text-base font-semibold text-slate-800">No Categories Available</h3>
+                        <h3 class="text-xs sm:text-base font-semibold text-slate-800">No Categories Available</h3>
                         <p class="mt-1 text-[11px] sm:text-xs text-slate-500 max-w-xs">
                             {{ $this->canManageCategories() ? 'Start by adding a new category above.' : 'You do not have any assigned categories to display.' }}
                         </p>
                     </div>
                 @else
-                    {{-- Responsive Grid: 1 column on 360px screen --}}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
+                    {{-- Responsive Grid: Optimized for 320px screens up to 4K --}}
+                    <div class="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
                         @foreach ($this->categories as $category)
                             <div wire:key="{{ $category->id }}"
-                                class="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white via-white to-slate-50/50 p-4 sm:p-5 shadow-xs transition-all duration-200 hover:border-blue-300 hover:shadow-md">
+                                class="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white via-white to-slate-50/50 p-3.5 sm:p-5 shadow-xs transition-all duration-200 hover:border-blue-300 hover:shadow-md">
 
                                 @if ($editCategoryId === $category->id)
                                     {{-- Edit View --}}
@@ -116,11 +116,11 @@
                                         </div>
                                         <div class="grid grid-cols-2 gap-2 pt-1">
                                             <button type="button" wire:click="updateCategory"
-                                                class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-xs font-bold text-white uppercase tracking-wider shadow-xs hover:opacity-95 transition">
+                                                class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-xs font-bold text-white uppercase tracking-wider shadow-xs hover:opacity-95 transition cursor-pointer">
                                                 Save
                                             </button>
                                             <button type="button" wire:click="$set('editCategoryId', null)"
-                                                class="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition">
+                                                class="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 border border-slate-200 hover:bg-slate-50 transition cursor-pointer">
                                                 Cancel
                                             </button>
                                         </div>
@@ -128,14 +128,14 @@
                                 @else
                                     {{-- Display View --}}
                                     <div class="flex flex-col justify-between h-full gap-3">
-                                        <div class="flex items-center justify-between gap-2.5">
+                                        <div class="flex items-start sm:items-center justify-between gap-2">
                                             <div class="space-y-1.5 min-w-0 flex-1">
                                                 <div
                                                     class="inline-flex items-center gap-1 rounded-full bg-blue-50/80 px-2.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-blue-600 border border-blue-100 shadow-2xs">
-                                                    <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0"></span>
                                                     Category
                                                 </div>
-                                                <h3 class="truncate text-sm sm:text-base font-bold text-slate-900 tracking-tight"
+                                                <h3 class="truncate text-xs xs:text-sm sm:text-base font-bold text-slate-900 tracking-tight"
                                                     title="{{ $category->name }}">
                                                     {{ $category->name }}
                                                 </h3>
@@ -147,7 +147,7 @@
                                                     {{-- Edit Button --}}
                                                     <button type="button"
                                                         wire:click="editCategorySetup({{ $category->id }})"
-                                                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200/80 cursor-pointer hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                                                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200/80 cursor-pointer hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all shrink-0"
                                                         title="Edit Category">
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                             viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"
@@ -162,7 +162,7 @@
                                                         <button type="button"
                                                             wire:click="deleteCategory({{ $category->id }})"
                                                             wire:confirm="Are you sure you want to delete this category?"
-                                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200/80 cursor-pointer hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all"
+                                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-600 border border-slate-200/80 cursor-pointer hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all shrink-0"
                                                             title="Delete Category">
                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                 viewBox="0 0 24 24" stroke-width="1.8"

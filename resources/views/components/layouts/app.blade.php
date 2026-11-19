@@ -15,8 +15,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <title>{{ $title ?? 'TMS Dashboard' }}</title>
 
-    <!-- Scripts & Styles -->
+    <!-- Include jQuery from a CDN -->
     <script src="{{ asset('/sw.js') }}"></script>
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
@@ -181,7 +182,7 @@
                                 (msg.isError ?
                                     'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900 rounded-bl-none shadow-sm' :
                                     'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700/80 rounded-bl-none shadow-sm'
-                                    )">
+                                )">
                             <div class="space-y-1" x-html="renderFormatted(msg.text)"></div>
                         </div>
                     </div>
@@ -377,7 +378,7 @@
                     // 1. Backtick code chips
                     text = text.replace(/`([^`]+)`/g,
                     '<span class="inline-block px-1.5 py-0.5 font-mono text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 rounded border border-slate-200 dark:border-slate-700">$1</span>'
-                    );
+                );
 
                 // 2. Bold tags
                 text = text.replace(/\*\*(.*?)\*\*/g,
@@ -386,7 +387,7 @@
                 // 3. Bullet points for standard prose
                 text = text.replace(/^[•*-]\s+(.+)$/gm,
                     '<div class="flex items-start gap-1.5 my-1"><span class="text-blue-500 font-bold">•</span><span>$1</span></div>'
-                    );
+                );
 
                 // 4. Line breaks for natural conversational replies
                 text = text.replace(/\n{2,}/g, '<div class="h-2"></div>');

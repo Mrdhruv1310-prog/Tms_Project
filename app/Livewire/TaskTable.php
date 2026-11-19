@@ -158,11 +158,11 @@ class TaskTable extends Component implements HasForms, HasTable
         $authId = (int) $user->id;
         $userRole = strtolower($user->role ?? 'employee');
 
+        // Using 'creator' relationship which maps to user_id in tasks table
         $query = Task::query()->with(['creator', 'category', 'assignedUsers'])->whereHas('creator');
 
         $this->applyDateFiltersToTaskQuery($query);
 
-        // Safe fetch for Group IDs & Labels without breaking SQL errors
         $userGroupIds = [];
         $userGroupLabels = [];
 
@@ -199,7 +199,6 @@ class TaskTable extends Component implements HasForms, HasTable
         }
 
         if ($this->taskView === 'my_tasks') {
-            // MY TASKS: Strictly fetch tasks assigned TO the logged-in user
             $query->where(function (Builder $q) use ($authId, $userGroupIds, $userGroupLabels) {
                 $q->whereHas('taskAssignments', function (Builder $aq) use ($authId) {
                     $aq->where('user_id', $authId);
@@ -300,6 +299,7 @@ class TaskTable extends Component implements HasForms, HasTable
                         'class' => 'cursor-pointer text-primary-600 hover:underline dark:text-primary-400 text-[11px] sm:text-xs py-1 px-1 min-w-[120px] max-w-[160px] truncate',
                     ]),
 
+                // Assigned By Column using creator relationship (mapped to user_id)
                 TextColumn::make('creator.first_name')
                     ->label($this->getDbFieldLabel('creator_first_name', 'Assigned By'))
                     ->searchable()
@@ -308,28 +308,28 @@ class TaskTable extends Component implements HasForms, HasTable
                     ->formatStateUsing(function (Task $record) {
                         /** @var \App\Models\User|null $creator */
                         $creator = $record->creator;
-                        return $creator ? $creator->first_name . ' ' . $creator->last_name : 'N/A';
+                        if ($creator) {
+                            return trim(ucfirst(strtolower($creator->first_name)) . ' ' . ucfirst(strtolower($creator->last_name)));
+                        }
+                        return 'N/A';
                     })
                     ->extraAttributes(['class' => 'text-[11px] sm:text-xs py-1 px-1 whitespace-nowrap']),
 
+                // Assigned To Column with comma-separated assigned users
                 TextColumn::make('assignedUsers')
                     ->label($this->getDbFieldLabel('assigned_users', 'Assigned To'))
-                    ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query->leftJoin('task_assignments', 'tasks.id', '=', 'task_assignments.task_id')
-                            ->leftJoin('users as assigned_users', 'task_assignments.user_id', '=', 'assigned_users.id')
-                            ->select('tasks.id', 'tasks.title', 'tasks.status', 'tasks.due_date', 'tasks.user_id', 'tasks.category_id', 'tasks.label_id', 'tasks.priority', 'tasks.recurrence', 'tasks.recurrence_end_date', 'tasks.created_at', 'tasks.updated_at')
-                            ->groupBy('tasks.id', 'tasks.title', 'tasks.status', 'tasks.due_date', 'tasks.user_id', 'tasks.category_id', 'tasks.label_id', 'tasks.priority', 'tasks.recurrence', 'tasks.recurrence_end_date', 'tasks.created_at', 'tasks.updated_at')
-                            ->orderBy(DB::raw('MIN(assigned_users.first_name)'), $direction);
-                    })
                     ->icon('heroicon-o-users')
                     ->formatStateUsing(function ($state, Task $record) {
                         /** @var Collection<int, \App\Models\User> $assignedUsers */
                         $assignedUsers = $record->assignedUsers;
-                        return $assignedUsers->map(function ($user) {
-                            return ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name));
-                        })->join(', ');
+                        if ($assignedUsers && $assignedUsers->isNotEmpty()) {
+                            return $assignedUsers->map(function ($user) {
+                                return trim(ucfirst(strtolower($user->first_name)) . ' ' . ucfirst(strtolower($user->last_name)));
+                            })->implode(', ');
+                        }
+                        return 'No users assigned';
                     })
-                    ->extraAttributes(['class' => 'text-[11px] sm:text-xs py-1 px-1 min-w-[100px]']),
+                    ->extraAttributes(['class' => 'text-[11px] sm:text-xs py-1 px-1 min-w-[120px]']),
 
                 TextColumn::make('due_date')
                     ->label($this->getDbFieldLabel('due_date', 'Due Date'))
@@ -618,7 +618,6 @@ class TaskTable extends Component implements HasForms, HasTable
 
                         return [
                             'change_user_reason' => $existing?->change_user_reason ?? '',
-                            // Fallback status updated to 'verified' since 'pending' is removed
                             'status' => ($existing?->status && $existing->status !== 'pending') ? $existing->status : 'verified',
                             'approval_decision' => ($existing && isset($existing->approval_status) && $existing->approval_status === 'pending') ? 'approve' : 'approve',
                         ];
@@ -649,7 +648,7 @@ class TaskTable extends Component implements HasForms, HasTable
                                     'verified' => 'Verified',
                                     'hold'     => 'Hold',
                                     'cancel'   => 'Cancel',
-                                ]) // Strictly only Verified, Hold, and Cancel options
+                                ])
                                 ->required()
                                 ->native(false),
                         ];
