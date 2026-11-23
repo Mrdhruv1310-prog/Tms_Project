@@ -12,7 +12,8 @@
     <title>TMS Portal | NS GROUP</title>
 
     <script src="{{ asset('/sw.js') }}"></script>
-    @vite(['resources/js/app.js', 'resources/css/app.css'])
+    @vite(['resources/js/app.js'
+    , 'resources/css/app.css'])
     <style>
         /* Lightweight custom scrollbar */
         ::-webkit-scrollbar {

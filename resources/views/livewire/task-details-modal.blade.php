@@ -12,6 +12,7 @@
         showReminderModal: false,
         errorMessage: '',
         reminderUnit: @entangle('reminderUnit'),
+        reminderTime: @entangle('reminderTime'),
         isReminderEnabled: @entangle('isReminderEnabled'),
         enableRepeatTask: @entangle('enableRepeatTask'),
         recurrence: @entangle('recurrence'),
@@ -22,6 +23,7 @@
         label_id_alpine: @entangle('label_id'),
         groupUserMap: @js($groupUserMap),
         userManuallyChanged: false,
+
         updateUserSelection(event, id) {
             this.userManuallyChanged = true;
             if (event.target.checked) {
@@ -31,22 +33,23 @@
             } else {
                 this.selectedUsers = this.selectedUsers.filter(uid => uid !== id);
             }
+            this.syncSelectedUserNames();
+        },
+
+        assignToSelf(currentUserId) {
+            this.userManuallyChanged = true;
+            if (!this.selectedUsers.includes(currentUserId)) {
+                this.selectedUsers.push(currentUserId);
+            } else {
+                this.selectedUsers = this.selectedUsers.filter(uid => uid !== currentUserId);
+            }
+            this.syncSelectedUserNames();
         },
 
         syncSelectedUserNames() {
             this.selectedUserNames = this.allUsers
                 .filter(user => this.selectedUsers.includes(user.id))
                 .map(user => user.first_name);
-        },
-
-        syncGroupUsersOnEdit() {
-            if (this.isEditMode && this.label_id_alpine && this.groupUserMap[this.label_id_alpine]) {
-                const groupUserIds = this.groupUserMap[this.label_id_alpine];
-                if (this.selectedUsers.length === 0) {
-                    this.selectedUsers = [...groupUserIds];
-                    this.syncSelectedUserNames();
-                }
-            }
         },
 
         init() {
@@ -77,10 +80,6 @@
                 }
             });
 
-            if (this.isEditMode) {
-                this.syncGroupUsersOnEdit();
-            }
-
             this.$watch('show', value => {
                 if (value) {
                     document.body.classList.add('overflow-hidden');
@@ -89,58 +88,84 @@
                 } else {
                     document.body.classList.remove('overflow-hidden');
                     this.destroyDatepicker();
-                    this.resetForm();
                 }
             });
 
             this.$watch('due_date', value => {
                 this.isReminderEnabled = value ? true : false;
             });
-
-            window.addEventListener('task-edit-form-filled', () => {
-                this.syncSelectedUserNames();
-                this.$nextTick(() => this.initDatepicker());
-            });
         },
 
         initDatepicker() {
-            window.initializeDateTimepicker('#duedatecalendar', '.scrollcontainer', this.due_date);
-            window.initializeDatepicker('#repeatenddatecalendar', '.scrollcontainer', this.recurrence_end_date);
+            if (window.initializeDateTimepicker) {
+                window.initializeDateTimepicker('#duedatecalendar', '.scrollcontainer', this.due_date);
+            }
+            if (window.initializeDatepicker) {
+                window.initializeDatepicker('#repeatenddatecalendar', '.scrollcontainer', this.recurrence_end_date);
+            }
         },
 
         destroyDatepicker() {
-            window.destroyDatepicker();
+            if (window.destroyDatepicker) {
+                window.destroyDatepicker();
+            }
         },
 
-        resetForm() {
-            this.title = '';
-            this.description = '';
-            this.category_id = '';
-            this.priority = '';
-            this.labels = '';
-            this.recurrence = '';
-            this.due_date = '';
-            this.recurrence_end_date = '';
-            this.selectedDays = [];
-            this.isReminderEnabled = false;
-            this.selectedUserNames = [];
-            this.userManuallyChanged = false;
-        },
+        updateReminderTime(event) {
+            const updatedField = event.target;
+            const fieldId = updatedField.id;
+
+            if (fieldId === 'reminder_time') {
+                this.reminderTime = updatedField.value ? Number(updatedField.value) : '';
+            } else if (fieldId === 'reminder_unit') {
+                this.reminderUnit = updatedField.value;
+            } else if (fieldId === 'duedatecalendar') {
+                this.due_date = updatedField.value;
+            }
+
+            this.errorMessage = '';
+
+            if (!this.reminderTime || !this.reminderUnit || !this.due_date) {
+                return;
+            }
+
+            const parts = this.due_date.split('/');
+            if (parts.length < 3) return;
+            const [day, month, yearWithTime] = parts;
+            const [year, time = '00:00'] = yearWithTime.split(' ');
+            const [hours = '00', minutes = '00'] = time.split(':');
+            const dueDateObj = new Date(year, month - 1, day, hours, minutes);
+
+            if (isNaN(dueDateObj.getTime())) {
+                this.errorMessage = 'Invalid due date';
+                return;
+            }
+
+            const unitMultipliers = {
+                minutes: 60 * 1000,
+                hours: 60 * 60 * 1000,
+                days: 24 * 60 * 60 * 1000,
+            };
+
+            const reminderInMilliseconds = this.reminderTime * unitMultipliers[this.reminderUnit];
+            const validReminderTime = dueDateObj.getTime() - Date.now();
+
+            if (reminderInMilliseconds > validReminderTime) {
+                this.reminderTime = '';
+                this.reminderUnit = '';
+                this.errorMessage = 'Reminder time is NOT valid.';
+            }
+        }
     }" x-cloak x-show="show"
         class="fixed inset-0 flex items-center justify-center z-50 p-2.5 xs:p-4 sm:p-6 lg:p-8 overflow-y-auto transform-gpu"
         aria-labelledby="modal-title" role="dialog" aria-modal="true">
 
         {{-- Backdrop --}}
-        <div x-show="show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-100"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-            class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" inert></div>
+        <div x-show="show" x-transition.opacity class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+            inert></div>
 
         {{-- Modal Container --}}
-        <div x-show="show" x-transition:enter="transition ease-out duration-150 transform-gpu"
-            x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-100 transform-gpu"
-            x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+        <div x-show="show" x-transition.scale.95
             class="relative w-full max-w-[340px] xs:max-w-[380px] sm:max-w-xl lg:max-w-2xl xl:max-w-3xl 2xl:max-w-4xl 3xl:max-w-5xl my-auto">
 
             <!-- Modal Content Box -->
@@ -150,11 +175,11 @@
                 <!-- Modal Header -->
                 <div
                     class="flex justify-between items-center pb-3.5 sm:pb-4 mb-4 border-b border-gray-100 dark:border-gray-700">
-                    <h3 class="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
-                        {{ $taskId ? 'Edit Task' : 'Assign New Task' }}
+                    <h3 class="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white"
+                        x-text="isEditMode ? 'Edit Task' : 'Assign New Task'">
                     </h3>
                     <button type="button" @click="show = false;"
-                        class="text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white rounded-xl text-xs sm:text-sm p-1.5 ml-auto inline-flex items-center transition-colors cursor-pointer shrink-0">
+                        class="text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-rose-500 hover:text-white rounded-xl text-xs sm:text-sm p-1.5 ml-auto inline-flex items-center transition-colors cursor-pointer shrink-0">
                         <svg inert class="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 20 20"
                             xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd"
@@ -167,60 +192,24 @@
 
                 <!-- Modal Body Form -->
                 <form wire:submit.prevent="{{ $taskId ? 'updateTask' : 'saveTask' }}" novalidate>
-                    <div x-data="{
-                        due_date: @entangle('due_date'),
-                        reminderTime: @entangle('reminderTime').defer,
-                        errorMessage: '',
-                        reminderUnit: @entangle('reminderUnit').defer,
+                    <div class="flex flex-col space-y-3.5 sm:space-y-4 mb-4">
 
-                        updateReminderTime(event) {
-                            const updatedField = event.target;
-                            const fieldId = updatedField.id;
-
-                            if (fieldId === 'reminder_time') {
-                                this.reminderTime = updatedField.value ? Number(updatedField.value) : '';
-                            } else if (fieldId === 'reminder_unit') {
-                                this.reminderUnit = updatedField.value;
-                            } else if (fieldId === 'duedatecalendar') {
-                                this.due_date = updatedField.value;
-                            }
-
-                            this.errorMessage = '';
-
-                            if (!this.reminderTime || !this.reminderUnit) {
-                                return;
-                            }
-
-                            if (!this.due_date) {
-                                return;
-                            }
-
-                            const [day, month, yearWithTime] = this.due_date.split('/');
-                            const [year, time = '00:00'] = yearWithTime.split(' ');
-                            const [hours = '00', minutes = '00'] = time.split(':');
-                            const dueDateObj = new Date(year, month - 1, day, hours, minutes);
-
-                            if (isNaN(dueDateObj.getTime())) {
-                                this.errorMessage = 'Invalid due date';
-                                return;
-                            }
-
-                            const unitMultipliers = {
-                                minutes: 60 * 1000,
-                                hours: 60 * 60 * 1000,
-                                days: 24 * 60 * 60 * 1000,
-                            };
-
-                            const reminderInMilliseconds = this.reminderTime * unitMultipliers[this.reminderUnit];
-                            const validReminderTime = dueDateObj.getTime() - Date.now();
-
-                            if (reminderInMilliseconds > validReminderTime) {
-                                this.reminderTime = '';
-                                this.reminderUnit = '';
-                                this.errorMessage = 'Reminder time is NOT valid.';
-                            }
-                        }
-                    }" class="flex flex-col space-y-3.5 sm:space-y-4 mb-4">
+                        <!-- Quick Assign to Self Button -->
+                        <div
+                            class="flex items-center justify-between bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 rounded-xl px-3 py-2">
+                            <span class="text-xs sm:text-sm font-medium text-blue-900 dark:text-blue-200">Assigning task
+                                to yourself?</span>
+                            <button type="button" @click="assignToSelf({{ Auth::id() }})"
+                                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <span
+                                    x-text="selectedUsers.includes({{ Auth::id() }}) ? 'Assigned to Me ✓' : 'Assign to Me'"></span>
+                            </button>
+                        </div>
 
                         <!-- Task Title -->
                         <div>
@@ -229,7 +218,7 @@
                                 Task Title <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="title" wire:model="title" x-model="title" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('title') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white @error('title') border-red-500 bg-red-50 @enderror"
                                 placeholder="Enter Task Title" />
                             @error('title')
                                 <p class="mt-1.5 text-xs sm:text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -243,7 +232,7 @@
                                 Description <span class="text-red-500">*</span>
                             </label>
                             <textarea id="description" wire:model="description" x-model="description" rows="3" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('description') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white @error('description') border-red-500 bg-red-50 @enderror"
                                 placeholder="Enter Task Description"></textarea>
                             @error('description')
                                 <p class="mt-1.5 text-xs sm:text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -258,7 +247,7 @@
                                     Category <span class="text-red-500">*</span>
                                 </label>
                                 <select id="category_id" wire:model="category_id" x-model="category_id" required
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('category_id') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white @error('category_id') border-red-500 bg-red-50 @enderror">
                                     <option value="">Select Category</option>
                                     @if ($categories && is_iterable($categories))
                                         @foreach ($categories as $category)
@@ -281,7 +270,7 @@
                                 <div class="relative">
                                     <button type="button" @click="openUsersDropdown = !openUsersDropdown"
                                         @click.outside="openUsersDropdown = false"
-                                        class="flex flex-row justify-between items-center bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white cursor-pointer @error('selectedUsers') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
+                                        class="flex flex-row justify-between items-center bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white cursor-pointer @error('selectedUsers') border-red-500 bg-red-50 @enderror">
                                         <span class="truncate"
                                             x-text="selectedUserNames.length ? selectedUserNames.join(', ') : 'Select Users'"></span>
                                         <svg class="w-2.5 h-2.5 ms-2 transition-transform duration-200 shrink-0"
@@ -295,7 +284,7 @@
                                     <div x-show="openUsersDropdown" x-transition x-cloak
                                         class="absolute z-30 mt-1 w-full bg-white rounded-xl shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600">
                                         <ul
-                                            class="h-40 sm:h-48 px-2.5 py-2 overflow-y-auto text-xs sm:text-sm text-gray-700 dark:text-gray-200 custom-scrollbar space-y-1">
+                                            class="h-40 sm:h-48 px-2.5 py-2 overflow-y-auto text-xs sm:text-sm text-gray-700 dark:text-gray-200 space-y-1">
                                             @if (isset($users) && count($users) > 0)
                                                 @foreach ($users as $user)
                                                     <li wire:key="user-item-{{ $user->id }}"
@@ -303,7 +292,7 @@
                                                         <input id="checkbox-user-{{ $user->id }}" type="checkbox"
                                                             wire:model="selectedUsers" value="{{ $user->id }}"
                                                             @change="updateUserSelection($event, {{ $user->id }})"
-                                                            class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500 cursor-pointer shrink-0">
+                                                            class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 cursor-pointer shrink-0">
 
                                                         <div
                                                             class="w-6 h-6 sm:w-7 sm:h-7 ml-2.5 flex items-center justify-center text-white rounded-full bg-blue-600 text-[10px] sm:text-xs font-bold shrink-0">
@@ -339,7 +328,7 @@
                                     Priority
                                 </label>
                                 <select id="priority" wire:model="priority" x-model="priority" required
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('priority') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white @error('priority') border-red-500 bg-red-50 @enderror">
                                     <option value="low">Low</option>
                                     <option value="medium">Medium</option>
                                     <option value="high">High</option>
@@ -353,10 +342,10 @@
                             <div>
                                 <label for="label_id"
                                     class="block mb-1.5 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                                    Group <small class="text-red-500 font-normal">(Auto-selects members)</small>
+                                    Group <small class="text-blue-500 font-normal">(Auto-selects members)</small>
                                 </label>
-                                <select id="label_id" wire:model="label_id"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 @error('label_id') border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-200 @enderror">
+                                <select id="label_id" wire:model="label_id" x-model="label_id_alpine"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm lg:text-base rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white @error('label_id') border-red-500 bg-red-50 @enderror">
                                     <option value="">Select Group</option>
                                     @if ($labels && is_iterable($labels))
                                         @foreach ($labels as $label)
@@ -371,7 +360,7 @@
                             </div>
                         </div>
 
-                        <!-- Recurrence Container -->
+                        <!-- Recurrence Container (Weekly & Monthly Fully Supported) -->
                         <div x-data="{ enableRepeatTask: @entangle('enableRepeatTask'), recurrence: @entangle('recurrence'), recurrence_end_date: @entangle('recurrence_end_date') }">
                             <div
                                 class="flex items-center flex-wrap gap-2.5 sm:gap-3 bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 mt-1">
@@ -385,8 +374,8 @@
                                     <span class="ml-2">Repeat</span>
                                     <input type="checkbox" id="enableRepeatTask" x-model="enableRepeatTask"
                                         wire:model="enableRepeatTask"
-                                        @change="if(!enableRepeatTask) { recurrence = 'none'; recurrence_end_date = null }"
-                                        class="h-4 w-4 ml-2 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-500 dark:focus:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+                                        @change="if(!enableRepeatTask) { recurrence = 'none'; recurrence_end_date = null; selectedDays = []; }"
+                                        class="h-4 w-4 ml-2 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
                                 </label>
 
                                 <div x-show="enableRepeatTask" class="transition-opacity duration-200">
@@ -420,6 +409,7 @@
                                 </div>
                             </div>
 
+                            <!-- Weekly on these days selector -->
                             <div x-show="enableRepeatTask && recurrence === 'weekly'"
                                 class="bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 mt-2">
                                 <label
@@ -431,7 +421,7 @@
                                         :key="day">
                                         <div class="flex flex-col items-center">
                                             <input type="checkbox" :value="day" wire:model="selectedDays"
-                                                class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:bg-gray-600 cursor-pointer">
+                                                class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-600 cursor-pointer">
                                             <label
                                                 class="text-[10px] sm:text-xs font-semibold text-gray-900 dark:text-gray-300 mt-0.5"
                                                 x-text="day"></label>
@@ -439,6 +429,15 @@
                                     </template>
                                 </div>
                             </div>
+
+                            <!-- Monthly selector info / options -->
+                            <div x-show="enableRepeatTask && recurrence === 'monthly'"
+                                class="bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 sm:p-3 mt-2">
+                                <p class="text-xs text-gray-600 dark:text-gray-300">
+                                    Monthly task will repeat on the same calendar day matching the due date.
+                                </p>
+                            </div>
+
                             @error('recurrence')
                                 <p class="mt-1.5 text-xs sm:text-sm text-red-600 dark:text-red-500">{{ $message }}
                                 </p>
@@ -446,24 +445,10 @@
                         </div>
 
                         <!-- Due Date & Time -->
-                        <div x-data="{ isReminderEnabled: @entangle('isReminderEnabled') }">
-                            <label for="duedate"
+                        <div>
+                            <label for="duedatecalendar"
                                 class="flex flex-row items-center mb-1.5 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                                 Due Date & Time
-                                <button data-tooltip-target="duedatepin" data-tooltip-trigger="click" type="button"
-                                    class="tooltip-button ml-1 text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white">
-                                    <svg class="h-4 w-4 sm:h-5 sm:w-5" inert xmlns="http://www.w3.org/2000/svg"
-                                        fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd"
-                                            d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm9.408-5.5a1 1 0 1 0 0 2h.01a1 1 0 1 0 0-2h-.01ZM10 10a1 1 0 1 0 0 2h1v3h-1a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2h-1v-4a1 1 0 0 0-1-1h-2Z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                                <div id="duedatepin" role="tooltip"
-                                    class="tooltip tooltip-content invisible absolute z-20 inline-block rounded-xl bg-gray-900 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity duration-300 dark:bg-gray-700">
-                                    The default time will be the start of the day at midnight.
-                                    <div class="tooltip-arrow" data-popper-arrow></div>
-                                </div>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
@@ -489,7 +474,8 @@
                             <span
                                 class="inline-flex bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-2.5">
                                 <button @click="showReminderModal = true" type="button"
-                                    class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer">
+                                    class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
+                                    title="Configure Reminder">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6"
                                         viewBox="0 0 24 24" fill="currentColor">
                                         <path
@@ -500,7 +486,7 @@
                         </div>
 
                         <!-- Reminder Modal Sub-window -->
-                        <div x-show="showReminderModal"
+                        <div x-show="showReminderModal" x-cloak
                             class="fixed inset-0 flex items-center justify-center z-50 p-3"
                             aria-labelledby="modal-title" role="dialog" aria-modal="true">
                             <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" inert></div>
@@ -512,7 +498,7 @@
                                         Task Reminder Before Due Date
                                     </h3>
                                     <button type="button" @click="showReminderModal = false"
-                                        class="text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white rounded-lg text-xs p-1.5 ml-auto">
+                                        class="text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white rounded-lg text-xs p-1.5 ml-auto cursor-pointer">
                                         <svg inert class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
                                                 d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -523,7 +509,7 @@
 
                                 <div class="grid grid-cols-2 gap-3">
                                     <input type="number" id="reminder_time" name="reminder_time"
-                                        wire:model="reminderTime" x-model="reminderTime"
+                                        wire:model="reminderTime" x-model="reminderTime" min="1"
                                         class="bg-gray-50 border border-gray-300 text-gray-900 text-xs sm:text-sm rounded-xl block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         placeholder="Enter time" x-on:input="updateReminderTime($event)">
 
@@ -553,9 +539,9 @@
                             <button type="submit"
                                 class="relative flex w-full justify-center items-center rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2.5 sm:py-3 text-xs sm:text-sm lg:text-base font-bold text-white shadow-md active:scale-[0.98] transition-all cursor-pointer"
                                 wire:loading.attr="disabled">
-                                <span wire:loading.remove>Save Task</span>
+                                <span wire:loading.remove x-text="isEditMode ? 'Update Task' : 'Save Task'"></span>
                                 <span wire:loading class="flex items-center gap-2">
-                                    Saving Task...
+                                    Processing...
                                     <svg class="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
                                         <circle class="opacity-25" cx="12" cy="12" r="10"
                                             stroke="currentColor" stroke-width="4"></circle>
@@ -566,7 +552,7 @@
                                 </span>
                             </button>
 
-                            <button type="button" @click="resetForm(); show = false;"
+                            <button type="button" @click="show = false;"
                                 class="relative flex w-full justify-center items-center rounded-xl border border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 px-5 py-2.5 sm:py-3 text-xs sm:text-sm lg:text-base font-bold text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600 active:scale-[0.98] transition-all cursor-pointer">
                                 Cancel
                             </button>
@@ -596,26 +582,4 @@
             background: linear-gradient(rgb(26 86 219), rgb(59, 130, 246), rgb(95 149 250));
         }
     </style>
-
-    <script>
-        function submitForm() {
-            console.log('Form submitted:', {
-                selectedDays: this.selectedUsers
-            });
-        }
-
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('modal', () => ({
-                init() {
-                    this.$watch('show', (value) => {
-                        if (value) {
-                            document.body.classList.add('overflow-hidden');
-                        } else {
-                            document.body.classList.remove('overflow-hidden');
-                        }
-                    });
-                }
-            }));
-        });
-    </script>
 </div>

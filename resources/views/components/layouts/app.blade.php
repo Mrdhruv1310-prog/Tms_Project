@@ -117,7 +117,7 @@
 
         <!-- Floating Launcher Button: Automatically HIDES when chat is open -->
         <button x-show="!isOpen" @click="toggleChat()" type="button" aria-label="Open Elektro Assistant"
-            class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-blue-600 text-white shadow-xl shadow-indigo-950/25 transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 focus:outline-none border border-white/20">
+            class="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1A56DB] text-white shadow-xl shadow-indigo-950/25 to-blue-600 text-white shadow-xl shadow-indigo-950/25 transition-all duration-300 hover:scale-105 hover:shadow-2xl active:scale-95 focus:outline-none border border-white/20">
             <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5">
                 <span
                     class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>

@@ -13,16 +13,17 @@
     <meta name="theme-color" content="#1a56db" />
     <link rel="apple-touch-icon" href="{{ asset('icons/nslogo.png') }}">
     <link rel="manifest" href="{{ asset('/1manifest.json') }}">
-    {{-- <title>{{ 'TMS Portal | NS GROUP' }}</title> --}}
     <script src="{{ asset('/sw.js') }}"></script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
 
-<body class="min-h-screen flex items-center justify-center bg-gray-100">
+<body class="min-h-screen flex items-center justify-center bg-gray-100 overflow-x-hidden">
 
-    {{ $slot }}
+    <div class="w-full min-h-screen flex items-center justify-center p-3 xs:p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        {{ $slot }}
+    </div>
 
     @livewireScripts
 </body>

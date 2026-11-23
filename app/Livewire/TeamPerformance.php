@@ -28,46 +28,56 @@ class TeamPerformance extends Component
         }
 
         $authUserId = (int) $authUser->id;
-        $role = strtolower($authUser->role ?? 'employee');
-        $isAdmin = in_array($role, ['admin', 'manager', 'hr', 'super-admin'], true);
+        $role = strtolower(trim($authUser->role ?? 'employee'));
+        $isSuperAdmin = ($role === 'super-admin');
 
-        if ($isAdmin) {
+        if ($isSuperAdmin) {
+            // Super-admin can view all users
             $userQuery = User::query();
         } else {
+            // Non-super-admin users can only view members in their group(s)
             $relevantUserIds = collect([$authUserId]);
 
-            // Group Members
+            // Check group_id column on user table
             if (!empty($authUser->group_id)) {
                 $sameGroupUserIds = User::where('group_id', $authUser->group_id)->pluck('id');
                 $relevantUserIds = $relevantUserIds->merge($sameGroupUserIds);
             }
 
-            // Task Creators (Users who assigned tasks to Auth User)
-            $creatorsOfMyTasks = Task::query()
-                ->where(function ($q) use ($authUserId) {
-                    $q->whereHas('taskAssignments', fn($sub) => $sub->where('user_id', $authUserId))
-                        ->orWhere('user_id', $authUserId);
-                })
-                ->pluck('user_id');
-            $relevantUserIds = $relevantUserIds->merge($creatorsOfMyTasks);
+            // Check group pivot tables if any exist
+            try {
+                foreach (['group_user', 'groups_users', 'user_groups'] as $pivotTable) {
+                    if (DB::getSchemaBuilder()->hasTable($pivotTable)) {
+                        $myGroupIds = DB::table($pivotTable)
+                            ->where('user_id', $authUserId)
+                            ->pluck('group_id')
+                            ->filter()
+                            ->toArray();
 
-            // Assignees (Users assigned to tasks created by Auth User)
-            $assigneesOfMyTasks = DB::table('task_assignments')
-                ->whereIn('task_id', Task::where('user_id', $authUserId)->pluck('id'))
-                ->pluck('user_id');
-            $relevantUserIds = $relevantUserIds->merge($assigneesOfMyTasks);
+                        if (!empty($myGroupIds)) {
+                            $groupMemberIds = DB::table($pivotTable)
+                                ->whereIn('group_id', $myGroupIds)
+                                ->pluck('user_id')
+                                ->filter()
+                                ->toArray();
+                            $relevantUserIds = $relevantUserIds->merge($groupMemberIds);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore pivot table lookup warnings
+            }
 
             $uniqueUserIds = $relevantUserIds->filter()->unique()->values()->toArray();
-
             $userQuery = User::query()->whereIn('id', $uniqueUserIds);
         }
 
         $allMembers = $userQuery->get()
-            ->map(function (User $user) use ($isAdmin, $authUserId): array {
+            ->map(function (User $user) use ($isSuperAdmin, $authUserId, $authUser): array {
                 $targetUserId = (int) $user->id;
 
                 // Extract UNIQUE task IDs where target user is Creator or Assignee
-                $assignedTaskIds = \Illuminate\Support\Facades\DB::table('task_assignments')
+                $assignedTaskIds = DB::table('task_assignments')
                     ->where('user_id', $targetUserId)
                     ->pluck('task_id');
 
@@ -81,8 +91,8 @@ class TeamPerformance extends Component
                     ->whereIn('id', $allUniqueTaskIds)
                     ->whereHas('creator');
 
-                if (! $isAdmin && $targetUserId !== $authUserId) {
-                    $taskBaseQuery->where(function (Builder $q) use ($authUserId, $targetUserId, $user) {
+                if (! $isSuperAdmin && $targetUserId !== $authUserId) {
+                    $taskBaseQuery->where(function (Builder $q) use ($authUserId, $targetUserId, $authUser, $user) {
                         $q->where(function (Builder $sub) use ($authUserId, $targetUserId) {
                             $sub->where('user_id', $authUserId)
                                 ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $targetUserId));
@@ -92,7 +102,7 @@ class TeamPerformance extends Component
                                     ->whereHas('taskAssignments', fn(Builder $a) => $a->where('user_id', $authUserId));
                             });
 
-                        if (!empty(Auth::user()->group_id) && (int) Auth::user()->group_id === (int) $user->group_id) {
+                        if (!empty($authUser->group_id) && (int) $authUser->group_id === (int) $user->group_id) {
                             $q->orWhere('user_id', $targetUserId);
                         }
                     });
@@ -121,7 +131,7 @@ class TeamPerformance extends Component
                     'percentage' => $total > 0 ? round(($completed / $total) * 100) : 0,
                 ];
             })
-            ->filter(fn($m) => $m['pending'] > 0)
+            ->filter(fn($m) => $m['total'] > 0)
             ->values();
 
         // Ensure Auth User is Always 1st Card

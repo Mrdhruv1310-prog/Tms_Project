@@ -1,42 +1,43 @@
 <div x-cloak
-    class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)] p-4 sm:p-6 lg:p-8 overflow-hidden">
+    class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-[rgb(230,242,234)] via-[rgb(240,245,248)] to-[rgb(225,238,247)] p-3 xs:p-4 sm:p-6 lg:p-8 overflow-y-auto overflow-x-hidden">
 
-    <!-- Decorative Glow Elements (Optimized for fast rendering) -->
+    <!-- Decorative Glow Elements (Optimized for fast rendering and scaling) -->
     <div
-        class="absolute -top-32 -left-32 w-80 h-80 bg-[rgb(114,204,74)]/15 rounded-full blur-2xl pointer-events-none transform-gpu">
+        class="absolute -top-32 -left-32 w-72 h-72 sm:w-80 sm:h-80 bg-[rgb(114,204,74)]/15 rounded-full blur-2xl pointer-events-none transform-gpu">
     </div>
     <div
-        class="absolute -bottom-32 -right-32 w-80 h-80 bg-[rgb(7,139,221)]/15 rounded-full blur-2xl pointer-events-none transform-gpu">
+        class="absolute -bottom-32 -right-32 w-72 h-72 sm:w-80 sm:h-80 bg-[rgb(7,139,221)]/15 rounded-full blur-2xl pointer-events-none transform-gpu">
     </div>
 
     <div
-        class="relative w-full max-w-md space-y-6 rounded-3xl bg-white/90 backdrop-blur-md p-8 shadow-[0_15px_40px_rgba(0,0,0,0.06)] sm:p-10 my-auto border border-white/80 ring-1 ring-black/5">
+        class="relative w-full max-w-[320px] xs:max-w-xs sm:max-w-sm md:max-w-md lg:max-w-md space-y-5 sm:space-y-6 rounded-2xl sm:rounded-3xl bg-white/90 backdrop-blur-md p-5 xs:p-6 sm:p-8 md:p-10 shadow-[0_15px_40px_rgba(0,0,0,0.06)] my-auto border border-white/80 ring-1 ring-black/5 mx-auto">
 
         <!-- Logo & Header -->
         <div class="flex flex-col items-center text-center">
-            <div class="flex px-5 py-2.5 items-center justify-center rounded-2xl">
-                <img class="h-11 w-auto object-contain drop-shadow-xs" src="{{ url('icons/tms.png') }}" alt="Your Company">
+            <div class="flex px-3 py-2 sm:px-5 sm:py-2.5 items-center justify-center rounded-2xl">
+                <img class="h-9 sm:h-11 w-auto object-contain drop-shadow-xs" src="{{ url('icons/tms.png') }}"
+                    alt="Your Company">
             </div>
 
-            <h2 class="mt-4 text-2xl font-bold tracking-tight text-gray-900">
+            <h2 class="mt-3 sm:mt-4 text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
                 Welcome Back
             </h2>
 
-            <p class="mt-1 text-sm text-gray-500">
+            <p class="mt-1 text-xs sm:text-sm text-gray-500 max-w-[260px] sm:max-w-none">
                 Please enter your credentials to access your account.
             </p>
         </div>
 
-        <form wire:submit.prevent="login" class="mt-6 space-y-4" novalidate>
+        <form wire:submit.prevent="login" class="mt-4 sm:mt-6 space-y-3.5 sm:space-y-4" novalidate>
 
             <!-- Email Address -->
             <div>
                 <x-input-label for="email" :value="__('Email address')"
-                    class="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1.5" />
+                    class="block text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1" />
 
                 <div class="relative">
                     <input wire:model.defer="email" id="email"
-                        class="block w-full rounded-xl border border-gray-200/80 bg-gray-50/50 px-4 py-2.5 text-gray-800 shadow-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-2 sm:text-sm transition-all duration-150
+                        class="block w-full rounded-xl border border-gray-200/80 bg-gray-50/50 px-3.5 sm:px-4 py-2 sm:py-2.5 text-gray-800 text-xs sm:text-sm shadow-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-2 transition-all duration-150
                             @if ($submitted && $errors->has('email')) border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-200
                             @else focus:border-[rgb(7,139,221)] focus:bg-white focus:ring-[rgb(7,139,221)]/15 @endif"
                         type="email" name="email" autocomplete="email" placeholder="name@example.com" />
@@ -49,14 +50,14 @@
 
             <!-- Password -->
             <div>
-                <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center justify-between mb-1">
                     <x-input-label for="password" :value="__('Password')"
-                        class="block text-xs font-semibold uppercase tracking-wider text-gray-600" />
+                        class="block text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-600" />
 
                     @if (Route::has('forget.password'))
-                        <div class="text-sm">
+                        <div class="text-xs sm:text-sm">
                             <a href="{{ route('forget.password') }}" wire:navigate
-                                class="font-medium text-[rgb(7,139,221)] hover:text-[rgb(7,139,221)]/80 transition-colors duration-150">
+                                class="font-medium text-[rgb(7,139,221)] hover:text-[rgb(7,139,221)]/80 transition-colors duration-150 py-1 inline-block">
                                 Forgot password?
                             </a>
                         </div>
@@ -66,15 +67,15 @@
                 <div class="flex flex-col" x-data="{ show: false }">
                     <div class="relative">
                         <input wire:model.defer="password" id="password"
-                            class="block w-full rounded-xl border border-gray-200/80 bg-gray-50/50 px-4 py-2.5 pr-11 text-gray-800 shadow-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-2 sm:text-sm transition-all duration-150
+                            class="block w-full rounded-xl border border-gray-200/80 bg-gray-50/50 px-3.5 sm:px-4 py-2 sm:py-2.5 pr-11 text-gray-800 text-xs sm:text-sm shadow-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-2 transition-all duration-150
                             @if ($submitted && $errors->has('password')) border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-200
                             @else focus:border-[rgb(7,139,221)] focus:bg-white focus:ring-[rgb(7,139,221)]/15 @endif"
                             :type="show ? 'text' : 'password'" name="password" autocomplete="current-password"
                             placeholder="••••••••" />
 
                         <button type="button"
-                            class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[rgb(7,139,221)] focus:outline-hidden transition-colors duration-150"
-                            @click="show = !show">
+                            class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-[rgb(7,139,221)] focus:outline-hidden transition-colors duration-150 cursor-pointer min-h-[44px] min-w-[44px] justify-center"
+                            @click="show = !show" aria-label="Toggle password visibility">
 
                             <svg x-cloak x-show="!show" xmlns="http://www.w3.org/2000/svg" fill="none"
                                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -123,7 +124,7 @@
                 <button type="submit" @click="clicked = true; setTimeout(() => clicked = false, 300)"
                     :class="clicked ? 'ring-2 ring-[rgb(7,139,221)]/40 scale-[0.98]' :
                         'hover:opacity-95 shadow-[rgb(7,139,221)]/20'"
-                    class="flex w-full justify-center items-center rounded-xl bg-[rgb(7,139,221)] px-4 py-2.5 text-sm font-semibold text-white shadow-md active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(7,139,221)] transition-all duration-150 transform-gpu">
+                    class="flex w-full justify-center items-center rounded-xl bg-[rgb(7,139,221)] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(7,139,221)] transition-all duration-150 transform-gpu min-h-[44px] cursor-pointer">
                     {{ __('Sign in') }}
                 </button>
             </div>
