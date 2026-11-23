@@ -18,13 +18,13 @@ class ViewUserGroups extends Component
     public ?int $labelId = null;
     public string $labelName = '';
 
-    /** @var array<int, array<string, mixed>> */
+    /** @array<int, array<string, mixed>> */
     public array $groupUsers = [];
 
-    /** @var array<int, array<string, mixed>> */
+    /** @array<int, array<string, mixed>> */
     public array $availableUsers = [];
 
-    /** @var array<string, string> */
+    /** @array<string, string> */
     protected $listeners = ['openUserGroupModal' => 'loadUsers'];
 
     public function loadUsers(mixed $labelId): void
@@ -53,7 +53,6 @@ class ViewUserGroups extends Component
             ? $groupLabel
             : 'Unknown Group';
 
-        // Fix: Removed 'users.name' from select list
         if (method_exists($group, 'users')) {
             $this->groupUsers = $group->users()
                 ->get(['users.id', 'users.first_name', 'users.last_name'])
@@ -99,11 +98,14 @@ class ViewUserGroups extends Component
         $existingUserIds = array_column($this->groupUsers, 'id');
         $currentUserId = Auth::id();
 
-        // Fix: Removed 'name' column selection from User query
         /** @var \Illuminate\Database\Eloquent\Builder<User> $query */
         $query = User::query()
-            ->select('id', 'first_name', 'last_name', 'role')
-            ->whereNotIn('id', $existingUserIds);
+            ->select('id', 'first_name', 'last_name', 'role');
+
+        // Safe check for empty array to prevent SQL compilation warnings/errors
+        if (!empty($existingUserIds)) {
+            $query->whereNotIn('id', $existingUserIds);
+        }
 
         if ($currentUserId) {
             $query->where('id', '!=', $currentUserId);

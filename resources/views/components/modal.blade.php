@@ -1,16 +1,15 @@
 @props(['name', 'show' => false, 'maxWidth' => '2xl'])
 
 @php
-    $maxWidth =
-        [
-            'sm' => 'sm:max-w-sm',
-            'md' => 'sm:max-w-md',
-            'lg' => 'sm:max-w-lg',
-            'xl' => 'sm:max-w-xl',
-            '2xl' => 'sm:max-w-2xl',
-            '3xl' => 'sm:max-w-2xl lg:max-w-3xl',
-            '4xl' => 'sm:max-w-2xl lg:max-w-4xl',
-        ][$maxWidth] ?? 'sm:max-w-2xl';
+   $maxWidth = [
+        'sm' => 'sm:max-w-sm',
+        'md' => 'sm:max-w-md',
+        'lg' => 'sm:max-w-lg',
+        'xl' => 'sm:max-w-xl',
+        '2xl' => 'sm:max-w-2xl',
+        '3xl' => 'sm:max-w-2xl lg:max-w-3xl',
+        '4xl' => 'sm:max-w-2xl lg:max-w-4xl',
+    ][$maxWidth] ?? 'sm:max-w-2xl';
 @endphp
 
 <div x-data="{
@@ -38,7 +37,7 @@
     x-on:close-modal.window="$event.detail == '{{ $name }}' ? show = false : null" x-on:close.stop="show = false"
     x-on:keydown.escape.window="show = false" x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
     x-on:keydown.shift.tab.prevent="prevFocusable().focus()" x-show="show"
-    class="fixed inset-0 z-50 overflow-y-auto px-2 py-2 xs:px-3 xs:py-3 sm:px-6 flex items-center justify-center min-h-full"
+    class="fixed inset-0 overflow-y-auto px-3 py-4 xs:px-4 xs:py-6 sm:px-6 z-50 flex items-center justify-center"
     style="display: {{ $show ? 'flex' : 'none' }};">
 
     <!-- Backdrop -->
@@ -51,7 +50,7 @@
 
     <!-- Modal Box with Hidden Scrollbar CSS -->
     <div x-show="show"
-        class="relative w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-xl sm:rounded-3xl shadow-2xl transform transition-all {{ $maxWidth }} mx-auto my-auto overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        class="relative w-full my-auto max-h-[92vh] overflow-y-auto bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-xl transform transition-all {{ $maxWidth }} sm:mx-auto"
         x-transition:enter="ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200"
@@ -59,8 +58,6 @@
         x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
         <!-- Content Container -->
-        <div class="p-3 xs:p-4 sm:p-6 w-full">
-            {{ $slot }}
-        </div>
+         {{ $slot }}
     </div>
 </div>

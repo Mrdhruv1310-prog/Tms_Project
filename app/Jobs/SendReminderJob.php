@@ -17,10 +17,17 @@ class SendReminderJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 3;
+    public int $backoff = 60;
+
     public int $reminderId;
+    /** @var array<int, string> */
     public array $channel;
     public string $message;
 
+    /**
+     * @param array<int, string> $channel
+     */
     public function __construct(int $reminderId, array $channel, string $message)
     {
         $this->reminderId = $reminderId;
@@ -30,35 +37,45 @@ class SendReminderJob implements ShouldQueue
 
     public function handle(): void
     {
-        $reminder = Reminder::with('task')->find($this->reminderId);
+        try {
+            /** @var Reminder|null $reminder */
+            $reminder = Reminder::with('task')->find($this->reminderId);
 
-        if (! $reminder) {
-            Log::info("Reminder skipped because reminder was deleted. ID: {$this->reminderId}");
-            return;
+            if (! $reminder) {
+                Log::info("Reminder skipped because reminder was deleted or not found. ID: {$this->reminderId}");
+                return;
+            }
+
+            $task = $reminder->task;
+
+            if (! $task || in_array($task->status, ['completed', 'canceled'], true)) {
+                $reminder->delete();
+                return;
+            }
+
+            /** @var User|null $user */
+            $user = User::find($reminder->user_id);
+
+            if (! $user || empty($user->email)) {
+                Log::warning("Reminder email skipped: User not found or empty email for reminder ID: {$this->reminderId}");
+                return;
+            }
+
+            if (in_array('email', $this->channel, true)) {
+                Mail::to($user->email)->send(
+                    new TimeWiseReminderMail(
+                        $task,
+                        $user,
+                        $this->message
+                    )
+                );
+                Log::info("Reminder mail successfully sent to {$user->email} for task: {$task->title}");
+            }
+        } catch (\Throwable $e) {
+            Log::error("Failed to process SendReminderJob for ID {$this->reminderId}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
-
-        $task = $reminder->task;
-
-        if (! $task || $task->status === 'completed') {
-            return;
-        }
-
-        $user = User::find($reminder->user_id);
-
-        if (! $user || empty($user->email)) {
-            return;
-        }
-
-        if (in_array('email', $this->channel)) {
-            Mail::to($user->email)->send(
-                new TimeWiseReminderMail(
-                    $task,
-                    $user,
-                    $this->message
-                )
-            );
-        }
-
-        Log::info("Reminder mail sent to {$user->email} for task {$task->title}");
     }
 }

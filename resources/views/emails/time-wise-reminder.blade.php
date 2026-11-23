@@ -106,10 +106,17 @@
                                     </td>
                                     <td style="padding:14px 18px;">
                                         @php
-                                            $priorityText = ucfirst($priority ?? ($task->priority ?? 'Low'));
+                                            $rawPriority = strtolower($priority ?? ($task->priority ?? 'low'));
+                                            $priorityText = ucfirst($rawPriority) . ' Priority';
+
+                                            $badgeStyle = match($rawPriority) {
+                                                'high' => 'background:#ffeeef; color:#dc2626;',
+                                                'medium' => 'background:#fff7ed; color:#c2410c;',
+                                                default => 'background:#eff6ff; color:#1d4ed8;',
+                                            };
                                         @endphp
 
-                                        <span style="display:inline-block; padding:6px 12px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:13px; font-weight:700;">
+                                        <span style="display:inline-block; padding:6px 12px; border-radius:999px; {{ $badgeStyle }} font-size:13px; font-weight:700;">
                                             {{ $priorityText }}
                                         </span>
                                     </td>

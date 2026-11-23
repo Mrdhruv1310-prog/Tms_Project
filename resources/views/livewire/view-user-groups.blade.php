@@ -16,7 +16,7 @@
             x-transition:leave="transition ease-in duration-100 transform-gpu"
             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
             x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-            class="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/80 dark:border-gray-700 w-full max-w-[340px] xs:max-w-[380px] sm:max-w-xl lg:max-w-2xl xl:max-w-2xl 2xl:max-w-3xl 3xl:max-w-4xl overflow-hidden z-10 my-auto max-h-[92vh] flex flex-col transition-all duration-150">
+            class="relative bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl sm:rounded-xl shadow-2xl border border-slate-200/80 dark:border-gray-700 w-full max-w-[340px] xs:max-w-[380px] sm:max-w-xl lg:max-w-2xl xl:max-w-2xl 2xl:max-w-3xl 3xl:max-w-4xl overflow-hidden z-10 my-auto max-h-[92vh] flex flex-col transition-all duration-150">
 
             {{-- Modal Header --}}
             <div

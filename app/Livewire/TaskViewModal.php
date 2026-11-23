@@ -4,6 +4,8 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Task;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -16,6 +18,7 @@ class TaskViewModal extends Component
     public bool $isOpen = false;
     public ?Task $taskList = null;
     public $taskUpdates;
+    public array $taskTransfers = [];
 
     protected $listeners = [
         'openTaskViewModal' => 'open',
@@ -27,6 +30,7 @@ class TaskViewModal extends Component
     public function mount(): void
     {
         $this->taskUpdates = collect();
+        $this->taskTransfers = [];
     }
 
     public function open($taskId): void
@@ -56,7 +60,7 @@ class TaskViewModal extends Component
             $this->taskList = Task::query()
                 ->with([
                     'assignedUsers',
-                    'creator', // Using 'creator' relationship mapped to user_id in tasks table
+                    'creator',
                     'category',
                     'updates.user',
                     'reminders.user',
@@ -67,6 +71,8 @@ class TaskViewModal extends Component
                 ->with('user')
                 ->latest()
                 ->get();
+
+            $this->loadTaskTransfers($this->taskId);
         } catch (\Throwable $e) {
             Log::error('Task View Modal Load Error: ' . $e->getMessage(), [
                 'task_id' => $this->taskId,
@@ -74,7 +80,36 @@ class TaskViewModal extends Component
 
             $this->taskList = null;
             $this->taskUpdates = collect();
-            $this->dispatch('notify', ['message' => 'Unable to load task details.', 'type' => 'error']);
+            $this->taskTransfers = [];
+        }
+    }
+
+    private function loadTaskTransfers(int $taskId): void
+    {
+        try {
+            if (DB::getSchemaBuilder()->hasTable('task_transfers')) {
+                $transfers = DB::table('task_transfers')
+                    ->where('task_id', $taskId)
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $this->taskTransfers = $transfers->map(function ($transfer) {
+                    $fromUser = User::find($transfer->from_user_id);
+                    $toUser = User::find($transfer->to_user_id);
+
+                    return [
+                        'from_name' => $fromUser ? trim($fromUser->first_name . ' ' . $fromUser->last_name) : 'Unknown User',
+                        'to_name' => $toUser ? trim($toUser->first_name . ' ' . $toUser->last_name) : 'Unknown User',
+                        'transfer_notes' => $transfer->transfer_notes ?? 'No notes provided',
+                        'transferred_at' => isset($transfer->created_at) ? \Carbon\Carbon::parse($transfer->created_at)->format('d-m-Y H:i') : null,
+                    ];
+                })->toArray();
+            } else {
+                $this->taskTransfers = [];
+            }
+        } catch (\Throwable $e) {
+            $this->taskTransfers = [];
+            Log::warning('Task transfers load warning: ' . $e->getMessage());
         }
     }
 
@@ -83,6 +118,7 @@ class TaskViewModal extends Component
         $this->isOpen = false;
         $this->reset(['taskId', 'taskList']);
         $this->taskUpdates = collect();
+        $this->taskTransfers = [];
     }
 
     public function render()

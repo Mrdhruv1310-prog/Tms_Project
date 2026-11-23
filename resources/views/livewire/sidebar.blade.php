@@ -54,7 +54,11 @@
             bottom: 18px;
             width: 4px;
             border-radius: 0 999px 999px 0;
-            background: linear-gradient(180deg, var(--tms-primary), var(--tms-indigo));
+            background: var(--tms-card) !important;
+        }
+
+        .dark [data-tms-sidebar-shell] .tms-mini-sidebar::before {
+            background: var(--tms-card-dark) !important;
         }
 
         [data-tms-sidebar-shell] .tms-mini-sidebar button {
@@ -263,7 +267,7 @@
             stroke: currentColor !important;
         }
 
-        {{-- Highly Responsive Bottom Navbar Styling (320px x 568px & below support) --}} [data-tms-sidebar-shell] .tms-mobile-bottom {
+        [data-tms-sidebar-shell] .tms-mobile-bottom {
             background: rgba(255, 255, 255, .98) !important;
             backdrop-filter: blur(16px);
             border: 1px solid var(--tms-border) !important;
@@ -300,7 +304,7 @@
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 100% !important;
+            width: 70% !important;
             height: 100% !important;
             background: transparent !important;
             border: none !important;
@@ -328,12 +332,12 @@
             }
         }
 
-        /* Bottom Nav Popups / Dropdowns Proper Positioning & Responsiveness */
+        /* Bottom Nav Popups / Dropdowns Proper Positioning & Extremely High Z-Index */
         [data-tms-sidebar-shell] [id*="menuContent"],
         [data-tms-sidebar-shell] [id*="dropdown-square"] {
             position: absolute !important;
-            bottom: calc(100% + 10px) !important;
-            left: 50% !important;
+            bottom: calc(100% + 12px) !important;
+            align-content: center !important;
             transform: translateX(-50%) !important;
             width: max-content !important;
             min-width: 170px !important;
@@ -341,9 +345,9 @@
             background: var(--tms-card) !important;
             border: 1px solid var(--tms-border) !important;
             border-radius: 14px !important;
-            box-shadow: 0 16px 36px rgba(15, 23, 42, .22) !important;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, .3) !important;
             padding: 6px !important;
-            z-index: 100050 !important;
+            z-index: 999999 !important;
         }
 
         .dark [data-tms-sidebar-shell] [id*="menuContent"],
@@ -414,8 +418,6 @@
 
     <div data-tms-sidebar-shell x-data="{ hoveredTab: null, activeTab: null, hoverTimeout: null, contentVisible: false, isHoveringSidebar: false }"
         class="hidden md:flex fixed top-0 left-0 z-20 flex-shrink-0 transition-all h-screen antialiased text-gray-900 dark:bg-dark dark:text-light">
-
-        <div class="fixed inset-y-0 z-10 w-16 bg-white"></div>
 
         <!-- Left mini bar -->
         <nav aria-label="Options"
@@ -998,17 +1000,26 @@
     </div>
     <div x-data="{}" @click.away="contentVisible = false"></div>
 
-    {{-- desktop bottom speed dial --}}
-    <div data-dial-init="" class="hidden md:block fixed right-6 bottom-6 group" style="z-index: 99999;">
+    {{-- desktop bottom speed dial (Fixed: removed @mouseenter to prevent click-toggle clash) --}}
+    <div data-dial-init="" class="hidden md:block fixed right-6 bottom-6 group" style="z-index: 99999;"
+        x-data="{ speedDialOpen: false }" @click.away="speedDialOpen = false">
         <div id="speed-dial-menu-dropdown-square"
-            class="flex flex-col justify-end py-1 mb-4 space-y-2 bg-white border border-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:border-gray-600 hidden">
+            class="flex flex-col justify-end py-1 mb-4 space-y-2 bg-white border border-gray-100 rounded-lg shadow-xl dark:bg-gray-700 dark:border-gray-600"
+            x-show="speedDialOpen" x-cloak x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-100"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-2 scale-95">
+
             <ul class="text-sm text-gray-500 dark:text-gray-300">
                 {{-- Add Tasks (Visible to Everyone) --}}
                 <li>
                     <a href="#" wire:click="$dispatch('openTaskModal', { component: 'task-details-modal' })"
-                        x-data="{ isLoading: false }" x-on:addtaskmodalopened.window="isLoading = false"
-                        x-on:click="isLoading = true" x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }"
-                        wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-not-allowed"
+                        @click="speedDialOpen = false" x-data="{ isLoading: false }"
+                        x-on:addtaskmodalopened.window="isLoading = false" x-on:click="isLoading = true"
+                        x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }" wire:loading.attr="disabled"
+                        wire:loading.class="opacity-50 cursor-not-allowed"
                         class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
                         <svg x-show="!isLoading" class="w-5 h-5 me-2" xmlns="http://www.w3.org/2000/svg"
                             fill="currentColor" viewBox="0 0 20 20">
@@ -1034,7 +1045,7 @@
                 @auth
                     @if (in_array(auth()->user()->role, ['super-admin', 'admin', 'hr', 'manager']))
                         <li>
-                            <a href="{{ route('categories') }}" wire:navigate
+                            <a href="{{ route('categories') }}" wire:navigate @click="speedDialOpen = false"
                                 class="flex items-center px-5 py-2 border-b border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white dark:border-gray-600">
                                 <svg class="w-4 h-4 me-2" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                                     viewBox="0 0 20 20">
@@ -1048,7 +1059,7 @@
                         </li>
                         <li>
                             <a href="#" wire:click="$dispatch('openModal', { component: 'user-details-modal' })"
-                                id="UserDetailsModalButton" x-data="{ isLoading: false }"
+                                id="UserDetailsModalButton" @click="speedDialOpen = false" x-data="{ isLoading: false }"
                                 x-on:addusermodalopened.window="isLoading = false" x-on:click="isLoading = true"
                                 x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }" wire:loading.attr="disabled"
                                 wire:loading.class="opacity-50 cursor-not-allowed"
@@ -1077,11 +1088,11 @@
                 @endauth
             </ul>
         </div>
-        <button type="button" data-dial-toggle="speed-dial-menu-dropdown-square"
-            aria-controls="speed-dial-menu-dropdown-square" aria-expanded="false"
-            class="flex items-center justify-center ml-auto text-white bg-blue-700 rounded-full w-14 h-14 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:focus:ring-blue-800">
-            <svg class="w-5 h-5 transition-transform group-hover:rotate-45" inert xmlns="http://www.w3.org/2000/svg"
-                fill="currentColor" viewBox="0 0 18 18">
+        <button type="button" @click="speedDialOpen = !speedDialOpen" aria-expanded="false"
+            class="flex items-center justify-center ml-auto text-white bg-blue-700 rounded-full w-14 h-14 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:focus:ring-blue-800 shadow-lg cursor-pointer transition-transform duration-200"
+            :class="{ 'rotate-45 bg-blue-800': speedDialOpen }">
+            <svg class="w-5 h-5 transition-transform" inert xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                viewBox="0 0 18 18">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 1v16M1 9h16"></path>
             </svg>
@@ -1089,7 +1100,7 @@
         </button>
     </div>
 
-    {{-- Bottom navbar for mobile (Fully Synchronized Alpine.js State & Corporate Layout) --}}
+    {{-- Bottom navbar for mobile --}}
     <div class="tms-mobile-bottom fixed z-30 max-w-lg bg-white border border-gray-200 rounded-full dark:bg-gray-700 dark:border-gray-600 md:hidden"
         x-data="{ activePopup: null }" @click.away="activePopup = null">
         <div class="tms-mobile-grid">
@@ -1108,7 +1119,6 @@
                         d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
                 </svg>
 
-                <!-- Logo theme colored loading spinner -->
                 <svg x-show="isLoading" inert class="animate-spin w-5 h-5 text-gray-500 dark:text-gray-400"
                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" style="color: var(--tms-primary);">
@@ -1125,7 +1135,7 @@
             <div class="group relative flex items-center justify-center w-full h-full">
                 <div x-show="activePopup === 'task'"
                     class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 flex flex-col py-1.5 min-w-[170px] bg-white border border-gray-100 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700"
-                    style="z-index: 100050;" x-cloak>
+                    x-cloak>
                     <ul class="text-sm text-gray-600 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                         <li>
                             <a href="{{ route('tasks', ['task_view' => 'my_tasks']) }}" @click="activePopup = null"
@@ -1176,12 +1186,13 @@
                 </button>
             </div>
 
-            {{-- Center Add (+) Button & Menu --}}
+            {{-- Center Add (+) Button --}}
             <div class="group relative flex items-center justify-center w-full h-full">
                 <div x-show="activePopup === 'add'"
-                    class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 flex flex-col py-1.5 min-w-[180px] bg-white border border-gray-100 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700"
-                    style="z-index: 100050;" x-cloak>
-                    <ul class="text-sm text-gray-600 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
+                    class="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 flex flex-col py-1 px-1.5 w-max bg-white border border-gray-100 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700"
+                    x-cloak>
+                    <ul
+                        class="text-sm text-gray-600 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700 w-full">
                         <li>
                             <a href="#"
                                 wire:click="$dispatch('openTaskModal', { component: 'task-details-modal' })"
@@ -1189,7 +1200,7 @@
                                 x-on:click="isLoading = true; activePopup = null"
                                 x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }"
                                 wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-not-allowed"
-                                class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                class="flex items-center gap-2.5 px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors whitespace-nowrap">
                                 <svg x-show="!isLoading" class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0"
                                     xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                     <path
@@ -1209,7 +1220,7 @@
                         @can('view-admin-options')
                             <li>
                                 <a href="{{ route('categories') }}" wire:navigate @click="activePopup = null"
-                                    class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                    class="flex items-center gap-2.5 px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors whitespace-nowrap">
                                     <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0"
                                         xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                         <path
@@ -1224,7 +1235,7 @@
                                     x-on:click="isLoading = true; activePopup = null"
                                     x-bind:class="{ 'opacity-50 cursor-not-allowed': isLoading }"
                                     wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-not-allowed"
-                                    class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors">
+                                    class="flex items-center gap-2.5 px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-white transition-colors whitespace-nowrap">
                                     <svg x-show="!isLoading" inert
                                         class="w-4 h-4 text-gray-500 dark:text-gray-400 shrink-0" viewBox="0 0 24 24"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -1285,12 +1296,12 @@
                 <span class="sr-only">Export Report</span>
             </a>
 
-            {{-- More Menu Dropdown (Fixed Overlap via Left/Right Alignment shift) --}}
+            {{-- More Menu Dropdown --}}
             <div class="group relative flex items-center justify-center w-full h-full">
                 @can('view-admin-options')
                     <div x-show="activePopup === 'more'"
                         class="absolute bottom-full mb-3 right-0 flex flex-col py-1.5 min-w-[170px] bg-white border border-gray-100 rounded-xl shadow-xl dark:bg-gray-800 dark:border-gray-700"
-                        style="z-index: 100050;" x-cloak>
+                        x-cloak>
                         <ul class="text-sm text-gray-600 dark:text-gray-300 divide-y divide-gray-100 dark:divide-gray-700">
                             <li>
                                 <a href="{{ route('users') }}" wire:navigate @click="activePopup = null"
@@ -1333,5 +1344,4 @@
             </div>
         </div>
     </div>
-
 </div>
